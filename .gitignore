@@ -1,0 +1,14 @@
+.DS_Store
+.idea/
+.cache-main
+/bin
+*.class
+*.settings/*
+*.classpath
+*.project
+target/*
+*/bin/*
+*/.cache*
+project/*
+!project/assembly.sbt
+TestAPI.scala
