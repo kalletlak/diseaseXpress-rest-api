@@ -11,20 +11,22 @@ GET   /api/v0/genes/symbols/:gene_symbols                                       
 GET   /api/v0/transcripts/ids                                                                        de.Resources.getTranscriptIds()
 GET   /api/v0/transcripts/ids/:transcript_ids                                                        de.Resources.getTranscriptInfo(transcript_ids:String)
 
-GET   /api/v0/data/genes/ids/:gene_ids                                                               de.Resources.getDataByGeneIds(gene_ids:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/ids/:gene_ids/studies/:studies                                              de.Resources.getDataByGeneIdsAndStudies(gene_ids:String,studies:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/ids/:gene_ids/normalizations/:normalizations                                de.Resources.getDataByGeneIdsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/ids/:gene_ids/studies/:studies/normalizations/:normalizations               de.Resources.getDataByGeneIdsAndStudiesAndNormalizations(gene_ids:String,studies:String,normalizations:String, projection:Option[Boolean])
+GET   /api/v0/data/genes/ids/:gene_ids                                                               de.Resources.getDataByGeneIds(gene_ids:String, projection:Option[String])
+GET   /api/v0/data/genes/ids/:gene_ids/studies/:studies                                              de.Resources.getDataByGeneIdsAndStudies(gene_ids:String,studies:String, projection:Option[String])
+GET   /api/v0/data/genes/ids/:gene_ids/normalizations/:normalizations                                de.Resources.getDataByGeneIdsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
+GET   /api/v0/data/genes/ids/:gene_ids/studies/:studies/normalizations/:normalizations               de.Resources.getDataByGeneIdsAndStudiesAndNormalizations(gene_ids:String,studies:String,normalizations:String, projection:Option[String])
 
 
-GET   /api/v0/data/genes/symbols/:gene_symbols                                                       de.Resources.getDataByGeneSymbols(gene_symbols:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/symbols/:gene_symbols/normalizations/:normalizations                        de.Resources.getDataByGeneSymbolsAndStudies(gene_symbols:String,normalizations:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/symbols/:gene_symbols/studies/:studies                                      de.Resources.getDataByGeneSymbolsAndNormalizations(gene_symbols:String,studies:String, projection:Option[Boolean])
-GET   /api/v0/data/genes/symbols/:gene_symbols/studies/:studies/normalizations/:normalizations       de.Resources.getDataByGeneSymbolsAndStudiesAndNormalizations(gene_symbols:String,studies:String,normalizations:String, projection:Option[Boolean])
+GET   /api/v0/data/genes/symbols/:gene_symbols                                                       de.Resources.getDataByGeneSymbols(gene_symbols:String, projection:Option[String])
+GET   /api/v0/data/genes/symbols/:gene_symbols/normalizations/:normalizations                        de.Resources.getDataByGeneSymbolsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
+GET   /api/v0/data/genes/symbols/:gene_symbols/studies/:studies                                      de.Resources.getDataByGeneSymbolsAndStudies(gene_symbols:String,studies:String, projection:Option[String])
+GET   /api/v0/data/genes/symbols/:gene_symbols/studies/:studies/normalizations/:normalizations       de.Resources.getDataByGeneSymbolsAndStudiesAndNormalizations(gene_symbols:String,studies:String,normalizations:String, projection:Option[String])
 
 
-GET   /api/v0/data/transcripts/ids/:transcript_ids                                                   de.Resources.getDataByTranscriptIds(transcript_ids:String, projection:Option[Boolean])
-GET   /api/v0/data/transcripts/ids/:transcript_ids/studies/:studies                                  de.Resources.getDataByTranscriptIdsAndStudies(transcript_ids:String,studies:String, projection:Option[Boolean])
-GET   /api/v0/data/transcripts/ids/:transcript_ids/normalizations/:normalizations                    de.Resources.getDataByTranscriptIdsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[Boolean])
-GET   /api/v0/data/transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normalizations   de.Resources.getDataByTranscriptIdsAndStudiesAndNormalizations(transcript_ids:String,studies:String,normalizations:String, projection:Option[Boolean])
+GET   /api/v0/data/transcripts/ids/:transcript_ids                                                   de.Resources.getDataByTranscriptIds(transcript_ids:String, projection:Option[String])
+GET   /api/v0/data/transcripts/ids/:transcript_ids/studies/:studies                                  de.Resources.getDataByTranscriptIdsAndStudies(transcript_ids:String,studies:String, projection:Option[String])
+GET   /api/v0/data/transcripts/ids/:transcript_ids/normalizations/:normalizations                    de.Resources.getDataByTranscriptIdsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
+GET   /api/v0/data/transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normalizations   de.Resources.getDataByTranscriptIdsAndStudiesAndNormalizations(transcript_ids:String,studies:String,normalizations:String, projection:Option[String])
 
+#GET /index  controllers.Assets.at(path="/views", file="index.html")
+GET     /                 controllers.Assets.at(path="/html", file="index.html")

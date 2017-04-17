@@ -1,6 +1,7 @@
 package de
 
 import java.io.InputStream
+import play.api.libs.json.Json
 
 case class SampleAnnotation(
   analysis_id: String,
@@ -20,10 +21,22 @@ case class SampleAnnotation(
 object SampleAnnotation {
 
   def apply(line: String): SampleAnnotation = {
-    val spl = line.split("\t")
-    SampleAnnotation(spl(0), spl(1), spl(2), spl(3), spl(4), spl(5), spl(6), spl(7), spl(8), spl(9), spl(10), spl(11), spl(12))
+    val spl = line.split("\t", -1).iterator
+    SampleAnnotation(analysis_id = spl.next,
+      patient_barcode = spl.next,
+      sample_barcode = spl.next,
+      group = spl.next,
+      study = spl.next,
+      disease = spl.next,
+      disease_name = spl.next,
+      disease_subtype = spl.next,
+      tissue = spl.next,
+      definition = spl.next,
+      library_type = spl.next,
+      platform = spl.next,
+      center = spl.next)
   }
-
+  
 }
 
 object SampleDataUtil {
@@ -42,6 +55,13 @@ object SampleDataUtil {
     case _ => studies
       .flatMap(studySampleMap) // get samples for each study and flatten it all up
       .map(_.analysis_id)
+      .toSeq
+  }
+
+  def getSamplesInfo(studies: Seq[String] = Nil) = studies match {
+    case Nil => { studySampleMap.map(x => x._2).flatten.toSeq }
+    case _ => studies
+      .flatMap(studySampleMap) // get samples for each study and flatten it all up
       .toSeq
   }
 
