@@ -9,4 +9,5 @@ target/*
 */.cache*
 project/*
 !project/assembly.sbt
-TestAPI.scala
+/app/test
+application.*.conf
