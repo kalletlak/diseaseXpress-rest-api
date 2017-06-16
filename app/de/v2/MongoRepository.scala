@@ -11,6 +11,8 @@ import play.api.libs.json.JsValue.jsValueToJsLookup
 import de.v2.model.Inputs._
 import de.v2.utils.GeneDataUtil
 import de.v2.model._
+import play.api.libs.json.JsObject
+import de.v2.model.DomainTypes._
 
 case class MongoRepositoryConfig(
   uri: String,
@@ -18,7 +20,7 @@ case class MongoRepositoryConfig(
 
 final class MongoRepository(val conf: MongoRepositoryConfig) {
 
-  private val client =
+  private val client: MongoClient =
     new MongoClient(
       new MongoClientURI(
         conf.uri))
@@ -28,97 +30,217 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
       client,
       conf.databaseName)
 
-  def findData(collectionName: String, filters: Map[String, Seq[String]]) = {
-    dao.findData(collectionName, filters)
-  }
+  def findData(collectionName: String,
+               filters: Map[Key, Seq[Value]]): Iterable[JsObject] = dao.findData(collectionName, filters)
 
-  def getDataByGeneSymbols(ref_ids: Seq[String], normalizations: Seq[ObjectFilters], targetSampleIds: Seq[String]) = {
-    val genes = ref_ids
-      .map { gene_symbol => GeneDataUtil.getGeneInputRef(GeneSymbolInput(gene_symbol)) }
+  def getDataByGeneSymbols(ref_ids: Seq[GeneSymbol],
+                           normalizations: Seq[ObjectFilters],
+                           targetSampleIds: Seq[SampleId]): Seq[GeneLevelOutput] = {
+
+    val genes: Seq[GeneInfoOutput] = ref_ids
+      .distinct
+      .map { GeneSymbolQuery.apply }
+      .map { GeneDataUtil.getGeneInputRef }
       .filter(_.isDefined)
       .map(_.get)
     getData(genes, normalizations, targetSampleIds)
+
   }
 
-  def getDataByGeneIds(ref_ids: Seq[String], normalizations: Seq[ObjectFilters], targetSampleIds: Seq[String]) = {
-    val genes = ref_ids
-      .map { gene_id => GeneDataUtil.getGeneInputRef(GeneIdInput(gene_id)) }
+  def getDataByGeneIds(ref_ids: Seq[GeneId],
+                       normalizations: Seq[ObjectFilters],
+                       targetSampleIds: Seq[SampleId]): Seq[GeneLevelOutput] = {
+
+    val genes: Seq[GeneInfoOutput] = ref_ids
+      .distinct
+      .map { GeneIdQuery.apply }
+      .map { GeneDataUtil.getGeneInputRef }
       .filter(_.isDefined)
       .map(_.get)
     getData(genes, normalizations, targetSampleIds)
+
   }
 
-  def getDataByTranscriptIds(ref_ids: Seq[String], normalizations: Seq[ObjectFilters], targetSampleIds: Seq[String]) = {
-    val genes = ref_ids
-      .map { transcript_id => GeneDataUtil.getGeneInputRef(TranscriptIdInput(transcript_id)) }
+  def getDataByTranscriptIds(ref_ids: Seq[TranscriptId],
+                             normalizations: Seq[ObjectFilters],
+                             targetSampleIds: Seq[SampleId]): Seq[GeneLevelOutput] = {
+
+    val genes: Seq[GeneInfoOutput] = ref_ids
+      .distinct
+      .map { TranscriptIdQuery.apply }
+      .map { GeneDataUtil.getGeneInputRef }
       .filter(_.isDefined)
-      .map(_.get).groupBy { _.gene_id }.mapValues(_.head).values.toSeq
+      .map(_.get)
+    //genes might have multiple records with same gene id
     getData(genes, normalizations, targetSampleIds)
+
+  }
+  def getAbundanceData(input_filters: Option[ObjectFilters], input_transcript_ids: Seq[TranscriptId], study_ids: Seq[StudyId]) = {
+    input_filters match {
+      case Some(_normalization_input: SampleAbundanceProjectons) => {
+
+        val _filters = Map("transcript_id" -> input_transcript_ids, "study_id" -> study_ids)
+
+        findData(_normalization_input.collection_name, _filters)
+          .map { _data =>
+            {
+              val transcript_id = (_data \ "transcript_id").as[TranscriptId]
+              _data
+                .parseObjectArray("data")
+                .map { _obj =>
+                  SampleAbundanceOutput.readJson(
+                    transcript_id = transcript_id,
+                    obj = _obj,
+                    projectionFileds = _normalization_input)
+                }
+                .map { _.get }
+            }
+          }
+          .flatten
+          .toSeq
+
+      }
+      case _ => Seq()
+    }
   }
 
-  def getData(genes: Seq[GeneInfoOutput], data_types: Seq[ObjectFilters], study_ids: Seq[String]) = {
-    val normalizations = data_types.groupBy { _.collection_name }.mapValues(_.head)
-    val input_gene_ids = genes.map { _.gene_id }
-    val input_transcript_ids = genes.flatMap { _.transcripts.map { _.transcript_id } }
+  def getIsoformData(input_filters: Option[ObjectFilters], input_transcript_ids: Seq[TranscriptId], study_ids: Seq[StudyId]) = {
+    input_filters match {
+      case Some(_normalization_input: SampleRsemIsoformProjectons) => {
 
-    //START get abundance data
-    val transcriptsAbundanceData = if (normalizations.get("transcript_abundance").isDefined) {
-      val _normalization_input = normalizations("transcript_abundance").asInstanceOf[SampleAbundanceProjectons]
-      val _filters = Map("transcript_id" -> input_transcript_ids, "study_id" -> study_ids)
-      findData(_normalization_input.collection_name, _filters).map { _data =>
-        {
-          val transcript_id = (_data \ "transcript_id").as[String]
-          _data.parseObjectArray("data").map { _obj => SampleAbundanceOutput.readJson(transcript_id = transcript_id, obj = _obj, projectionFileds = _normalization_input) }.map { _.get }
-        }
-      }.flatten.toSeq
-    } else Seq[SampleAbundanceOutput]()
+        val _filters = Map("transcript_id" -> input_transcript_ids, "study_id" -> study_ids)
+        findData(_normalization_input.collection_name, _filters)
+          .map { _data =>
+            {
+              val transcript_id = (_data \ "transcript_id").as[TranscriptId]
+              _data
+                .parseObjectArray("data")
+                .map { _obj =>
+                  SampleRsemIsoformOutput.readJson(
+                    transcript_id = transcript_id,
+                    obj = _obj,
+                    projectionFileds = _normalization_input)
+                }
+                .map { _.get }
+            }
+          }
+          .flatten
+          .toSeq
 
-    val _abundanceData = transcriptsAbundanceData
-      .map { sampleAbundance => (sampleAbundance.sample_id, sampleAbundance.transcript_id) -> sampleAbundance }.toMap
-    //END get abundance data
+      }
+      case _ => Seq()
+    }
+  }
 
-    //START get isoform data
-    val transcriptsIsoformData = if (normalizations.get("transcript_isoform").isDefined) {
-      val _normalization_input = normalizations("transcript_isoform").asInstanceOf[SampleRsemIsoformProjectons]
-      val _filters = Map("transcript_id" -> input_transcript_ids, "study_id" -> study_ids)
-      findData(_normalization_input.collection_name, _filters).map { _data =>
-        {
-          val transcript_id = (_data \ "transcript_id").as[String]
-          _data.parseObjectArray("data").map { _obj => SampleRsemIsoformOutput.readJson(transcript_id = transcript_id, obj = _obj, projectionFileds = _normalization_input) }.map { _.get }
-        }
-      }.flatten.toSeq
-    } else Seq[SampleRsemIsoformOutput]()
+  def getRsemGeneData(input_filters: Option[ObjectFilters], input_gene_ids: Seq[GeneId], study_ids: Seq[StudyId]) = {
 
-    val _isoformData = transcriptsIsoformData
-      .map { sampleRsemIsoform => (sampleRsemIsoform.sample_id, sampleRsemIsoform.transcript_id) -> sampleRsemIsoform }.toMap
-    //END get isoform data
+    input_filters match {
+      case Some(_normalization_input: SampleRsemGeneProjectons) => {
 
-    //START get rsem gene data
-    val geneRsemData = if (normalizations.get("gene_rsem").isDefined) {
-      val _normalization_input = normalizations("gene_rsem").asInstanceOf[SampleRsemGeneProjectons]
-      val _filters = Map("gene_id" -> input_gene_ids, "study_id" -> study_ids)
-      findData(_normalization_input.collection_name, _filters).map { _data =>
-        {
-          val gene_id = (_data \ "gene_id").as[String]
-          _data.parseObjectArray("data").map { _obj => SampleRsemGeneOutput.readJson(gene_id = gene_id, obj = _obj, projectionFileds = _normalization_input) }.map { _.get }
-        }
-      }.flatten.toSeq
-    } else Seq[SampleRsemGeneOutput]()
+        val _filters = Map("gene_id" -> input_gene_ids, "study_id" -> study_ids)
+        findData(_normalization_input.collection_name, _filters)
+          .map { _data =>
+            {
+              val gene_id = (_data \ "gene_id").as[GeneId]
+              _data
+                .parseObjectArray("data")
+                .map { _obj =>
+                  SampleRsemGeneOutput.readJson(
+                    gene_id = gene_id,
+                    obj = _obj,
+                    projectionFileds = _normalization_input)
+                }
+                .map { _.get }
+            }
+          }
+          .flatten
+          .toSeq
 
-    val _rsemData = geneRsemData.map { sampleRsemGene => (sampleRsemGene.gene_id, sampleRsemGene.sample_id) -> sampleRsemGene }.toMap
-    //END get rsem gene data
+      }
+      case _ => Seq()
+    }
+  }
 
-    val _transcriptDataKeys = (_abundanceData.keySet ++ _isoformData.keySet).toSeq.distinct
-    val _trancriptData1 = _transcriptDataKeys.map { case (sample_id, transcript_id) => (sample_id, transcript_id) -> TranscriptLevelOutput(transcript_id, _abundanceData.get((sample_id, transcript_id)), _isoformData.get((sample_id, transcript_id))) }.toMap
+  def getData(genes: Seq[GeneInfoOutput],
+              data_types: Seq[ObjectFilters],
+              study_ids: Seq[StudyId]): Seq[GeneLevelOutput] = {
 
-    val targetSamples = (_transcriptDataKeys.map { case (sample_id, _) => sample_id } ++ _rsemData.map { case ((_, sample_id), _) => sample_id }).toSeq.distinct
+    //get the unique geneId transcriptid's map
+    val input_genes: Map[GeneId, (GeneSymbol, Seq[TranscriptId])] = genes
+      .groupBy { _.gene_id }
+      .mapValues { gene_info =>
+        (gene_info.head.gene_symbol, gene_info
+          .flatMap {
+            _.transcripts
+              .map { _.transcript_id }
+          }
+          .distinct)
+      }
+
+    //get unique collections
+    val normalizations = data_types
+      .groupBy { _.collection_name }
+      .mapValues { _.head }
+
+    val input_gene_ids = input_genes.keys.toSeq
+
+    val input_transcript_ids = input_genes.values.flatMap { _._2 }.toSeq
+
+    val _abundanceData = getAbundanceData(
+      normalizations.get("transcript_abundance"),
+      input_transcript_ids,
+      study_ids)
+      .map { sampleAbundance => (sampleAbundance.sample_id, sampleAbundance.transcript_id) -> sampleAbundance }
+      .toMap
+
+    val _isoformData = getIsoformData(
+      normalizations.get("transcript_isoform"),
+      input_transcript_ids,
+      study_ids)
+      .map { sampleRsemIsoform => (sampleRsemIsoform.sample_id, sampleRsemIsoform.transcript_id) -> sampleRsemIsoform }
+      .toMap
+
+    val _rsemData = getRsemGeneData(
+      normalizations.get("gene_rsem"),
+      input_gene_ids,
+      study_ids)
+      .map { sampleRsemGene => (sampleRsemGene.sample_id, sampleRsemGene.gene_id) -> sampleRsemGene }
+      .toMap
+
+    //join sample transcript data by transcript ids
+    val _transcriptDataKeys = (_abundanceData.keySet ++ _isoformData.keySet)
+      .toSeq
+      .distinct
+
+    val _trancriptData = _transcriptDataKeys
+      .map {
+        case (sample_id, transcript_id) => (sample_id, transcript_id) ->
+          TranscriptLevelOutput(transcript_id,
+            _abundanceData.get((sample_id, transcript_id)),
+            _isoformData.get((sample_id, transcript_id)))
+      }
+      .toMap
+
+    //TODO: should updated this??
+    //these are the samples which should be same as input sample list but filtering out the samples which doesn't have data
+    val targetSamples = (_transcriptDataKeys.map { case (sample_id, _) => sample_id } ++ _rsemData.map { case ((sample_id, _), _) => sample_id })
+      .toSeq
+      .distinct
+
+    //join sample gene rsem data with transcript data
+    //TODO: need to find a better way
     genes.map { gene =>
       {
         val gene_data = targetSamples.map { sample_id =>
           {
-            val _rsemData1 = _rsemData.get((gene.gene_id, sample_id))
-            val _transcriptData1 = gene.transcripts.map { transcript => _trancriptData1.get((sample_id, transcript.transcript_id)) }.filter { _.isDefined }.map { _.get }
-            SampleDataOutput(sample_id, _rsemData1, if (_transcriptData1.size > 0) Some(_transcriptData1) else None)
+            val sampleRsemDta = _rsemData.get((sample_id, gene.gene_id))
+
+            val sampleTranscriptData1 = gene.transcripts
+              .map { transcript => _trancriptData.get((sample_id, transcript.transcript_id)) }
+              .filter { _.isDefined }
+              .map { _.get }
+
+            SampleDataOutput(sample_id, sampleRsemDta, if (sampleTranscriptData1.size > 0) Some(sampleTranscriptData1) else None)
           }
         }
         GeneLevelOutput(gene.gene_id, gene.gene_symbol, gene_data)

@@ -1,31 +1,22 @@
 package de.v2.model
 
-object Inputs {
+package object DomainTypes {
+  type GeneId = String
+  type GeneSymbol = String
+  type TranscriptId = String
+  type SampleId = String
+  type StudyId = String
+  type Key = String
+  type Value = String
+}
 
-  case class GeneQuery(
-    gene_id: String,
-    gene_symbol: String,
-    transcript_ids: Seq[String])
+object Inputs {
 
   trait GeneQueryRef
 
-  case class GeneIdInput(ref_id: String) extends GeneQueryRef
-  case class GeneSymbolInput(ref_id: String) extends GeneQueryRef
-  case class TranscriptIdInput(ref_id: String) extends GeneQueryRef
-
-  object GeneQuery {
-
-    def apply(line: String): GeneQuery = {
-      val spl = line.split("\t", -1).iterator
-      GeneQuery(
-        gene_id = spl.next,
-        gene_symbol = spl.next,
-        transcript_ids = spl.next
-          .split(",")
-          .map { _.trim })
-    }
-
-  }
+  case class GeneIdQuery(ref_id: String) extends GeneQueryRef
+  case class GeneSymbolQuery(ref_id: String) extends GeneQueryRef
+  case class TranscriptIdQuery(ref_id: String) extends GeneQueryRef
 
   trait ObjectFilters {
     val collection_name: String
@@ -51,41 +42,63 @@ object Inputs {
 
     def apply(line: String): Gene = {
       val spl = line.split("\t", 14)
-      Gene(spl(0), spl(1), spl(2), spl(3), spl(4).toLong, spl(5).toLong, spl(6), spl(7), spl(8).toLong, spl(9).toLong, spl(10), toSeq(spl(11)), toSeq(spl(12)), toSeq(spl(13)))
+      Gene(spl(0),
+        spl(1),
+        spl(2),
+        spl(3),
+        spl(4).toLong,
+        spl(5).toLong,
+        spl(6),
+        spl(7),
+        spl(8).toLong,
+        spl(9).toLong,
+        spl(10),
+        toSeq(spl(11)),
+        toSeq(spl(12)),
+        toSeq(spl(13)))
     }
 
-    def toSeq(listAsString: String): Seq[String] = { val x = listAsString.split(",", -1).map { _.trim() }.toSeq; if (x == Seq("")) Seq() else x }
+    //convert empty value as empty list
+    def toSeq(listAsString: String): Seq[String] = {
+      val x = listAsString.split(",", -1)
+        .map { _.trim() }
+        .toSeq
+      if (x == Seq("")) Seq() else x
+    }
 
   }
+
+  trait TranscriptModel extends ObjectFilters
+  trait GeneModel extends ObjectFilters
 
   case class SampleAbundanceProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,
-      tpm: Boolean = true) extends ObjectFilters {
+      tpm: Boolean = true) extends TranscriptModel {
     val sample_id: Boolean = true
     val collection_name: String = "transcript_abundance"
   }
 
-  // ===========================================================================	
+  // ===========================================================================
   case class SampleRsemGeneProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,
       tpm: Boolean = false,
-      fpkm: Boolean = true) extends ObjectFilters {
+      fpkm: Boolean = true) extends TranscriptModel {
     val sample_id: Boolean = true
     val collection_name: String = "gene_rsem"
   }
 
-  // ===========================================================================	
+  // ===========================================================================
   case class SampleRsemIsoformProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,
       tpm: Boolean = true,
       fpkm: Boolean = false,
-      isoform_percentage: Boolean = false) extends ObjectFilters {
+      isoform_percentage: Boolean = false) extends GeneModel {
     val sample_id: Boolean = true
     val collection_name: String = "transcript_isoform"
   }

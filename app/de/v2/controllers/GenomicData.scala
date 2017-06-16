@@ -1,30 +1,17 @@
 package de.v2.controllers
 
-import scala.Right
-import scala.annotation.implicitNotFound
-import scala.annotation.migration
-
-import de.v2.utils.SampleDataUtil
-import de.v2.utils.Enums.Normalization
-import de.v2.utils.Enums.Projection
-import de.v2.utils.JsObjectWithOption
-import de.v2.MongoRepository
-import de.v2.MongoRepositoryConfig
-import io.swagger.annotations.Api
-import io.swagger.annotations.ApiModel
-import io.swagger.annotations.ApiModelProperty
-import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.ApiParam
+import de.v2.{ MongoRepository, MongoRepositoryConfig }
+import de.v2.model.GeneLevelOutput
+import de.v2.model.Inputs.{ SampleAbundanceProjectons, SampleRsemGeneProjectons, SampleRsemIsoformProjectons }
+import de.v2.utils.{ JsObjectWithOption, SampleDataUtil }
+import de.v2.utils.Enums.{ Normalization, Projection }
+import io.swagger.annotations.{ Api, ApiModel, ApiModelProperty, ApiOperation, ApiParam }
 import javax.inject.Inject
 import play.api.http.HttpFilters
 import play.api.libs.json.Json
-import play.api.mvc.Accepting
-import play.api.mvc.Action
-import play.api.mvc.Controller
-import play.api.mvc.RequestHeader
+import play.api.mvc.{ Accepting, Action, Controller, RequestHeader }
 import play.filters.gzip.GzipFilter
-import de.v2.model.Inputs._
-import de.v2.model.GeneLevelOutput
+import de.v2.model.DomainTypes.StudyId
 
 class Filters @Inject() (gzipFilter: GzipFilter) extends HttpFilters {
   def filters = Seq(gzipFilter)
@@ -50,11 +37,15 @@ class GenomicData @javax.inject.Inject() (
   /**
    * Converts gene data object to tsv format
    */
-  private def tsvFormat(result: Seq[GeneLevelOutput], projection: Projection) = {
-    val header = Seq(result.head.getHeader(projection.entryName).mkString("\t"))
+  private def tsvFormat(norms: Seq[Normalization], result: Seq[GeneLevelOutput],
+                        projection: Projection) = {
+    val rsem = norms.contains(Normalization.rsem)
+    val sample_abundance = norms.contains(Normalization.sample_abundance)
+    val sample_rsem_isoform = norms.contains(Normalization.sample_rsem_isoform)
+    val header = Seq(GeneLevelOutput.getHeader(rsem, sample_abundance, sample_rsem_isoform, norms, projection).mkString("\t"))
     val data = result
-      .map {
-        _.getValues(projection.entryName)
+      .map { x =>
+        GeneLevelOutput.getValues(x, norms, projection)
           .map { _.mkString("\t") }
           .mkString("\n")
       }
@@ -102,7 +93,7 @@ class GenomicData @javax.inject.Inject() (
 
   private def getData(_ids_type: String,
                       _ids: String,
-                      studies_ids: Option[String],
+                      studies_ids: Option[StudyId],
                       normalizations: Option[String],
                       projection: Option[String])(implicit request: RequestHeader) = {
 
@@ -125,37 +116,53 @@ class GenomicData @javax.inject.Inject() (
 
     val proj_invalid = !projection_enum.isDefined
 
+    //TODO: need to find a better solution
     if (norm_invalid.size > 0 || proj_invalid) {
-      val t1 = if (norm_invalid.size > 0) Some(norm_invalid.keySet.mkString("", ",", " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]")) else None
-      val t2 = if (proj_invalid) Some(s"""${projection.get}, is invalid. Must be summary or detailed """) else None
-      BadRequest(JsObjectWithOption("projection" -> Right(t2.map(x => Json.toJson(x))), "normalizations" -> Right(t1.map(x => Json.toJson(x)))))
+      val t1 = if (norm_invalid.size > 0)
+        Some(norm_invalid
+          .keySet
+          .mkString("", ",", " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]"))
+      else None
+
+      val t2 = if (proj_invalid)
+        Some(s"""${projection.get}, is invalid. Must be summary or detailed """)
+      else None
+
+      BadRequest(JsObjectWithOption(
+        "projection" -> Right(t2.map(x => Json.toJson(x))),
+        "normalizations" -> Right(t1.map(x => Json.toJson(x)))))
 
     } else {
 
       val _projection_enum = projection_enum.get
-      val _normalizations_enums = normalization_enums.values.map { _.get }.toSeq
+
+      val _normalizations_enums = normalization_enums.values
+        .map { _.get }
+        .toSeq
+
       val _studies = studies_ids match {
         case Some(studies) => studies.split(",").toSeq
         case None          => SampleDataUtil.getStudies()
       }
+
       val _result = _ids_type match {
         case "gene_id" => repo.getDataByGeneIds(
           _ids.split(",").toSeq,
-          getFields(projection = _projection_enum, normalizations = _normalizations_enums),
+          getFields(_projection_enum, _normalizations_enums),
           _studies)
         case "gene_symbol" => repo.getDataByGeneSymbols(
           _ids.split(",").toSeq,
-          getFields(projection = _projection_enum, normalizations = _normalizations_enums),
+          getFields(_projection_enum, _normalizations_enums),
           _studies)
         case "transcript_id" => repo.getDataByTranscriptIds(
           _ids.split(",").toSeq,
-          getFields(projection = _projection_enum, normalizations = _normalizations_enums),
+          getFields(_projection_enum, _normalizations_enums),
           _studies)
       }
 
       render {
         case Accepts.Json() => Ok(Json.toJson(_result))
-        case AcceptsTsv()   => Ok(tsvFormat(_result, _projection_enum))
+        case AcceptsTsv()   => Ok(tsvFormat(_normalizations_enums, _result, _projection_enum))
       }
 
     }
@@ -167,10 +174,20 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIds(
-    @ApiParam(value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
+
     implicit request =>
-      getData("gene_id", gene_ids, None, None, projection)
+
+      getData("gene_id",
+        gene_ids,
+        None,
+        None,
+        projection)
 
   }
 
@@ -180,11 +197,20 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIdsAndStudies(
-    @ApiParam(value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id", gene_ids, Some(studies_ids), None, projection)
+      getData("gene_id",
+        gene_ids,
+        Some(studies_ids),
+        None,
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given gene entrez ids",
@@ -193,11 +219,22 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIdsAndNormalizations(
-    @ApiParam(value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      defaultValue = "rsem", allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id", gene_ids, None, Some(normalizations), projection)
+      getData("gene_id",
+        gene_ids,
+        None,
+        Some(normalizations),
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given gene entrez ids and studies",
@@ -206,12 +243,24 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIdsAndStudiesAndNormalizations(
-    @ApiParam(value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id", gene_ids, Some(studies_ids), Some(normalizations), projection)
+      getData("gene_id",
+        gene_ids,
+        Some(studies_ids),
+        Some(normalizations),
+        projection)
 
   }
 
@@ -223,10 +272,18 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbols(
-    @ApiParam(value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol", gene_ids, None, None, projection)
+      getData("gene_symbol",
+        gene_ids,
+        None,
+        None,
+        projection)
 
   }
 
@@ -236,11 +293,20 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbolsAndStudies(
-    @ApiParam(value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol", _ids, Some(studies_ids), None, projection)
+      getData("gene_symbol",
+        _ids,
+        Some(studies_ids),
+        None,
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given gene symbols",
@@ -249,11 +315,22 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbolsAndNormalizations(
-    @ApiParam(value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol", _ids, None, Some(normalizations), projection)
+      getData("gene_symbol",
+        _ids,
+        None,
+        Some(normalizations),
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given gene symbols and studies",
@@ -262,12 +339,24 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbolsAndStudiesAndNormalizations(
-    @ApiParam(value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol", _ids, Some(studies_ids), Some(normalizations), projection)
+      getData("gene_symbol",
+        _ids,
+        Some(studies_ids),
+        Some(normalizations),
+        projection)
 
   }
   //END : data by gene symbol
@@ -278,10 +367,18 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIds(
-    @ApiParam(value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") gene_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") gene_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id", gene_ids, None, None, projection)
+      getData("transcript_id",
+        gene_ids,
+        None,
+        None,
+        projection)
 
   }
 
@@ -291,11 +388,20 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIdsAndStudies(
-    @ApiParam(value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id", _ids, Some(studies_ids), None, projection)
+      getData("transcript_id",
+        _ids,
+        Some(studies_ids),
+        None,
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given transcript ids",
@@ -304,11 +410,22 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIdsAndNormalizations(
-    @ApiParam(value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id", _ids, None, Some(normalizations), projection)
+
+      getData("transcript_id",
+        _ids,
+        None,
+        Some(normalizations),
+        projection)
   }
 
   @ApiOperation(value = "get expression data for given transcript ids and studies",
@@ -317,12 +434,25 @@ class GenomicData @javax.inject.Inject() (
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIdsAndStudiesAndNormalizations(
-    @ApiParam(value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
-    @ApiParam(value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
-    @ApiParam(value = "Comma separated list of normalization methods", allowableValues = "rsem,sample_abundance,sample_rsem_isoform", allowMultiple = true) normalizations: String,
-    @ApiParam(value = "Projection type summary or detailed", allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
+    @ApiParam(
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id", _ids, Some(studies_ids), Some(normalizations), projection)
+
+      getData("transcript_id",
+        _ids,
+        Some(studies_ids),
+        Some(normalizations),
+        projection)
 
   }
   //END : data by transcript id

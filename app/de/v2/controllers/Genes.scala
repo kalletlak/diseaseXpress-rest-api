@@ -67,7 +67,10 @@ class Genes @javax.inject.Inject() (
     httpMethod = "GET")
   def getGeneInfoByIds(gene_ids: String) = Action {
     implicit request =>
-      val result = gene_ids.split(",").map { gene_id => GeneDataUtil.getGeneById(gene_id) }.filter { _.isDefined }.map { _.get }
+      val result = gene_ids.split(",")
+        .map { gene_id => GeneDataUtil.getGeneById(gene_id) }
+        .filter { _.isDefined }
+        .map { _.get }
       render {
         case Accepts.Json() => Ok(Json.toJson(result))
         case AcceptsTsv()   => Ok(tsvFormat(result))
@@ -82,7 +85,10 @@ class Genes @javax.inject.Inject() (
     httpMethod = "GET")
   def getGeneInfoBySymbols(gene_symbols: String) = Action {
     implicit request =>
-      val result = gene_symbols.split(",").map { gene_symbol => GeneDataUtil.getGeneBySymbol(gene_symbol) }.filter { _.isDefined }.map { _.get }
+      val result = gene_symbols.split(",")
+        .map { gene_symbol => GeneDataUtil.getGeneBySymbol(gene_symbol) }
+        .filter { _.isDefined }
+        .map { _.get }
       render {
         case Accepts.Json() => Ok(Json.toJson(result))
         case AcceptsTsv()   => Ok(tsvFormat(result))
@@ -97,12 +103,15 @@ class Genes @javax.inject.Inject() (
     httpMethod = "GET")
   def getTranscriptInfo(transcript_ids: String) = Action {
     implicit request =>
-      val result = transcript_ids.split(",").map { transcript_id => GeneDataUtil.getTranscript(transcript_id) }.toSeq.filter { _.isDefined }.flatMap { x =>
-        {
-          val _data = x.get
-          _data.transcripts.map { transcript => TranscriptWithGeneInfoOutput.apply(transcript, _data.gene_id, _data.gene_symbol) }
+      val result = transcript_ids.split(",")
+        .map { transcript_id => GeneDataUtil.getTranscript(transcript_id) }
+        .filter { _.isDefined }
+        .map { _.get }
+        .flatMap { _obj =>
+          {
+            _obj.transcripts.map { transcript => TranscriptWithGeneInfoOutput.apply(transcript, _obj.gene_id, _obj.gene_symbol) }
+          }
         }
-      }
 
       render {
         case Accepts.Json() => Ok(Json.toJson(result))

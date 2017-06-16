@@ -15,29 +15,38 @@ object GeneDataUtil {
     x
   }
 
-  private val genes = geneLookup
-    .groupBy { _.gene_id }
-    .mapValues { GeneInfoOutput.apply }
+  private val genes =
+    geneLookup
+      .groupBy { _.gene_id }
+      .mapValues { GeneInfoOutput.apply }
 
-  private val transcripts = geneLookup
-    .groupBy { _.transcript_id }
-    .mapValues { GeneInfoOutput.apply }
+  private val transcripts =
+    geneLookup
+      .groupBy { _.transcript_id }
+      .mapValues { GeneInfoOutput.apply }
 
-  private val transcriptGeneMap = geneLookup.map { x => x.transcript_id -> x.gene_id }.toMap
-  private val geneSymbolIdMap = geneLookup.map { x => x.gene_symbol -> x.gene_id }.toMap
+  private val transcriptGeneMap =
+    geneLookup
+      .map { x => x.transcript_id -> x.gene_id }
+      .toMap
+
+  private val geneSymbolIdMap =
+    geneLookup
+      .map { x => x.gene_symbol -> x.gene_id }
+      .toMap
 
   def getGeneInputRef(geneInputRef: GeneQueryRef): Option[GeneInfoOutput] = {
     geneInputRef match {
-      case x: GeneIdInput => {
+      case x: GeneIdQuery => {
         genes.get(x.ref_id)
       }
-      case x: GeneSymbolInput => {
-        val _gene_id = geneSymbolIdMap.get(x.ref_id)
-        if (_gene_id.isDefined) {
-          genes.get(_gene_id.get)
-        } else None
+      case x: GeneSymbolQuery => {
+        geneSymbolIdMap.get(x.ref_id) match {
+          case Some(_gene_id) => genes.get(_gene_id)
+          case _              => None
+        }
       }
-      case x: TranscriptIdInput => {
+      case x: TranscriptIdQuery => {
         transcripts.get(x.ref_id)
       }
     }
@@ -51,10 +60,11 @@ object GeneDataUtil {
   }
 
   def getGeneBySymbol(gene_symbol: String) = {
-    val _gene_id = geneSymbolIdMap.get(gene_symbol)
-    if (_gene_id.isDefined) {
-      genes.get(_gene_id.get)
-    } else None
+
+    geneSymbolIdMap.get(gene_symbol) match {
+      case Some(gene_id) => genes.get(gene_id)
+      case _             => None
+    }
   }
 
   def getTranscript(transcript_id: String) = {

@@ -25,13 +25,36 @@ case class SampleAnnotation(
     center: String) {
   @ApiModelProperty(hidden = true)
   val values =
-    Seq(analysis_id, patient_barcode, sample_barcode, group, study, disease, disease_name, disease_subtype, tissue, definition, library_type, platform, center)
+    Seq(analysis_id,
+      patient_barcode,
+      sample_barcode,
+      group,
+      study,
+      disease,
+      disease_name,
+      disease_subtype,
+      tissue,
+      definition,
+      library_type,
+      platform,
+      center)
 
 }
 
 object SampleAnnotation {
 
-  val header = Seq("sample_id", "patient_barcode", "sample_barcode", "group", "study", "disease", "disease_name", "disease_subtype", "tissue", "definition", "library_type", "platform", "center")
+  val header = Seq("sample_id",
+    "patient_barcode",
+    "sample_barcode",
+    "group", "study",
+    "disease",
+    "disease_name",
+    "disease_subtype",
+    "tissue",
+    "definition",
+    "library_type",
+    "platform",
+    "center")
 
   def apply(line: String): SampleAnnotation = {
     val spl = line.split("\t", -1).iterator
@@ -75,7 +98,11 @@ object SampleDataUtil {
   val studySampleMap: Map[String, Seq[SampleAnnotation]] = {
     val stream: InputStream = getClass.getResourceAsStream("/sample_info_19262.txt")
     val src = scala.io.Source.fromInputStream(stream)
-    val x = src.getLines.drop(1).map { SampleAnnotation.apply }.toList.groupBy { _.study }
+    val x = src.getLines
+      .drop(1)
+      .map { SampleAnnotation.apply }
+      .toList
+      .groupBy { _.study }
     src.close()
     x
   }
@@ -83,7 +110,10 @@ object SampleDataUtil {
   def getStudies(): Seq[String] = studySampleMap.keys.toSeq
 
   def getSamples(studies: Seq[String] = Nil): Seq[String] = studies match {
-    case Nil => { studySampleMap.map(x => x._2.map { _.analysis_id }).flatten.toSeq }
+    case Nil => studySampleMap
+      .map { case (_, sampleAnnotations) => sampleAnnotations.map { _.analysis_id } }
+      .flatten
+      .toSeq
     case _ => studies
       .flatMap(studySampleMap) // get samples for each study and flatten it all up
       .map(_.analysis_id)
@@ -91,11 +121,13 @@ object SampleDataUtil {
   }
 
   def getSamplesInfo(studies: Seq[String] = Nil) = studies match {
-    case Nil => { studySampleMap.map(x => x._2).flatten.toSeq }
+    case Nil => studySampleMap
+      .map(x => x._2)
+      .flatten
+      .toSeq
     case _ => studies
       .flatMap(study_id => studySampleMap.getOrElse(study_id, Seq())) // get samples for each study and flatten it all up
       .toSeq
   }
 
 }
-
