@@ -34,9 +34,19 @@ class MongoDAO(
         .getDB(databaseName))
 
   def findData(collectionName: String, filters: Map[String, Seq[String]]): Iterable[JsObject] = {
-    val filter_str = filters
-      .map { case (name, values) => s"""{$name: {$$in: ${values.map { x => s""""$x"""" }.mkString("[", ", ", "]")}}}""" }
-      .mkString("{ $and : [ ", ", ", " ] }")
+
+    def stringWithDoubleQuotes(str: String) = s""""$str""""
+
+    def seqAsMongoString(values: Seq[String]) = values
+      .map { stringWithDoubleQuotes }
+      .mkString("[", ", ", "]")
+
+    val filter_str =
+      filters
+        .map { case (key, values) =>
+            s"""{$key: {$$in: ${seqAsMongoString(values)}}}"""
+        }
+        .mkString("{ $and : [ ", ", ", " ] }")
 
     //required, toPlayJsObject throws error for ObjectId type
     val projection_str = s"""{_id: 0}"""

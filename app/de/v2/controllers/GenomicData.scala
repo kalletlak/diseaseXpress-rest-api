@@ -12,6 +12,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{ Accepting, Action, Controller, RequestHeader }
 import play.filters.gzip.GzipFilter
 import de.v2.model.DomainTypes.StudyId
+import de.v2.utils.Enums.IdQuery
 
 class Filters @Inject() (gzipFilter: GzipFilter) extends HttpFilters {
   def filters = Seq(gzipFilter)
@@ -56,10 +57,10 @@ class GenomicData @javax.inject.Inject() (
    *
    *
    */
-  private def getFields(projection: Projection, normalizations: Seq[Normalization]) = {
-    projection match {
-      case Projection.detailed => normalizations.map {
-        _ match {
+  private def getFields(projection: Projection, normalizations: Seq[Normalization]) =
+    (projection match {
+      case Projection.detailed => normalizations.map { x =>
+        (x, x match {
           case Normalization.rsem => SampleRsemGeneProjectons(
             length = true,
             effective_length = true,
@@ -78,20 +79,20 @@ class GenomicData @javax.inject.Inject() (
             tpm = true,
             fpkm = true,
             isoform_percentage = true)
-        }
+        })
       }
-      case Projection.summary => normalizations.map {
-        _ match {
-          case Normalization.rsem                => SampleRsemGeneProjectons()
-          case Normalization.sample_abundance    => SampleAbundanceProjectons()
-          case Normalization.sample_rsem_isoform => SampleRsemIsoformProjectons()
-        }
+      case Projection.summary => normalizations.map { x =>
+        (x,
+          x match {
+            case Normalization.rsem                => SampleRsemGeneProjectons()
+            case Normalization.sample_abundance    => SampleAbundanceProjectons()
+            case Normalization.sample_rsem_isoform => SampleRsemIsoformProjectons()
+          })
       }
-    }
+    })
+      .toMap
 
-  }
-
-  private def getData(_ids_type: String,
+  private def getData(query_id_ref: IdQuery,
                       _ids: String,
                       studies_ids: Option[StudyId],
                       normalizations: Option[String],
@@ -145,20 +146,12 @@ class GenomicData @javax.inject.Inject() (
         case None          => SampleDataUtil.getStudies()
       }
 
-      val _result = _ids_type match {
-        case "gene_id" => repo.getDataByGeneIds(
-          _ids.split(",").toSeq,
-          getFields(_projection_enum, _normalizations_enums),
-          _studies)
-        case "gene_symbol" => repo.getDataByGeneSymbols(
-          _ids.split(",").toSeq,
-          getFields(_projection_enum, _normalizations_enums),
-          _studies)
-        case "transcript_id" => repo.getDataByTranscriptIds(
-          _ids.split(",").toSeq,
-          getFields(_projection_enum, _normalizations_enums),
-          _studies)
-      }
+      val _result = repo.getData(query_id_ref,
+        _ids.split(",")
+          .toSeq
+          .distinct,
+        getFields(_projection_enum, _normalizations_enums),
+        _studies)
 
       render {
         case Accepts.Json() => Ok(Json.toJson(_result))
@@ -183,7 +176,7 @@ class GenomicData @javax.inject.Inject() (
 
     implicit request =>
 
-      getData("gene_id",
+      getData(IdQuery.GeneIdQuery,
         gene_ids,
         None,
         None,
@@ -206,7 +199,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id",
+      getData(IdQuery.GeneIdQuery,
         gene_ids,
         Some(studies_ids),
         None,
@@ -230,7 +223,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id",
+      getData(IdQuery.GeneIdQuery,
         gene_ids,
         None,
         Some(normalizations),
@@ -256,7 +249,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_id",
+      getData(IdQuery.GeneIdQuery,
         gene_ids,
         Some(studies_ids),
         Some(normalizations),
@@ -279,7 +272,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol",
+      getData(IdQuery.GeneSymbolQuery,
         gene_ids,
         None,
         None,
@@ -302,7 +295,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol",
+      getData(IdQuery.GeneSymbolQuery,
         _ids,
         Some(studies_ids),
         None,
@@ -326,7 +319,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol",
+      getData(IdQuery.GeneSymbolQuery,
         _ids,
         None,
         Some(normalizations),
@@ -352,7 +345,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("gene_symbol",
+      getData(IdQuery.GeneSymbolQuery,
         _ids,
         Some(studies_ids),
         Some(normalizations),
@@ -374,7 +367,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id",
+      getData(IdQuery.TranscriptIdQuery,
         gene_ids,
         None,
         None,
@@ -397,7 +390,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
-      getData("transcript_id",
+      getData(IdQuery.TranscriptIdQuery,
         _ids,
         Some(studies_ids),
         None,
@@ -421,7 +414,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed", defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
 
-      getData("transcript_id",
+      getData(IdQuery.TranscriptIdQuery,
         _ids,
         None,
         Some(normalizations),
@@ -448,7 +441,7 @@ class GenomicData @javax.inject.Inject() (
       defaultValue = "summary") projection: Option[String]) = Action {
     implicit request =>
 
-      getData("transcript_id",
+      getData(IdQuery.TranscriptIdQuery,
         _ids,
         Some(studies_ids),
         Some(normalizations),

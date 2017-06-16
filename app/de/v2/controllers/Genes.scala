@@ -25,8 +25,15 @@ class Genes @javax.inject.Inject() (
    */
   private def tsvFormat(result: Seq[GeneInfoOutput]) = {
     val header = Seq(GeneInfoOutput.getHeader.mkString("\t"))
-    val data = result.flatMap { x => GeneInfoOutput.getValues(x).map { _.mkString("\t") } }
-    (header ++ data).mkString("\n")
+    val t1 = result
+      .flatMap { GeneInfoOutput.getValues }
+      .map { _.mkString("\t") }
+    val data = result.flatMap { x =>
+      GeneInfoOutput
+        .getValues(x)
+        .map { _.mkString("\t") }
+    }
+    (header ++ t1).mkString("\n")
   }
 
   @ApiOperation(value = "get All Genes",
@@ -68,7 +75,7 @@ class Genes @javax.inject.Inject() (
   def getGeneInfoByIds(gene_ids: String) = Action {
     implicit request =>
       val result = gene_ids.split(",")
-        .map { gene_id => GeneDataUtil.getGeneById(gene_id) }
+        .map { GeneDataUtil.getGeneById }
         .filter { _.isDefined }
         .map { _.get }
       render {
@@ -86,7 +93,7 @@ class Genes @javax.inject.Inject() (
   def getGeneInfoBySymbols(gene_symbols: String) = Action {
     implicit request =>
       val result = gene_symbols.split(",")
-        .map { gene_symbol => GeneDataUtil.getGeneBySymbol(gene_symbol) }
+        .map { GeneDataUtil.getGeneBySymbol }
         .filter { _.isDefined }
         .map { _.get }
       render {
@@ -104,12 +111,12 @@ class Genes @javax.inject.Inject() (
   def getTranscriptInfo(transcript_ids: String) = Action {
     implicit request =>
       val result = transcript_ids.split(",")
-        .map { transcript_id => GeneDataUtil.getTranscript(transcript_id) }
+        .map { GeneDataUtil.getTranscript }
         .filter { _.isDefined }
         .map { _.get }
-        .flatMap { _obj =>
+        .flatMap { obj =>
           {
-            _obj.transcripts.map { transcript => TranscriptWithGeneInfoOutput.apply(transcript, _obj.gene_id, _obj.gene_symbol) }
+            obj.transcripts.map { transcript => TranscriptWithGeneInfoOutput.apply(transcript, obj.gene_id, obj.gene_symbol) }
           }
         }
 
@@ -118,7 +125,7 @@ class Genes @javax.inject.Inject() (
         case AcceptsTsv() => {
 
           val header = Seq(TranscriptWithGeneInfoOutput.getHeader.mkString("\t"))
-          val data = result.map { x => TranscriptWithGeneInfoOutput.getValues(x).mkString("\t") }
+          val data = result.map { TranscriptWithGeneInfoOutput.getValues }.map {_.mkString("\t")}
 
           Ok((header ++ data).mkString("\n"))
         }

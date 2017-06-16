@@ -41,16 +41,18 @@ object SampleRsemIsoformOutput {
 
   def readJson(transcript_id: String,
                obj: JsObject,
-               projectionFileds: SampleRsemIsoformProjectons = new SampleRsemIsoformProjectons): JsResult[SampleRsemIsoformOutput] =
+               projectionFileds: ObjectFilters = new SampleRsemIsoformProjectons): JsResult[SampleRsemIsoformOutput] = {
+    val projectionFiledsObj = projectionFileds.asInstanceOf[SampleRsemIsoformProjectons]
     JsSuccess(SampleRsemIsoformOutput(
       transcript_id = transcript_id,
       sample_id = (obj \ "sample_id").as[String],
-      length = obj.parseDoubleOption("length", projectionFileds.length),
-      effective_length = obj.parseDoubleOption("effective_length", projectionFileds.effective_length),
-      expected_count = obj.parseDoubleOption("expected_count", projectionFileds.expected_count),
-      tpm = obj.parseDoubleOption("tpm", projectionFileds.tpm),
-      fpkm = obj.parseDoubleOption("fpkm", projectionFileds.fpkm),
-      isoform_percentage = obj.parseDoubleOption("isoform_percentage", projectionFileds.isoform_percentage)))
+      length = obj.parseDoubleOption("length", projectionFiledsObj.length),
+      effective_length = obj.parseDoubleOption("effective_length", projectionFiledsObj.effective_length),
+      expected_count = obj.parseDoubleOption("expected_count", projectionFiledsObj.expected_count),
+      tpm = obj.parseDoubleOption("tpm", projectionFiledsObj.tpm),
+      fpkm = obj.parseDoubleOption("fpkm", projectionFiledsObj.fpkm),
+      isoform_percentage = obj.parseDoubleOption("isoform_percentage", projectionFiledsObj.isoform_percentage)))
+  }
 
   implicit val writeJson = new Writes[SampleRsemIsoformOutput] {
     def writes(obj: SampleRsemIsoformOutput): JsValue = {
@@ -84,8 +86,6 @@ object SampleRsemIsoformOutput {
   }
 }
 
-trait SampleData
-
 //initialized parameters with default values. used would be used when getting tsv format data
 @ApiModel("SampleAbundanceData")
 case class SampleAbundanceOutput(
@@ -102,20 +102,22 @@ case class SampleAbundanceOutput(
     required = false) expected_count: Option[Double] = None,
   @ApiModelProperty(
     dataType = "double",
-    required = false) tpm: Option[Double] = None) extends SampleData
+    required = false) tpm: Option[Double] = None)
 
 object SampleAbundanceOutput {
 
   def readJson(transcript_id: String,
                obj: JsObject,
-               projectionFileds: SampleAbundanceProjectons = new SampleAbundanceProjectons): JsResult[SampleAbundanceOutput] = {
+               projectionFileds: ObjectFilters = new SampleAbundanceProjectons): JsResult[SampleAbundanceOutput] = {
+    val projectionFiledsObj = projectionFileds.asInstanceOf[SampleAbundanceProjectons]
+
     JsSuccess(SampleAbundanceOutput(
       transcript_id = transcript_id,
       sample_id = (obj \ "sample_id").as[String],
-      length = obj.parseDoubleOption("length", projectionFileds.length),
-      effective_length = obj.parseDoubleOption("effective_length", projectionFileds.effective_length),
-      expected_count = obj.parseDoubleOption("expected_count", projectionFileds.expected_count),
-      tpm = obj.parseDoubleOption("tpm", projectionFileds.tpm)))
+      length = obj.parseDoubleOption("length", projectionFiledsObj.length),
+      effective_length = obj.parseDoubleOption("effective_length", projectionFiledsObj.effective_length),
+      expected_count = obj.parseDoubleOption("expected_count", projectionFiledsObj.expected_count),
+      tpm = obj.parseDoubleOption("tpm", projectionFiledsObj.tpm)))
   }
 
   implicit val writeJson = new Writes[SampleAbundanceOutput] {
@@ -165,20 +167,24 @@ case class SampleRsemGeneOutput(
     required = false) tpm: Option[Double] = None,
   @ApiModelProperty(
     dataType = "double",
-    required = false) fpkm: Option[Double] = None) extends SampleData
+    required = false) fpkm: Option[Double] = None)
 
 object SampleRsemGeneOutput {
   def readJson(gene_id: String,
                obj: JsObject,
-               projectionFileds: SampleRsemGeneProjectons = new SampleRsemGeneProjectons()): JsResult[SampleRsemGeneOutput] =
+               projectionFileds: ObjectFilters = new SampleRsemGeneProjectons()): JsResult[SampleRsemGeneOutput] = {
+
+    val projectionFiledsObj = projectionFileds.asInstanceOf[SampleRsemGeneProjectons]
     JsSuccess(SampleRsemGeneOutput(
       gene_id = gene_id,
       sample_id = (obj \ "sample_id").as[String],
-      length = obj.parseDoubleOption("length", projectionFileds.length),
-      effective_length = obj.parseDoubleOption("effective_length", projectionFileds.effective_length),
-      expected_count = obj.parseDoubleOption("expected_count", projectionFileds.expected_count),
-      tpm = obj.parseDoubleOption("tpm", projectionFileds.tpm),
-      fpkm = obj.parseDoubleOption("fpkm", projectionFileds.fpkm)))
+      length = obj.parseDoubleOption("length", projectionFiledsObj.length),
+      effective_length = obj.parseDoubleOption("effective_length", projectionFiledsObj.effective_length),
+      expected_count = obj.parseDoubleOption("expected_count", projectionFiledsObj.expected_count),
+      tpm = obj.parseDoubleOption("tpm", projectionFiledsObj.tpm),
+      fpkm = obj.parseDoubleOption("fpkm", projectionFiledsObj.fpkm)))
+
+  }
 
   implicit val writeJson = new Writes[SampleRsemGeneOutput] {
     def writes(obj: SampleRsemGeneOutput): JsValue = {
@@ -219,7 +225,7 @@ case class TranscriptLevelOutput(
   @ApiModelProperty(
     name = "SampleRsemIsoformData",
     dataType = "de.v2.model.SampleRsemIsoformOutput",
-    required = false) sample_rsem_isoform: Option[SampleRsemIsoformOutput]) extends SampleData
+    required = false) sample_rsem_isoform: Option[SampleRsemIsoformOutput])
 
 object TranscriptLevelOutput {
 

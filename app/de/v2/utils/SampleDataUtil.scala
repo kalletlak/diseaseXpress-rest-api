@@ -7,6 +7,7 @@ import play.api.libs.json.JsValue
 import io.swagger.annotations.ApiModel
 import io.swagger.annotations.ApiModelProperty
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import de.v2.model.DomainTypes.StudyId
 
 @ApiModel("SampleAnnotation")
 case class SampleAnnotation(
@@ -107,7 +108,7 @@ object SampleDataUtil {
     x
   }
 
-  def getStudies(): Seq[String] = studySampleMap.keys.toSeq
+  def getStudies(): Seq[StudyId] = studySampleMap.keys.toSeq
 
   def getSamples(studies: Seq[String] = Nil): Seq[String] = studies match {
     case Nil => studySampleMap
@@ -122,7 +123,7 @@ object SampleDataUtil {
 
   def getSamplesInfo(studies: Seq[String] = Nil) = studies match {
     case Nil => studySampleMap
-      .map(x => x._2)
+      .values
       .flatten
       .toSeq
     case _ => studies
