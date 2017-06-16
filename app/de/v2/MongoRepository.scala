@@ -75,7 +75,9 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
     getData(genes, normalizations, targetSampleIds)
 
   }
-  def getAbundanceData(input_filters: Option[ObjectFilters], input_transcript_ids: Seq[TranscriptId], study_ids: Seq[StudyId]) = {
+  def getAbundanceData(input_filters: Option[ObjectFilters],
+                       input_transcript_ids: Seq[TranscriptId],
+                       study_ids: Seq[StudyId]) = {
     input_filters match {
       case Some(_normalization_input: SampleAbundanceProjectons) => {
 
@@ -104,7 +106,9 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
     }
   }
 
-  def getIsoformData(input_filters: Option[ObjectFilters], input_transcript_ids: Seq[TranscriptId], study_ids: Seq[StudyId]) = {
+  def getIsoformData(input_filters: Option[ObjectFilters],
+                     input_transcript_ids: Seq[TranscriptId],
+                     study_ids: Seq[StudyId]) = {
     input_filters match {
       case Some(_normalization_input: SampleRsemIsoformProjectons) => {
 
@@ -132,7 +136,9 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
     }
   }
 
-  def getRsemGeneData(input_filters: Option[ObjectFilters], input_gene_ids: Seq[GeneId], study_ids: Seq[StudyId]) = {
+  def getRsemGeneData(input_filters: Option[ObjectFilters],
+                      input_gene_ids: Seq[GeneId],
+                      study_ids: Seq[StudyId]) = {
 
     input_filters match {
       case Some(_normalization_input: SampleRsemGeneProjectons) => {
@@ -229,24 +235,25 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
 
     //join sample gene rsem data with transcript data
     //TODO: need to find a better way
-    genes.map { gene =>
-      {
+    //case(gene_id, (gene_symbol, transcript_ids))
+    input_genes.map {
+      case (gene_id, (gene_symbol, transcript_ids)) => {
         val gene_data = targetSamples.map { sample_id =>
           {
-            val sampleRsemDta = _rsemData.get((sample_id, gene.gene_id))
+            val sampleRsemData = _rsemData.get((sample_id, gene_id))
 
-            val sampleTranscriptData1 = gene.transcripts
-              .map { transcript => _trancriptData.get((sample_id, transcript.transcript_id)) }
+            val sampleTranscriptData = transcript_ids
+              .map { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
               .filter { _.isDefined }
               .map { _.get }
 
-            SampleDataOutput(sample_id, sampleRsemDta, if (sampleTranscriptData1.size > 0) Some(sampleTranscriptData1) else None)
+            SampleDataOutput(sample_id, sampleRsemData, if (sampleTranscriptData.size > 0) Some(sampleTranscriptData) else None)
           }
         }
-        GeneLevelOutput(gene.gene_id, gene.gene_symbol, gene_data)
+        GeneLevelOutput(gene_id, gene_symbol, gene_data)
 
       }
-    }
+    }.toSeq
 
   }
 }
