@@ -15,14 +15,14 @@ import de.v2.model.GeneInfoOutput
 import de.v2.model.TranscriptWithGeneInfoOutput
 
 @Api(value = "/Genes", description = "Operations with Genes and Transcripts")
-class Genes @javax.inject.Inject() (
-  configuration: play.api.Configuration)
-    extends Controller {
+class Genes @javax.inject.Inject()(
+                                    configuration: play.api.Configuration)
+  extends Controller {
   val AcceptsTsv = Accepting("text/tab-separated-values")
 
   /**
-   * Converts gene data object to tsv format
-   */
+    * Converts gene data object to tsv format
+    */
   private def tsvFormat(result: Seq[GeneInfoOutput]) = {
     val header = Seq(GeneInfoOutput.getHeader.mkString("\t"))
     val t1 = result
@@ -37,41 +37,41 @@ class Genes @javax.inject.Inject() (
   }
 
   @ApiOperation(value = "get All Genes",
-    notes = "Returns List of Gene Ids",
-    responseContainer = "List",
-    response = classOf[String],
-    produces = "application/json",
-    httpMethod = "GET")
+                 notes = "Returns List of Gene Ids",
+                 responseContainer = "List",
+                 response = classOf[String],
+                 produces = "application/json",
+                 httpMethod = "GET")
   def getGeneIds() = Action {
     Ok(Json.toJson(GeneDataUtil.getGeneIds()))
   }
 
   @ApiOperation(value = "get All Genes",
-    notes = "Returns List of Gene Symbols",
-    response = classOf[String],
-    responseContainer = "List",
-    produces = "application/json",
-    httpMethod = "GET")
+                 notes = "Returns List of Gene Symbols",
+                 response = classOf[String],
+                 responseContainer = "List",
+                 produces = "application/json",
+                 httpMethod = "GET")
   def getGenesBySymbol() = Action {
     Ok(Json.toJson(GeneDataUtil.getGeneSymbols()))
   }
 
   @ApiOperation(value = "get All Transcripts",
-    notes = "Returns List of Transcript Ids",
-    response = classOf[String],
-    responseContainer = "List",
-    produces = "application/json",
-    httpMethod = "GET")
+                 notes = "Returns List of Transcript Ids",
+                 response = classOf[String],
+                 responseContainer = "List",
+                 produces = "application/json",
+                 httpMethod = "GET")
   def getTranscriptIds() = Action {
     Ok(Json.toJson(GeneDataUtil.getTranscriptIds()))
   }
 
   @ApiOperation(value = "get Gene information",
-    notes = "Returns Gene information",
-    response = classOf[GeneInfoOutput],
-    responseContainer = "List",
-    produces = "application/json, text/tab-separated-values",
-    httpMethod = "GET")
+                 notes = "Returns Gene information",
+                 response = classOf[GeneInfoOutput],
+                 responseContainer = "List",
+                 produces = "application/json, text/tab-separated-values",
+                 httpMethod = "GET")
   def getGeneInfoByIds(gene_ids: String) = Action {
     implicit request =>
       val result = gene_ids.split(",")
@@ -84,12 +84,13 @@ class Genes @javax.inject.Inject() (
       }
 
   }
+
   @ApiOperation(value = "get Gene information",
-    notes = "Returns Gene information",
-    response = classOf[GeneInfoOutput],
-    responseContainer = "List",
-    produces = "application/json, text/tab-separated-values",
-    httpMethod = "GET")
+                 notes = "Returns Gene information",
+                 response = classOf[GeneInfoOutput],
+                 responseContainer = "List",
+                 produces = "application/json, text/tab-separated-values",
+                 httpMethod = "GET")
   def getGeneInfoBySymbols(gene_symbols: String) = Action {
     implicit request =>
       val result = gene_symbols.split(",")
@@ -103,29 +104,37 @@ class Genes @javax.inject.Inject() (
   }
 
   @ApiOperation(value = "get Transcript information",
-    notes = "Returns Transcript information",
-    response = classOf[TranscriptWithGeneInfoOutput],
-    responseContainer = "List",
-    produces = "application/json, text/tab-separated-values",
-    httpMethod = "GET")
+                 notes = "Returns Transcript information",
+                 response = classOf[TranscriptWithGeneInfoOutput],
+                 responseContainer = "List",
+                 produces = "application/json, text/tab-separated-values",
+                 httpMethod = "GET")
   def getTranscriptInfo(transcript_ids: String) = Action {
     implicit request =>
       val result = transcript_ids.split(",")
         .map { GeneDataUtil.getTranscript }
         .filter { _.isDefined }
         .map { _.get }
-        .flatMap { obj =>
-          {
-            obj.transcripts.map { transcript => TranscriptWithGeneInfoOutput.apply(transcript, obj.gene_id, obj.gene_symbol) }
-          }
+        .flatMap { obj => {
+          obj.transcripts
+            .map { transcript =>
+              TranscriptWithGeneInfoOutput.apply(transcript, obj.gene_id,
+                                                  obj.gene_symbol)
+            }
+        }
         }
 
       render {
         case Accepts.Json() => Ok(Json.toJson(result))
-        case AcceptsTsv() => {
+        case AcceptsTsv()   => {
 
-          val header = Seq(TranscriptWithGeneInfoOutput.getHeader.mkString("\t"))
-          val data = result.map { TranscriptWithGeneInfoOutput.getValues }.map {_.mkString("\t")}
+          val header = Seq(TranscriptWithGeneInfoOutput
+            .getHeader
+            .mkString("\t"))
+
+          val data = result
+            .map { TranscriptWithGeneInfoOutput.getValues }
+            .map { _.mkString("\t") }
 
           Ok((header ++ data).mkString("\n"))
         }
