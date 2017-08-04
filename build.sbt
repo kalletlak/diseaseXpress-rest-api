@@ -48,4 +48,4 @@ lazy val disease_express = (project in file("."))
   .enablePlugins(PlayScala)
   .settings(
     name := "disease-express_es_rest_api",
-    version := "1.0")
+    version := "1.1")
