@@ -9,9 +9,9 @@ object GeneDataUtil {
 
   val geneLookup = {
     val stream: InputStream = getClass
-      .getResourceAsStream("/gencode.v23.chr_patch_hapl_scaff.annotation_otherids.txt")
+      .getResourceAsStream("/gencode.v23.annotation_otherids.txt")
     val src = scala.io.Source.fromInputStream(stream)
-    val x = src.getLines.map {
+    val x = src.getLines.drop(1).map {
       Gene.apply
     }.toList
     src.close()

@@ -3,13 +3,13 @@ package de.v2.controllers
 import io.swagger.annotations.Api
 import play.api.mvc.Controller
 import io.swagger.annotations.ApiOperation
-import play.api.mvc.Action
 import play.api.libs.json.Json
 import de.v2.utils.SampleDataUtil
 import play.api.mvc.Accepting
 import play.api.mvc.RequestHeader
 import de.v2.utils.SampleAnnotation
 import de.v2.model.DomainTypes.StudyId
+import de.v2.utils.LoggingAction
 
 @Api(value = "/Samples",
       description = "Operations with Samples",
@@ -43,7 +43,7 @@ class Samples @javax.inject.Inject()(
                  response = classOf[String],
                  responseContainer = "List",
                  httpMethod = "GET")
-  def getAllSamples() = Action {
+  def getAllSamples() = LoggingAction {
     implicit request =>
       getData(None)
   }
@@ -53,7 +53,7 @@ class Samples @javax.inject.Inject()(
                  response = classOf[String],
                  responseContainer = "List",
                  httpMethod = "GET")
-  def getSamples(studyIds: String) = Action {
+  def getSamples(studyIds: String) = LoggingAction {
     implicit request =>
       getData(Some(studyIds))
   }

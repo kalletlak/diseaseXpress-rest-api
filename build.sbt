@@ -19,7 +19,8 @@ libraryDependencies ++= Seq(
   "com.beachape" %% "enumeratum" % enumeratumVersion withSources () withJavadoc (),
   "com.beachape" %% "enumeratum-play-json" % enumeratumVersion withSources () withJavadoc (),
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
-  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.3")
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.3",
+  "net.databinder.dispatch" %% "dispatch-core"   % "0.13.1")
   
 libraryDependencies += filters
 
@@ -33,6 +34,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("org", "apache", "commons", "logging", xs @ _*) => MergeStrategy.first
   case PathList(ps @ _*) if ps.last endsWith ".html"            => MergeStrategy.first
   case "application.conf"                                       => MergeStrategy.concat
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
@@ -48,4 +50,4 @@ lazy val disease_express = (project in file("."))
   .enablePlugins(PlayScala)
   .settings(
     name := "disease-express_es_rest_api",
-    version := "1.0")
+    version := "1.2")
