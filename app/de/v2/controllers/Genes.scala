@@ -3,7 +3,6 @@ package de.v2.controllers
 import io.swagger.annotations.Api
 import play.api.mvc.Controller
 import io.swagger.annotations.ApiOperation
-import play.api.mvc.Action
 import play.api.libs.json.Json
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
@@ -13,6 +12,7 @@ import play.api.mvc.Accepting
 import de.v2.utils.GeneDataUtil
 import de.v2.model.GeneInfoOutput
 import de.v2.model.TranscriptWithGeneInfoOutput
+import de.v2.utils.LoggingAction
 
 @Api(value = "/Genes", description = "Operations with Genes and Transcripts")
 class Genes @javax.inject.Inject()(
@@ -42,7 +42,7 @@ class Genes @javax.inject.Inject()(
                  response = classOf[String],
                  produces = "application/json",
                  httpMethod = "GET")
-  def getGeneIds() = Action {
+  def getGeneIds() = LoggingAction {
     Ok(Json.toJson(GeneDataUtil.getGeneIds()))
   }
 
@@ -52,7 +52,7 @@ class Genes @javax.inject.Inject()(
                  responseContainer = "List",
                  produces = "application/json",
                  httpMethod = "GET")
-  def getGenesBySymbol() = Action {
+  def getGenesBySymbol() = LoggingAction {
     Ok(Json.toJson(GeneDataUtil.getGeneSymbols()))
   }
 
@@ -62,7 +62,7 @@ class Genes @javax.inject.Inject()(
                  responseContainer = "List",
                  produces = "application/json",
                  httpMethod = "GET")
-  def getTranscriptIds() = Action {
+  def getTranscriptIds() = LoggingAction {
     Ok(Json.toJson(GeneDataUtil.getTranscriptIds()))
   }
 
@@ -72,7 +72,7 @@ class Genes @javax.inject.Inject()(
                  responseContainer = "List",
                  produces = "application/json, text/tab-separated-values",
                  httpMethod = "GET")
-  def getGeneInfoByIds(gene_ids: String) = Action {
+  def getGeneInfoByIds(gene_ids: String) = LoggingAction {
     implicit request =>
       val result = gene_ids.split(",")
         .map { GeneDataUtil.getGeneById }
@@ -91,7 +91,7 @@ class Genes @javax.inject.Inject()(
                  responseContainer = "List",
                  produces = "application/json, text/tab-separated-values",
                  httpMethod = "GET")
-  def getGeneInfoBySymbols(gene_symbols: String) = Action {
+  def getGeneInfoBySymbols(gene_symbols: String) = LoggingAction {
     implicit request =>
       val result = gene_symbols.split(",")
         .map { GeneDataUtil.getGeneBySymbol }
@@ -109,7 +109,7 @@ class Genes @javax.inject.Inject()(
                  responseContainer = "List",
                  produces = "application/json, text/tab-separated-values",
                  httpMethod = "GET")
-  def getTranscriptInfo(transcript_ids: String) = Action {
+  def getTranscriptInfo(transcript_ids: String) = LoggingAction {
     implicit request =>
       val result = transcript_ids.split(",")
         .map { GeneDataUtil.getTranscript }
