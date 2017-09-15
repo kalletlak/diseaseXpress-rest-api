@@ -2,7 +2,6 @@ package de.v2
 
 import scala.annotation.migration
 
-import com.mongodb.MongoClient
 import com.mongodb.MongoClientURI
 
 import io.swagger.annotations.ApiModel
@@ -17,21 +16,28 @@ import de.v2.model.DomainTypes._
 import de.v2.utils.Enums.Normalization
 import de.v2.utils.Enums.IdQuery
 import de.v2.utils.Enums.Projection
+import de.v2.utils.SampleDataUtil
+import com.mongodb.MongoClient
 
 case class MongoRepositoryConfig(uri: String,
                                  databaseName: String)
 
-final class MongoRepository(val conf: MongoRepositoryConfig) {
+final class MongoRepository1(val conf: MongoRepositoryConfig) {
 
   private val client: MongoClient =
     new MongoClient(new MongoClientURI(conf.uri))
 
-  private val dao: MongoDAO = new MongoDAO(client,
-                                            conf.databaseName)
+  private val jongo =
+    new org.jongo.Jongo(
+      client
+        // warning: see https://github.com/bguerout/jongo/issues/254
+        .getDB( conf.databaseName))
+
+  private val dao: MongoDAO = new MongoDAO(jongo)
 
   def findData(collectionName: String,
                filters: Map[Key, Seq[Value]]): Iterable[JsObject] = dao
-    .findData(collectionName, filters)
+    .find(collectionName, filters)
 
   private def getRsemGeneData(input_filters: InputDataModel,
                               input_gene_ids: Seq[GeneId],
@@ -39,85 +45,89 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
 
     val _filters = Map("gene_id" -> input_gene_ids, "study_id" -> study_ids)
     findData(input_filters.collection_name, _filters)
-      .flatMap { result => {
-        val gene_id = (result \ "gene_id").as[GeneId]
-        result
-          .parseObjectArray("data")
-          .map { _data =>
-            SampleRsemGeneOutput.readJson(
-                                           gene_id,
-                                           _data,
-                                           input_filters)
-          }
-          .map {
-            _.get
-          }
-      }
+      .flatMap { result =>
+        {
+          val gene_id = (result \ "gene_id").as[GeneId]
+          result
+            .parseObjectArray("data")
+            .map { _data =>
+              SampleRsemGeneOutput.readJson(
+                gene_id,
+                _data,
+                input_filters)
+            }
+            .map {
+              _.get
+            }
+        }
       }
   }
 
   private def getAbundanceData(input_filters: InputDataModel,
                                input_transcript_ids: Seq[TranscriptId],
                                study_ids: Seq[StudyId]) = {
+
     val _filters = Map("transcript_id" -> input_transcript_ids,
-                        "study_id" -> study_ids)
+      "study_id" -> study_ids)
 
     findData(input_filters.collection_name, _filters)
-      .flatMap { result => {
-        val transcript_id = (result \ "transcript_id").as[TranscriptId]
-        result
-          .parseObjectArray("data")
-          .map { _data =>
-            SampleAbundanceOutput.readJson(
-                                            transcript_id,
-                                            _data,
-                                            input_filters)
-          }
-          .map {
-            _.get
-          }
-      }
+      .flatMap { result =>
+        {
+          val transcript_id = (result \ "transcript_id").as[TranscriptId]
+          result
+            .parseObjectArray("data")
+            .map { _data =>
+              SampleAbundanceOutput.readJson(
+                transcript_id,
+                _data,
+                input_filters)
+            }
+            .map {
+              _.get
+            }
+        }
       }
   }
 
   private def getIsoformData(input_filters: InputDataModel,
                              input_transcript_ids: Seq[TranscriptId],
                              study_ids: Seq[StudyId]) = {
+
     val _filters = Map("transcript_id" -> input_transcript_ids,
-                        "study_id" -> study_ids)
+      "study_id" -> study_ids)
     findData(input_filters.collection_name, _filters)
-      .map { result => {
-        val transcript_id = (result \ "transcript_id").as[TranscriptId]
-        result
-          .parseObjectArray("data")
-          .map { _data =>
-            SampleRsemIsoformOutput.readJson(
-                                              transcript_id,
-                                              _data,
-                                              input_filters)
-          }
-          .map {
-            _.get
-          }
+      .flatMap { result =>
+        {
+          val transcript_id = (result \ "transcript_id").as[TranscriptId]
+          result
+            .parseObjectArray("data")
+            .map { _data =>
+              SampleRsemIsoformOutput.readJson(
+                transcript_id,
+                _data,
+                input_filters)
+            }
+            .map {
+              _.get
+            }
+        }
       }
-      }
-      .flatten
 
   }
 
-  def getData(queryIdRef: IdQuery,
+  def getData(queryRef: IdQuery,
               ref_ids: Seq[GeneId],
               normalizations: Map[Normalization, InputDataModel],
               study_ids: Seq[StudyId]): Seq[GeneLevelOutput] = {
 
     //get queried gene objects
-    val genes: Seq[GeneInfoOutput] = (queryIdRef match {
-      case IdQuery.GeneIdQuery       => ref_ids
+    val genes: Seq[GeneInfoOutput] = (queryRef match {
+      case IdQuery.GeneIdQuery => ref_ids
         .distinct
         .map {
           GeneIdQuery.apply
         }
-      case IdQuery.GeneSymbolQuery   => ref_ids
+      case IdQuery.GeneSymbolQuery => ref_ids
         .distinct
         .map {
           GeneSymbolQuery.apply
@@ -134,7 +144,7 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
       .map(_.get)
 
     //get the unique geneId transcriptid's map
-    val input_genes: Map[GeneId, (GeneSymbol, Seq[TranscriptId])] = genes
+    val input_ids: Map[GeneId, (GeneSymbol, Seq[TranscriptId])] = genes
       .groupBy {
         _.gene_id
       }
@@ -149,51 +159,53 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
           .distinct)
       }
 
-    val input_gene_ids = input_genes.keys.toSeq
+    val input_gene_ids = input_ids.keys.toSeq
 
-    val input_transcript_ids = input_genes.values.flatMap {
-      case(_,transcript_ids) => transcript_ids
+    val input_transcript_ids = input_ids.values.flatMap {
+      case (_, transcript_ids) => transcript_ids
     }.toSeq
 
     val _abundanceData: Map[(String, String), SampleAbundanceOutput] = normalizations
       .get(Normalization.sample_abundance) match {
-      case Some(filter) => getAbundanceData(
-                                             filter,
-                                             input_transcript_ids,
-                                             study_ids)
-        .map { sampleAbundance => (sampleAbundance.sample_id, sampleAbundance
-          .transcript_id) -> sampleAbundance
+        case Some(filter) => getAbundanceData(
+          filter,
+          input_transcript_ids,
+          study_ids)
+        .map { sampleAbundance =>
+          (sampleAbundance.sample_id, sampleAbundance
+            .transcript_id) -> sampleAbundance
         }
         .toMap
-      case None         => Map() // map it to empty Map if normalization is not passed in input query
-    }
+        case None => Map() // map it to empty Map if normalization is not passed in input query
+      }
 
     val _isoformData: Map[(String, String), SampleRsemIsoformOutput] = normalizations
       .get(Normalization.sample_rsem_isoform) match {
-      case Some(filter) => getIsoformData(
-                                           filter,
-                                           input_transcript_ids,
-                                           study_ids)
-        .map
-        { sampleRsemIsoform => (sampleRsemIsoform.sample_id, sampleRsemIsoform
-          .transcript_id) -> sampleRsemIsoform
+        case Some(filter) => getIsoformData(
+          filter,
+          input_transcript_ids,
+          study_ids)
+        .map { sampleRsemIsoform =>
+          (sampleRsemIsoform.sample_id, sampleRsemIsoform
+            .transcript_id) -> sampleRsemIsoform
         }
         .toMap
-      case None         => Map() // map it to empty Map if normalization is not passed in input query
-    }
+        case None => Map() // map it to empty Map if normalization is not passed in input query
+      }
 
     val _rsemData: Map[(String, String), SampleRsemGeneOutput] = normalizations
       .get(Normalization.rsem) match {
-      case Some(filter) => getRsemGeneData(
-                                            filter,
-                                            input_gene_ids,
-                                            study_ids)
-        .map { sampleRsemGene => (sampleRsemGene.sample_id, sampleRsemGene
-          .gene_id) -> sampleRsemGene
+        case Some(filter) => getRsemGeneData(
+          filter,
+          input_gene_ids,
+          study_ids)
+        .map { sampleRsemGene =>
+          (sampleRsemGene.sample_id, sampleRsemGene
+            .gene_id) -> sampleRsemGene
         }
         .toMap
-      case None         => Map() // map it to empty Map if normalization is not passed in input query
-    }
+        case None => Map() // map it to empty Map if normalization is not passed in input query
+      }
 
     //join sample transcript data by transcript ids
     val _transcriptDataKeys = (_abundanceData.keySet ++ _isoformData.keySet)
@@ -204,8 +216,8 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
       .map {
         case (sample_id, transcript_id) => (sample_id, transcript_id) ->
           TranscriptLevelOutput(transcript_id,
-                                 _abundanceData.get((sample_id, transcript_id)),
-                                 _isoformData.get((sample_id, transcript_id)))
+            _abundanceData.get((sample_id, transcript_id)),
+            _isoformData.get((sample_id, transcript_id)))
       }
       .toMap
 
@@ -224,25 +236,25 @@ final class MongoRepository(val conf: MongoRepositoryConfig) {
     //join sample gene rsem data with transcript data
     //TODO: need to find a better way
     //case(gene_id, (gene_symbol, transcript_ids))
-    input_genes.map {
+    input_ids.map {
       case (gene_id, (gene_symbol, transcript_ids)) => {
-        val gene_data = targetSamples.map { sample_id => {
-          val sampleRsemData = _rsemData.get((sample_id, gene_id))
+        val gene_data = targetSamples.map { sample_id =>
+          {
+            val sampleRsemData = _rsemData.get((sample_id, gene_id))
 
-          val sampleTranscriptData = transcript_ids
-            .map
-            { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
-            .filter {
-              _.isDefined
-            }
-            .map {
-              _.get
-            }
+            val sampleTranscriptData = transcript_ids
+              .map { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
+              .filter {
+                _.isDefined
+              }
+              .map {
+                _.get
+              }
 
-          SampleDataOutput(sample_id, sampleRsemData, if (sampleTranscriptData
-            .nonEmpty) Some(sampleTranscriptData)
-          else None)
-        }
+            SampleDataOutput(sample_id, sampleRsemData, if (sampleTranscriptData
+              .nonEmpty) Some(sampleTranscriptData)
+            else None)
+          }
         }
         GeneLevelOutput(gene_id, gene_symbol, gene_data)
 

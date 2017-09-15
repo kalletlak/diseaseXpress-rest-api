@@ -7,16 +7,15 @@ import play.api.libs.json.Json
 import de.v2.utils.SampleDataUtil
 import play.api.mvc.Accepting
 import play.api.mvc.RequestHeader
-import de.v2.utils.SampleAnnotation
 import de.v2.model.DomainTypes.StudyId
 import de.v2.utils.LoggingAction
 
 @Api(value = "/Samples",
-      description = "Operations with Samples",
-      produces = "application/json, text/tab-separated-values")
-class Samples @javax.inject.Inject()(
-                                      configuration: play.api.Configuration)
-  extends Controller {
+  description = "Operations with Samples",
+  produces = "application/json, text/tab-separated-values")
+class Samples @javax.inject.Inject() (
+  configuration: play.api.Configuration)
+    extends Controller {
 
   val AcceptsTsv = Accepting("text/tab-separated-values")
 
@@ -26,33 +25,38 @@ class Samples @javax.inject.Inject()(
       case None    => SampleDataUtil.getStudies
     }
 
-    val response = SampleDataUtil.getSamplesInfo(_studies)
+    val response = SampleDataUtil.getSamplesInfo(_studies).map { sample => sample.getAllTagsAsMap }
     render {
       case Accepts.Json() => Ok(Json.toJson(response))
-      case AcceptsTsv()   => {
-        val header = Seq(SampleAnnotation.header.mkString("\t"))
-        val data = response.map { _.values.mkString("\t") }
-        Ok((header ++ data).mkString("\n"))
+      case AcceptsTsv() => {
+        val header = response.flatMap { sample_tags => sample_tags.keySet }.distinct
+        val data = response.map { sample_tags =>
+          {
+            header.map { tag => sample_tags.getOrElse(tag, "") }.mkString("\t")
+
+          }
+        }
+        Ok((Seq(header.mkString("\t")) ++ data).mkString("\n"))
       }
     }
 
   }
 
   @ApiOperation(value = "get All Samples data",
-                 notes = "Returns List of Sample Data",
-                 response = classOf[String],
-                 responseContainer = "List",
-                 httpMethod = "GET")
+    notes = "Returns List of Sample Data",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "GET")
   def getAllSamples() = LoggingAction {
     implicit request =>
       getData(None)
   }
 
   @ApiOperation(value = "get Samples Data",
-                 notes = "Returns List of Sample Data",
-                 response = classOf[String],
-                 responseContainer = "List",
-                 httpMethod = "GET")
+    notes = "Returns List of Sample Data",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "GET")
   def getSamples(studyIds: String) = LoggingAction {
     implicit request =>
       getData(Some(studyIds))

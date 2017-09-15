@@ -28,4 +28,6 @@ GET   /api/v1/data/transcripts/ids/:transcript_ids/studies/:studies             
 GET   /api/v1/data/transcripts/ids/:transcript_ids/normalizations/:normalizations                    @de.v2.controllers.GenomicData.getDataByTranscriptIdsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
 GET   /api/v1/data/transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normalizations   @de.v2.controllers.GenomicData.getDataByTranscriptIdsAndStudiesAndNormalizations(transcript_ids:String,studies:String,normalizations:String, projection:Option[String])
 
+POST   /api/v1/tags/data/genes/symbols/:gene_symbols/normalizations/:normalizations   @de.v2.controllers.GenomicData.getDataByGeneSymbolsAndTagsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
+
 GET   /                                                                                      @controllers.Default.redirect(to = "/api-docs/")

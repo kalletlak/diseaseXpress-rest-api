@@ -1,41 +1,92 @@
 package de.v2.controllers
 
-import scala.Right
-import scala.annotation.implicitNotFound
+import java.net.InetAddress
 
-import de.v2.{ MongoRepository, MongoRepositoryConfig }
-import de.v2.model.DomainTypes.StudyId
+import scala.{ Left, Right }
+import scala.annotation.migration
+import scala.collection.JavaConverters.seqAsJavaListConverter
+
+import com.datastax.driver.core.Cluster
+import com.mongodb.{ MongoClient, MongoClientURI }
+
+import de.v2.{ CassandraRepository, CassandraService, MongoRepository, MongoService, ServiceComponent }
 import de.v2.model.GeneLevelOutput
 import de.v2.model.Inputs.{ SampleAbundanceProjectons, SampleRsemGeneProjectons, SampleRsemIsoformProjectons }
 import de.v2.utils.{ JsObjectWithOption, LoggingAction, SampleDataUtil }
 import de.v2.utils.Enums.{ IdQuery, Normalization, Projection }
-import io.swagger.annotations.{ Api, ApiModel, ApiOperation, ApiParam }
-import javax.inject.Inject
+import io.swagger.annotations.{ Api, ApiImplicitParams, ApiModel, ApiOperation, ApiParam }
+import javax.inject.{ Inject, Singleton }
 import play.api.http.HttpFilters
 import play.api.libs.json.Json
 import play.api.mvc.{ Accepting, Controller, RequestHeader }
 import play.filters.gzip.GzipFilter
+import io.swagger.annotations.{ ApiImplicitParam, Example, ExampleProperty }
 
 class Filters @Inject() (gzipFilter: GzipFilter) extends HttpFilters {
   def filters = Seq(gzipFilter)
+}
+@Singleton // this is not necessary, I put it here so you know this is possible
+class Context @Inject() (configuration: play.api.Configuration) {
+
+  // Since this controller is not annotated with @Inject
+  // it WILL NOT be used when binding components
+  //  def this(configuration: play.api.Configuration) = this(configuration)
+
+  private val AcceptsTsv = Accepting("text/tab-separated-values")
+
+  private val mongo_uri = configuration.getString("disease-express.database.mongo.uri").get
+  private val mongo_database = configuration.getString("disease-express.database.mongo.db").get
+  private val cassandra_ips = configuration.getStringSeq("disease-express.database.cassandra.contact_points").get
+
+  private val cassandra_database = configuration.getString("disease-express.database.cassandra.db").get
+  private val cassandra_port = configuration.getInt("disease-express.database.cassandra.port").get
+
+  val cluster = Cluster.builder()
+    .addContactPoints(cassandra_ips.map { InetAddress.getByName(_) }.asJava).withPort(cassandra_port)
+    .build()
+  cluster.getConfiguration.getSocketOptions
+  //.setConnectTimeoutMillis(50000)
+  // .setReadTimeoutMillis(120000)
+  val session = cluster.connect(cassandra_database)
+  val cassandraService = new CassandraService with CassandraRepository {
+    val context = session
+  }
+
+  val client: MongoClient =
+    new MongoClient(new MongoClientURI(mongo_uri))
+
+  val jongo =
+    new org.jongo.Jongo(
+      client
+        // warning: see https://github.com/bguerout/jongo/issues/254
+        .getDB(mongo_database))
+
+  private val mongoService = new MongoService with MongoRepository {
+    val context = jongo
+  }
+
+  def getService(): ServiceComponent = {
+    return cassandraService
+  }
 }
 
 @Api(value = "/Data",
   description = "Operations with Genes and Transcripts",
   produces = "application/json, text/tab-separated-values")
 class GenomicData @javax.inject.Inject() (
-  configuration: play.api.Configuration)
+  configuration: play.api.Configuration, context: Context)
     extends Controller {
 
   private val AcceptsTsv = Accepting("text/tab-separated-values")
 
-  private val uri = configuration.getString("disease-express.database.mongo.uri").get
-  private val database = configuration.getString("disease-express.database.mongo.db").get
-  private val repo = new MongoRepository(
-    conf =
-      new MongoRepositoryConfig(
-        uri = uri,
-        database))
+  private val mongo_uri = configuration.getString("disease-express.database.mongo.uri").get
+  private val mongo_database = configuration.getString("disease-express.database.mongo.db").get
+  private val contact_points = configuration.getStringSeq("disease-express.database.cassandra.contact_points").get
+
+  private val cassandra_database = configuration.getString("disease-express.database.cassandra.db").get
+  private val cassandra_port = configuration.getInt("disease-express.database.cassandra.port").get
+
+  private val repo = context.getService.service
 
   /**
    * Converts gene data object to tsv format
@@ -99,9 +150,9 @@ class GenomicData @javax.inject.Inject() (
     })
       .toMap
 
-  private def getData(query_id_ref: IdQuery,
+  private def getData(query_ref: IdQuery,
                       _ids: String,
-                      studies_ids: Option[StudyId],
+                      ref_ids: Either[Seq[String], Seq[String]],
                       normalizations: Option[String],
                       projection: Option[String])(implicit request: RequestHeader) = {
 
@@ -160,18 +211,38 @@ class GenomicData @javax.inject.Inject() (
         .map { _.get }
         .toSeq
 
-      val _studies = studies_ids match {
-        case Some(studies) => studies.split(",").toSeq
-        case None          => SampleDataUtil.getStudies
+      val start = System.currentTimeMillis()
+
+      val _result = context.getService match {
+        case x: CassandraService => {
+          val sample_ids = ref_ids match {
+            case Left(x)  => SampleDataUtil.getSamples(x)
+            case Right(x) => x
+          }
+          repo.getData(query_ref,
+            _ids.split(",")
+              .toSeq
+              .distinct,
+            getFields(_projection_enum,
+              _normalizations_enums),
+            sample_ids)
+        }
+        case x: MongoService => {
+          val study_ids = ref_ids match {
+            case Left(x)  => x
+            case Right(x) => Seq()
+          }
+          repo.getData(query_ref,
+            _ids.split(",")
+              .toSeq
+              .distinct,
+            getFields(_projection_enum,
+              _normalizations_enums),
+            study_ids)
+        }
       }
 
-      val _result = repo.getData(query_id_ref,
-        _ids.split(",")
-          .toSeq
-          .distinct,
-        getFields(_projection_enum,
-          _normalizations_enums),
-        _studies)
+      println("Total Execution : " + (System.currentTimeMillis() - start))
 
       render {
         case Accepts.Json() => Ok(Json.toJson(_result))
@@ -200,7 +271,7 @@ class GenomicData @javax.inject.Inject() (
 
       getData(IdQuery.GeneIdQuery,
         gene_ids,
-        None,
+        Left(Seq()),
         None,
         projection)
 
@@ -223,7 +294,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneIdQuery,
         gene_ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         None,
         projection)
   }
@@ -248,7 +319,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneIdQuery,
         gene_ids,
-        None,
+        Left(Seq()),
         Some(normalizations),
         projection)
   }
@@ -274,7 +345,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneIdQuery,
         gene_ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
 
@@ -297,7 +368,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneSymbolQuery,
         gene_ids,
-        None,
+        Left(Seq()),
         None,
         projection)
 
@@ -320,7 +391,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneSymbolQuery,
         _ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         None,
         projection)
   }
@@ -344,7 +415,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneSymbolQuery,
         _ids,
-        None,
+        Left(Seq()),
         Some(normalizations),
         projection)
   }
@@ -370,7 +441,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.GeneSymbolQuery,
         _ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
 
@@ -393,7 +464,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.TranscriptIdQuery,
         gene_ids,
-        None,
+        Left(Seq()),
         None,
         projection)
 
@@ -416,7 +487,7 @@ class GenomicData @javax.inject.Inject() (
     implicit request =>
       getData(IdQuery.TranscriptIdQuery,
         _ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         None,
         projection)
   }
@@ -441,7 +512,7 @@ class GenomicData @javax.inject.Inject() (
 
       getData(IdQuery.TranscriptIdQuery,
         _ids,
-        None,
+        Left(Seq()),
         Some(normalizations),
         projection)
   }
@@ -468,12 +539,70 @@ class GenomicData @javax.inject.Inject() (
 
       getData(IdQuery.TranscriptIdQuery,
         _ids,
-        Some(studies_ids),
+        Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
 
   }
 
   //END : data by transcript id
+
+  @ApiOperation(value = "get expression data for given transcript ids and studies",
+    notes = "Returns expression data for given transcript ids and studies",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(
+      name = "payload",
+      required = true,
+      value = """Its a JSON payload currently supports the following operations
+                     &ensp; Logical Operators : $and, $not, $nor, $or
+                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+                {
+                 &ensp;&ensp;"$and": [
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$eq": { "mycn_status":"amplified" }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$in": { "risk": ["high","low"] }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$not": { "$eq": { "stage": 4 }}},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$or": [
+    	           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "risk": "high" },
+                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "stage": 4 }]
+                 &ensp;&ensp;&ensp;&ensp;&ensp;}]
+                } """,
+      paramType = "body",
+      examples = new Example(Array(new ExampleProperty(mediaType = "String", value = "\"test\""))) //examples isn't working with this swaggger version
+      )))
+  def getDataByGeneSymbolsAndTagsAndNormalizations(
+    @ApiParam(
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = LoggingAction(bodyParser = parse.json) {
+    implicit request =>
+
+      val json = request.body
+      try {
+        getData(IdQuery.GeneSymbolQuery,
+          _ids,
+          Right(SampleDataUtil.getSamples(json).toSeq),
+          Some(normalizations),
+          projection)
+      } catch {
+        case x: AssertionError => {
+          println(x.printStackTrace())
+          BadRequest("Got some other kind of exception AssertionError")
+        }
+        case x: Throwable => {
+          println(x.printStackTrace())
+          BadRequest("Got some other kind of exception")
+        }
+      }
+
+  }
 
 }

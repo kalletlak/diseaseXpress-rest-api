@@ -5,10 +5,10 @@ import com.mongodb.MongoClient
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import org.jongo.Jongo
 
 class MongoDAO(
-                private val mongoClient: MongoClient,
-                databaseName: String) {
+    jongo: Jongo) extends Dao {
 
   import scala.collection.JavaConversions.asScalaIterator
 
@@ -27,16 +27,14 @@ class MongoDAO(
 
   }
 
-  val database = mongoClient.getDatabase(databaseName)
-
-  private val jongo =
+ /* private val jongo =
     new org.jongo.Jongo(
-                         mongoClient
-                           // warning: see https://github.com/bguerout/jongo/issues/254
-                           .getDB(databaseName))
+      mongoClient
+        // warning: see https://github.com/bguerout/jongo/issues/254
+        .getDB(databaseName))*/
 
-  def findData(collectionName: String,
-               filters: Map[String, Seq[String]]): Iterable[JsObject] = {
+  override def find(collectionName: String,
+                    filters: Map[String, Seq[String]]): Iterable[JsObject] = {
 
     def stringWithDoubleQuotes(str: String) = s""""$str""""
 
@@ -48,15 +46,19 @@ class MongoDAO(
 
     val filter_str =
       filters
-        .map { case (key, values) =>
-          s"""{$key: {$$in: ${seqAsMongoString(values)}}}"""
+        .map {
+          case (key, values) =>
+            s"""{$key: {$$in: ${seqAsMongoString(values)}}}"""
         }
         .mkString("{ $and : [ ", ", ", " ] }")
 
+    println(filter_str)
     //required, toPlayJsObject throws error for ObjectId type
     val projection_str =
       s"""{_id: 0}"""
-    new Iterable[JsObject] {
+    val start = System.currentTimeMillis()
+
+    val to_return = new Iterable[JsObject] {
       override def iterator() = {
         jongo.getCollection(collectionName)
           .find(filter_str)
@@ -66,6 +68,8 @@ class MongoDAO(
           .map(_.toPlayJsObject)
       }
     }
+    println("Mongo Execution : "+(System.currentTimeMillis() - start))
+    to_return
   }
 
 }
