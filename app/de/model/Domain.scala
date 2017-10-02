@@ -1,8 +1,8 @@
-package de.v2.model
+package de.model
 
 import scala.math.BigDecimal.double2bigDecimal
 
-import de.v2.model.Enums.{ Tag, ethnicity, gender, library_type, platform, race, study, unavailable, vital_status }
+import de.model.Enums.{ Tag, ethnicity, gender, library_type, platform, race, study, unavailable, vital_status }
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
 

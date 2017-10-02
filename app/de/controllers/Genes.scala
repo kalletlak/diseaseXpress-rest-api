@@ -1,4 +1,4 @@
-package de.v2.controllers
+package de.controllers
 
 import io.swagger.annotations.Api
 import play.api.mvc.Controller
@@ -9,10 +9,10 @@ import play.api.libs.json.JsString
 import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
 import play.api.mvc.Accepting
-import de.v2.utils.GeneDataUtil
-import de.v2.model.GeneInfoOutput
-import de.v2.model.TranscriptWithGeneInfoOutput
-import de.v2.utils.LoggingAction
+import de.utils.GeneDataUtil
+import de.model.GeneInfoOutput
+import de.model.TranscriptWithGeneInfoOutput
+import de.utils.LoggingAction
 
 @Api(value = "/Genes", description = "Operations with Genes and Transcripts")
 class Genes @javax.inject.Inject()(

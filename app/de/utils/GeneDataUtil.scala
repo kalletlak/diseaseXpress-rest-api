@@ -1,9 +1,10 @@
-package de.v2.utils
+package de.utils
 
 import java.io.InputStream
-import de.v2.model.Inputs.Gene
-import de.v2.model.Inputs._
-import de.v2.model.GeneInfoOutput
+
+import de.model.GeneInfoOutput
+import de.model.Inputs.{ Gene, GeneIdQuery, GeneQueryRef, GeneSymbolQuery, TranscriptIdQuery }
+import io.swagger.annotations.ApiModel
 
 object GeneDataUtil {
 
@@ -46,21 +47,27 @@ object GeneDataUtil {
       .map { x => x.gene_symbol -> x.gene_id }
       .toMap
 
-  def getGeneInputRef(geneInputRef: GeneQueryRef): Option[GeneInfoOutput] = {
-    geneInputRef match {
-      case x: GeneIdQuery       => {
-        genes.get(x.ref_id)
+  def getGeneInputRef(geneInputRef: GeneQueryRef): Seq[GeneInfoOutput] = {
+    val temp = geneInputRef match {
+      case x: GeneIdQuery => {
+        x.ref_id.map { x => genes.get(x) }
+
       }
-      case x: GeneSymbolQuery   => {
-        geneSymbolIdMap.get(x.ref_id) match {
-          case Some(_gene_id) => genes.get(_gene_id)
-          case _              => None
+      case x: GeneSymbolQuery => {
+        x.ref_id.map { x =>
+          geneSymbolIdMap.get(x) match {
+            case Some(_gene_id) => genes.get(_gene_id)
+            case _              => None
+          }
         }
+
       }
       case x: TranscriptIdQuery => {
-        transcripts.get(x.ref_id)
+        x.ref_id.map { x =>  transcripts.get(x) }
+
       }
     }
+    temp.flatten
   }
 
   def getGeneIds(): Seq[String] = genes.keySet.toSeq

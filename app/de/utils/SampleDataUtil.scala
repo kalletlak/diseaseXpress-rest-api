@@ -1,4 +1,4 @@
-package de.v2.utils
+package de.utils
 
 import java.io.InputStream
 
@@ -8,12 +8,12 @@ import scala.collection.JavaConversions.asScalaIterator
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.fakemongo.Fongo
 
-import de.v2.model.Enums.{ Tag, ethnicity, gender, group, library_type, platform, race, study, unavailable, vital_status }
+import de.model.Enums.{ Tag, ethnicity, gender, group, library_type, platform, race, study, unavailable, vital_status }
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsObject, JsValue }
 import play.api.libs.json.{ Json, Writes }
 import play.api.libs.json.JsValue.jsValueToJsLookup
-import de.v2.model.Domain._
+import de.model.Domain._
 import com.mongodb.util.JSON
 import com.mongodb.DBObject
 
@@ -45,21 +45,19 @@ object Sample {
 
   def readEnum[T](s: String, withNameOption: (String) => Option[T]): Either[T, unavailable] = {
     assert(!s.isEmpty())
-    val temp: Either[T, unavailable] = withNameOption(s) match {
+    withNameOption(s) match {
       case Some(x) => Left(x.asInstanceOf[T])
       case None    => Right(unavailable.withName(s))
     }
-    temp
   }
   def readValue[Value](s: String, withNameOption: (String) => Value): Either[Value, unavailable] = {
     assert(!s.isEmpty())
-    val temp: Either[Value, unavailable] = unavailable.withNameOption(s) match {
+    unavailable.withNameOption(s) match {
       case Some(x) => Right(x)
       case None => {
         Left(withNameOption(s))
       }
     }
-    temp
   }
 
   def apply(line: String): Sample = {
@@ -137,27 +135,6 @@ object Sample {
   implicit val writeJson = new Writes[Sample] {
     def writes(obj: Sample): JsValue = {
       val tags = obj.tags.map { obj => (obj.key -> obj.value.formatJson) }.toMap
-      /* Json.obj(
-        "sample_id" -> obj.sample_id,
-        "patient_barcode" -> obj.patient_barcode,
-        "sample_barcode" -> obj.sample_barcode,
-        "group" -> obj.group,
-        "study" -> obj.study,
-        "disease" -> obj.disease,
-        "disease_name" -> obj.disease_name,
-        "disease_subtype" -> obj.disease_subtype,
-        "tissue" -> obj.tissue,
-        "definition" -> obj.definition,
-        "library_type" -> obj.library_type,
-        "platform" -> obj.platform,
-        "gender" -> obj.gender.entryName,
-        "race" -> obj.race,
-        "ethnicity" -> obj.ethnicity,
-        "age_normal" -> obj.age_normal,
-        "age_at_diagnosis_in_days" -> obj.age_at_diagnosis_in_days,
-        "event_free_survival_time_in_days" -> obj.event_free_survival_time_in_days,
-        "overall_survival_time_in_days" -> obj.overall_survival_time_in_days,
-        "vital_status" -> obj.vital_status).deepMerge(Json.toJson(tags).asInstanceOf[JsObject])*/
       Json.toJson(obj.getAllTagsAsMap)
     }
   }
@@ -166,10 +143,13 @@ object Sample {
 
 object SampleDataUtil {
   val studySampleMap: Map[study, Seq[Sample]] = {
+
     val stream: InputStream = getClass
       .getResourceAsStream("/clinical_info.txt")
+
     val src = scala.io.Source.fromInputStream(stream)
-    val x = src.getLines
+
+    val result = src.getLines
       .drop(1)
       .map {
         Sample.apply
@@ -179,26 +159,26 @@ object SampleDataUtil {
         _.study
       }
     src.close()
-    x
+    result
   }
 
-  def getStudies: Seq[String] = studySampleMap.keys.toSeq.map { x => x.entryName }
+  def getStudies: Seq[String] = studySampleMap.keys.toSeq.map { _.entryName }
 
   def getSamples(studies: Seq[String] = Nil): Seq[String] = studies match {
     case Nil => studySampleMap
       .flatMap {
         case (_, sampleAnnotations) => sampleAnnotations.map {
-          _.sample_id
+          _.sample_id.value
         }
       }
-      .toSeq.map { x => x.value }
+      .toSeq
     case _ => {
 
       studies
-        .flatMap { x => study.withNameOption(x) }
+        .flatMap { study.withNameOption }
         .flatMap(studySampleMap) // get samples for each study and flatten it all up
         .map(_.sample_id)
-        .toSeq.map { x => x.value }
+        .toSeq.map { _.value }
     }
 
   }
@@ -209,7 +189,7 @@ object SampleDataUtil {
       .flatten
       .toSeq
     case _ => studies
-      .flatMap { x => study.withNameOption(x) }
+      .flatMap { study.withNameOption }
       .flatMap(study_id => studySampleMap.getOrElse(study_id,
         Seq())) // get samples for each study and flatten it all up
       .toSeq
@@ -237,9 +217,8 @@ object SampleDataUtil {
     MongoQuery.getMongoQuery(value) match {
       case query: Query => {
         val querystr = query.formatQuery
-        val start = System.currentTimeMillis()
         val projection_str = s"""{sample_id: 1, _id: 0}"""
-        val result = collection
+        collection
           .find(querystr)
           .projection(projection_str)
           .as(classOf[ObjectNode])
@@ -251,9 +230,6 @@ object SampleDataUtil {
           }
           .map { obj => (obj \ "sample_id").as[String] }
           .toSeq
-        val executionTime = System.currentTimeMillis() - start
-        println(s"""Execution Time to get samples \n\t query : $querystr \n\t Time : $executionTime""")
-        result
       }
       case _ => Seq()
     }

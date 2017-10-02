@@ -1,12 +1,16 @@
-package de.v2.utils
+package de.utils
 
-import de.v2.model.Domain.{ Formatter, Number, Text, Value }
+import de.model.Domain.{ Formatter, Number, Text, Value }
 import enumeratum.{ Enum, EnumEntry }
 import play.api.libs.json.{ JsArray, JsNumber, JsObject, JsString, JsValue, Json }
 
 trait Query extends Formatter
 trait Comparison
 trait Logical
+
+case class InvalidQueryException(private val message: String = "",
+                           private val cause: Throwable = None.orNull)
+                      extends Exception(message, cause)
 
 sealed trait OperationType extends EnumEntry
 object OperationType extends Enum[OperationType] {
@@ -124,11 +128,12 @@ object MongoQuery {
                 }
                 case (kx: String, vx: JsArray) => {
 
-                  val temp = vx.value.flatMap {
-                    x =>
-                      x match {
+                  val temp = vx.value.flatMap {_  match {
                         case x: JsString => Some(Seq(StringValue(x.value)))
-                        case _           => None
+                        case x:Any           => {
+                          assert(false,InvalidQueryException(s"""$x should be a string"""))
+                          None
+                        }
                       }
                   }
                     .flatten
@@ -140,19 +145,22 @@ object MongoQuery {
                   }.mkString("[", ",", "]")
                   Some(StringValue(s"""{$$and: [{"tags.key": "$kx"}, {"tags.value": {$$not:{$operation1: $t1}}}]}"""))
                 }
-                case _ => None
+                case x:Any => {
+                  assert(false,InvalidQueryException(s"""invalid identifier : $x"""))
+                  None
+                }
 
               }.flatten.toSeq
               Some(temp)
             }
-            case _ => {
-              assert(false)
+            case x: Any => {
+              assert(false,throw new InvalidQueryException(s"""$x should be comparison operator"""))
               None
             }
           }
         }
-        case _ => {
-          assert(false)
+        case x:Any => {
+          assert(false,InvalidQueryException(s"""invalid $x"""))
           None
         }
       }.flatten.toSeq.head
@@ -180,19 +188,16 @@ object MongoQuery {
                 //TODO: other operators
                 case OperationType.$not => { parseNotQuery(v) }
                 case operation: Logical => {
-                  assert(false)
-                  None
-                }
-                case _ => {
-                  assert(false)
-                  None
+                  val x = operation.entryName
+                  assert(false,InvalidQueryException(s"""invalid cannot be logical : $x"""))
+                  ???
                 }
               }
             }
             //no nested query objects
-            case _ => {
-              assert(false)
-              None
+            case x:Any => {
+              assert(false,InvalidQueryException(s"""invalid operator : $x"""))
+              ???
             }
           }
         }
@@ -206,10 +211,6 @@ object MongoQuery {
                 case operation: Logical => {
                   Some(Base(operation.entryName, parseJsArray(v, None)))
                 }
-                case _ => {
-                  assert(false)
-                  None
-                }
               }
             }
             case _ => {
@@ -217,9 +218,9 @@ object MongoQuery {
             }
           }
         }
-        case _ => {
-          assert(false)
-          None
+        case x:Any => {
+          assert(false,InvalidQueryException(s"""invalid : $x"""))
+          ???
         }
       }
       .toSeq
@@ -229,7 +230,7 @@ object MongoQuery {
     value match {
       case obj: JsObject => parseJsObject(obj, None).head
       case _ => {
-        assert(false)
+        assert(false,InvalidQueryException(s"""$value should be a object"""))
         ???
       }
     }

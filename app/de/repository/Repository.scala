@@ -1,11 +1,18 @@
-package de.v2
+package de.repository
 
 import org.jongo.Jongo
+
 import com.datastax.driver.core.Session
+
+import de.model.Inputs.FilterUnit
+import de.dao.MongoDAO
+import de.dao.ElasticSearchSession
+import de.dao.ElasticSearchDAO
+import de.dao.CassandraDAO
 
 trait Dao {
   def find(collectionName: String,
-           filters: Map[String, Seq[String]]): Any
+             filters: Seq[FilterUnit]): Any
 }
 
 trait Repository {
@@ -27,4 +34,12 @@ trait CassandraRepository extends Repository {
     new CassandraDAO(context)
   }
 
+}
+
+trait ElasticSearchRepository extends Repository {
+
+  val context: ElasticSearchSession
+  def dao = {
+    new ElasticSearchDAO(context)
+  }
 }

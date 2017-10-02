@@ -1,73 +1,28 @@
-package de.v2.controllers
-
-import java.net.InetAddress
+package de.controllers
 
 import scala.{ Left, Right }
-import scala.annotation.migration
-import scala.collection.JavaConverters.seqAsJavaListConverter
 
-import com.datastax.driver.core.Cluster
-import com.mongodb.{ MongoClient, MongoClientURI }
-
-import de.v2.{ CassandraRepository, CassandraService, MongoRepository, MongoService, ServiceComponent }
-import de.v2.model.GeneLevelOutput
-import de.v2.model.Inputs.{ SampleAbundanceProjectons, SampleRsemGeneProjectons, SampleRsemIsoformProjectons }
-import de.v2.utils.{ JsObjectWithOption, LoggingAction, SampleDataUtil }
-import de.v2.utils.Enums.{ IdQuery, Normalization, Projection }
+import de.Context
+import de.model.GeneLevelOutput
+import de.model.Inputs._
+import de.service.{ CassandraService, ElasticSearchService, MongoService }
+import de.utils.{ InvalidQueryException, JsObjectWithOption, LoggingAction, SampleDataUtil }
+import de.utils.Enums.{ Normalization, Projection }
 import io.swagger.annotations.{ Api, ApiImplicitParams, ApiModel, ApiOperation, ApiParam }
 import javax.inject.{ Inject, Singleton }
 import play.api.http.HttpFilters
 import play.api.libs.json.Json
 import play.api.mvc.{ Accepting, Controller, RequestHeader }
 import play.filters.gzip.GzipFilter
-import io.swagger.annotations.{ ApiImplicitParam, Example, ExampleProperty }
+import io.swagger.annotations.ApiImplicitParam
+import io.swagger.annotations.Example
+import io.swagger.annotations.ExampleProperty
+import de.model.Inputs.InputDataModel
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
 class Filters @Inject() (gzipFilter: GzipFilter) extends HttpFilters {
   def filters = Seq(gzipFilter)
-}
-@Singleton // this is not necessary, I put it here so you know this is possible
-class Context @Inject() (configuration: play.api.Configuration) {
-
-  // Since this controller is not annotated with @Inject
-  // it WILL NOT be used when binding components
-  //  def this(configuration: play.api.Configuration) = this(configuration)
-
-  private val AcceptsTsv = Accepting("text/tab-separated-values")
-
-  private val mongo_uri = configuration.getString("disease-express.database.mongo.uri").get
-  private val mongo_database = configuration.getString("disease-express.database.mongo.db").get
-  private val cassandra_ips = configuration.getStringSeq("disease-express.database.cassandra.contact_points").get
-
-  private val cassandra_database = configuration.getString("disease-express.database.cassandra.db").get
-  private val cassandra_port = configuration.getInt("disease-express.database.cassandra.port").get
-
-  val cluster = Cluster.builder()
-    .addContactPoints(cassandra_ips.map { InetAddress.getByName(_) }.asJava).withPort(cassandra_port)
-    .build()
-  cluster.getConfiguration.getSocketOptions
-  //.setConnectTimeoutMillis(50000)
-  // .setReadTimeoutMillis(120000)
-  val session = cluster.connect(cassandra_database)
-  val cassandraService = new CassandraService with CassandraRepository {
-    val context = session
-  }
-
-  val client: MongoClient =
-    new MongoClient(new MongoClientURI(mongo_uri))
-
-  val jongo =
-    new org.jongo.Jongo(
-      client
-        // warning: see https://github.com/bguerout/jongo/issues/254
-        .getDB(mongo_database))
-
-  private val mongoService = new MongoService with MongoRepository {
-    val context = jongo
-  }
-
-  def getService(): ServiceComponent = {
-    return cassandraService
-  }
 }
 
 @Api(value = "/Data",
@@ -78,13 +33,6 @@ class GenomicData @javax.inject.Inject() (
     extends Controller {
 
   private val AcceptsTsv = Accepting("text/tab-separated-values")
-
-  private val mongo_uri = configuration.getString("disease-express.database.mongo.uri").get
-  private val mongo_database = configuration.getString("disease-express.database.mongo.db").get
-  private val contact_points = configuration.getStringSeq("disease-express.database.cassandra.contact_points").get
-
-  private val cassandra_database = configuration.getString("disease-express.database.cassandra.db").get
-  private val cassandra_port = configuration.getInt("disease-express.database.cassandra.port").get
 
   private val repo = context.getService.service
 
@@ -113,7 +61,7 @@ class GenomicData @javax.inject.Inject() (
    *
    */
   private def getFields(projection: Projection,
-                        normalizations: Seq[Normalization]) =
+                        normalizations: Seq[Normalization]): Map[Normalization, InputDataModel] =
     (projection match {
       case Projection.detailed => normalizations.map { x =>
         (x, x match {
@@ -137,9 +85,9 @@ class GenomicData @javax.inject.Inject() (
             isoform_percentage = true)
         })
       }
-      case Projection.summary => normalizations.map { x =>
-        (x,
-          x match {
+      case Projection.summary => normalizations.map { normalization =>
+        (normalization,
+          normalization match {
             case Normalization.rsem => SampleRsemGeneProjectons()
             case Normalization
               .sample_abundance => SampleAbundanceProjectons()
@@ -150,8 +98,7 @@ class GenomicData @javax.inject.Inject() (
     })
       .toMap
 
-  private def getData(query_ref: IdQuery,
-                      _ids: String,
+  private def getData(filters: InputFilters,
                       ref_ids: Either[Seq[String], Seq[String]],
                       normalizations: Option[String],
                       projection: Option[String])(implicit request: RequestHeader) = {
@@ -164,7 +111,7 @@ class GenomicData @javax.inject.Inject() (
 
     //map normalizarions to enum
     val normalization_enums = normalizations match {
-      case Some(x) => x.split(",")
+      case Some(normalizations) => normalizations.split(",")
         .map(normalization => normalization -> Normalization
           .withNameOption(normalization)).toMap
       case None => Map(
@@ -181,27 +128,25 @@ class GenomicData @javax.inject.Inject() (
 
     val proj_invalid = !projection_enum.isDefined
 
-    //TODO: need to find a better solution
     if (norm_invalid.size > 0 || proj_invalid) {
-      val t1 = if (norm_invalid.size > 0)
-        Some(norm_invalid
+
+      var obj = Json.obj()
+      obj = if (norm_invalid.size > 0) {
+
+         obj + ("normalizations" -> JsString(norm_invalid
+            .keySet
+            .mkString("", ",",
+              " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]")))
+      } else Json.obj()
+
+      obj = if (proj_invalid) {
+        obj + ("projection" -> JsString(norm_invalid
           .keySet
           .mkString("", ",",
-            " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]"))
-      else None
+            " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]")))
+      } else Json.obj()
 
-      val t2 = if (proj_invalid)
-        Some(
-          s"""${
-            projection.get
-          }, is invalid. Must be summary or detailed """)
-      else None
-
-      BadRequest(JsObjectWithOption(
-        "projection" -> Right(t2.map(x => Json
-          .toJson(x))),
-        "normalizations" -> Right(t1.map(x => Json
-          .toJson(x)))))
+      BadRequest(obj)
 
     } else {
 
@@ -213,34 +158,10 @@ class GenomicData @javax.inject.Inject() (
 
       val start = System.currentTimeMillis()
 
-      val _result = context.getService match {
-        case x: CassandraService => {
-          val sample_ids = ref_ids match {
-            case Left(x)  => SampleDataUtil.getSamples(x)
-            case Right(x) => x
-          }
-          repo.getData(query_ref,
-            _ids.split(",")
-              .toSeq
-              .distinct,
-            getFields(_projection_enum,
-              _normalizations_enums),
-            sample_ids)
-        }
-        case x: MongoService => {
-          val study_ids = ref_ids match {
-            case Left(x)  => x
-            case Right(x) => Seq()
-          }
-          repo.getData(query_ref,
-            _ids.split(",")
-              .toSeq
-              .distinct,
-            getFields(_projection_enum,
-              _normalizations_enums),
-            study_ids)
-        }
-      }
+      val _result = repo.getData(
+        filters,
+        getFields(_projection_enum,
+          _normalizations_enums))
 
       println("Total Execution : " + (System.currentTimeMillis() - start))
 
@@ -269,8 +190,9 @@ class GenomicData @javax.inject.Inject() (
 
     implicit request =>
 
-      getData(IdQuery.GeneIdQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         None,
         projection)
@@ -292,8 +214,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneIdQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         None,
         projection)
@@ -317,8 +240,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneIdQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         Some(normalizations),
         projection)
@@ -343,8 +267,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneIdQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
@@ -360,14 +285,15 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByGeneSymbols(
     @ApiParam(
-      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_ids: String,
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_symbols: String,
     @ApiParam(
       value = "Projection type summary or detailed",
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneSymbolQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         None,
         projection)
@@ -381,7 +307,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByGeneSymbolsAndStudies(
     @ApiParam(
-      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_symbols: String,
     @ApiParam(
       value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
     @ApiParam(
@@ -389,8 +315,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneSymbolQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         None,
         projection)
@@ -403,7 +330,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByGeneSymbolsAndNormalizations(
     @ApiParam(
-      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_symbols: String,
     @ApiParam(
       value = "Comma separated list of normalization methods",
       allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
@@ -413,8 +340,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneSymbolQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         Some(normalizations),
         projection)
@@ -427,7 +355,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByGeneSymbolsAndStudiesAndNormalizations(
     @ApiParam(
-      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_symbols: String,
     @ApiParam(
       value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
     @ApiParam(
@@ -439,8 +367,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.GeneSymbolQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
@@ -456,14 +385,15 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByTranscriptIds(
     @ApiParam(
-      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") gene_ids: String,
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") transcript_ids: String,
     @ApiParam(
       value = "Projection type summary or detailed",
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.TranscriptIdQuery,
-        gene_ids,
+      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         None,
         projection)
@@ -477,7 +407,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByTranscriptIdsAndStudies(
     @ApiParam(
-      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") transcript_ids: String,
     @ApiParam(
       value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
     @ApiParam(
@@ -485,8 +415,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      getData(IdQuery.TranscriptIdQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         None,
         projection)
@@ -499,7 +430,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByTranscriptIdsAndNormalizations(
     @ApiParam(
-      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") transcript_ids: String,
     @ApiParam(
       value = "Comma separated list of normalization methods",
       allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
@@ -509,9 +440,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-
-      getData(IdQuery.TranscriptIdQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })))
+      getData(
+        filters,
         Left(Seq()),
         Some(normalizations),
         projection)
@@ -524,7 +455,7 @@ class GenomicData @javax.inject.Inject() (
     httpMethod = "GET")
   def getDataByTranscriptIdsAndStudiesAndNormalizations(
     @ApiParam(
-      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") _ids: String,
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") transcript_ids: String,
     @ApiParam(
       value = "Comma separated list of study ids. e.g. PNOC,TARGET") studies_ids: String,
     @ApiParam(
@@ -536,9 +467,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-
-      getData(IdQuery.TranscriptIdQuery,
-        _ids,
+      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
         Left(studies_ids.split(",", -1)),
         Some(normalizations),
         projection)
@@ -574,7 +505,7 @@ class GenomicData @javax.inject.Inject() (
       )))
   def getDataByGeneSymbolsAndTagsAndNormalizations(
     @ApiParam(
-      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") _ids: String,
+      value = "Comma separated list of gene symbols. e.g. MYCN,TP53") gene_symbols: String,
     @ApiParam(
       value = "Comma separated list of normalization methods",
       allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
@@ -587,21 +518,160 @@ class GenomicData @javax.inject.Inject() (
 
       val json = request.body
       try {
-        getData(IdQuery.GeneSymbolQuery,
-          _ids,
+        val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        getData(
+          filters,
           Right(SampleDataUtil.getSamples(json).toSeq),
           Some(normalizations),
           projection)
       } catch {
-        case x: AssertionError => {
-          println(x.printStackTrace())
-          BadRequest("Got some other kind of exception AssertionError")
+        case x: InvalidQueryException => {
+          BadRequest(x.getMessage)
         }
         case x: Throwable => {
-          println(x.printStackTrace())
-          BadRequest("Got some other kind of exception")
+          BadRequest("Unknown Exception")
         }
       }
+
+  }
+
+  @ApiOperation(value = "get expression data for given transcript ids and studies",
+    notes = "Returns expression data for given transcript ids and studies",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(
+      name = "payload",
+      required = true,
+      value = """Its a JSON payload currently supports the following operations
+                     &ensp; Logical Operators : $and, $not, $nor, $or
+                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+                {
+                 &ensp;&ensp;"$and": [
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$eq": { "mycn_status":"amplified" }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$in": { "risk": ["high","low"] }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$not": { "$eq": { "stage": 4 }}},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$or": [
+    	           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "risk": "high" },
+                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "stage": 4 }]
+                 &ensp;&ensp;&ensp;&ensp;&ensp;}]
+                } """,
+      paramType = "body",
+      examples = new Example(Array(new ExampleProperty(mediaType = "String", value = "\"test\""))) //examples isn't working with this swaggger version
+      )))
+  def getDataByGeneIdsAndTagsAndNormalizations(
+    @ApiParam(
+      value = "Comma separated list of gene entrez ids. e.g. ENSG00000136997.14,ENSG00000000003.14") gene_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = LoggingAction(bodyParser = parse.json) {
+    implicit request =>
+
+      val json = request.body
+      try {
+        val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        getData(
+          filters,
+          Right(SampleDataUtil.getSamples(json).toSeq),
+          Some(normalizations),
+          projection)
+      } catch {
+        case x: InvalidQueryException => {
+          BadRequest(x.getMessage)
+        }
+        case x: Throwable => {
+          BadRequest("Unknown Exception")
+        }
+      }
+
+  }
+
+  @ApiOperation(value = "get expression data for given transcript ids and studies",
+    notes = "Returns expression data for given transcript ids and studies",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(
+      name = "payload",
+      required = true,
+      value = """Its a JSON payload currently supports the following operations
+                     &ensp; Logical Operators : $and, $not, $nor, $or
+                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+                {
+                 &ensp;&ensp;"$and": [
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$eq": { "mycn_status":"amplified" }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$in": { "risk": ["high","low"] }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$not": { "$eq": { "stage": 4 }}},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$or": [
+    	           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "risk": "high" },
+                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "stage": 4 }]
+                 &ensp;&ensp;&ensp;&ensp;&ensp;}]
+                } """,
+      paramType = "body",
+      examples = new Example(Array(new ExampleProperty(mediaType = "String", value = "\"test\""))) //examples isn't working with this swaggger version
+      )))
+  def getDataByTranscriptIdsAndTagsAndNormalizations(
+    @ApiParam(
+      value = "Comma separated list of transcript ids. e.g. ENST00000373031.4,ENST00000514373.2") transcript_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = LoggingAction(bodyParser = parse.json) {
+    implicit request =>
+
+      val json = request.body
+      try {
+        val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        getData(
+          filters,
+          Right(SampleDataUtil.getSamples(json).toSeq),
+          Some(normalizations),
+          projection)
+      } catch {
+        case x: InvalidQueryException => {
+          BadRequest(x.getMessage)
+        }
+        case x: Throwable => {
+          BadRequest("Unknown Exception")
+        }
+      }
+
+  }
+
+  @ApiOperation(value = "get expression data for given samples and normalizations",
+    notes = "Returns expression data for given samples and normalizations",
+    response = classOf[String],
+    responseContainer = "List",
+    httpMethod = "GET")
+  def getDataBySamplesAndNormalizations(
+    @ApiParam(
+      value = "Comma separated list of sample ids. e.g. 3f232b7d-b473-4a2a-9549-1f61434c49c0") sample_ids: String,
+    @ApiParam(
+      value = "Comma separated list of normalization methods",
+      allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
+      allowMultiple = true) normalizations: String,
+    @ApiParam(
+      value = "Projection type summary or detailed",
+      allowableValues = "summary,detailed",
+      defaultValue = "summary") projection: Option[String]) = LoggingAction {
+    implicit request =>
+      val filters = InputFilters(sample_id = sample_ids.split(",", -1).map { _.trim })
+      getData(
+        filters,
+        Right(sample_ids.split(",", -1).map { _.trim }),
+        Some(normalizations),
+        projection)
 
   }
 

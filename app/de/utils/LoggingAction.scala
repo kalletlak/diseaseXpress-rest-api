@@ -1,4 +1,4 @@
-package de.v2.utils
+package de.utils
 
 import java.nio.charset.Charset
 
@@ -19,7 +19,7 @@ object LoggingAction extends ActionBuilder[Request] {
 
     val queryParams = request.queryString
 
-    val requestPath = URLDecoder.decode(request.path)
+    val requestPath = URLDecoder.decode(request.path, "UTF-8")
 
     val params = request.tags.get("ROUTE_PATTERN") match {
       case Some(route_pattern) => {
@@ -71,7 +71,7 @@ object LoggingAction extends ActionBuilder[Request] {
     val myPostWithBody = myRequestAsJson << s"""$jsonStr"""
 
     //make async request
-    val response: Future[String] = Http(myPostWithBody > as.String)
+    val response: Future[String] = Http.default(myPostWithBody > as.String)
 
     block(request)
   }

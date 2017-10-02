@@ -1,14 +1,14 @@
-package de.v2.controllers
+package de.controllers
 
 import io.swagger.annotations.Api
 import play.api.mvc.Controller
 import io.swagger.annotations.ApiOperation
 import play.api.libs.json.Json
-import de.v2.utils.SampleDataUtil
+import de.utils.SampleDataUtil
 import play.api.mvc.Accepting
 import play.api.mvc.RequestHeader
-import de.v2.model.DomainTypes.StudyId
-import de.v2.utils.LoggingAction
+import de.model.DomainTypes.StudyId
+import de.utils.LoggingAction
 
 @Api(value = "/Samples",
   description = "Operations with Samples",

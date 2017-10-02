@@ -1,4 +1,4 @@
-package de.v2.utils
+package de.utils
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsArray

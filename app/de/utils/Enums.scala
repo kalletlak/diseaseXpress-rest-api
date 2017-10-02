@@ -1,4 +1,4 @@
-package de.v2.utils
+package de.utils
 
 import enumeratum.Enum
 import enumeratum.EnumEntry
@@ -26,19 +26,6 @@ object Enums {
     case object sample_abundance extends Normalization
 
     case object sample_rsem_isoform extends Normalization
-
-  }
-
-  sealed trait IdQuery extends EnumEntry
-
-  object IdQuery extends Enum[IdQuery] {
-    val values = findValues
-
-    case object GeneIdQuery extends IdQuery
-
-    case object GeneSymbolQuery extends IdQuery
-
-    case object TranscriptIdQuery extends IdQuery
 
   }
 

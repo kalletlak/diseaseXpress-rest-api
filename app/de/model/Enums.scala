@@ -1,6 +1,6 @@
-package de.v2.model
+package de.model
 
-import de.v2.model.Domain.Value
+import de.model.Domain.Value
 import enumeratum.{ Enum, EnumEntry }
 import play.api.libs.json.{ JsString, Json }
 import play.api.libs.json.Json.toJsFieldJsValueWrapper

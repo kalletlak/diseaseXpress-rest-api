@@ -1,4 +1,4 @@
-package de.v2.model
+package de.model
 
 import scala.Right
 import io.swagger.annotations.ApiModel
@@ -6,13 +6,13 @@ import io.swagger.annotations.ApiModelProperty
 import play.api.libs.json.{ JsObject, JsResult, JsSuccess, JsValue, Json, Writes }
 import play.api.libs.json.JsValue.jsValueToJsLookup
 
-import de.v2.model.Inputs._
-import de.v2.utils.JsObjectWithOption
-import de.v2.utils.PlayJsonUtils.JsObjectImplicits
-import de.v2.utils.Enums.Projection
-import de.v2.utils.Enums.Normalization
+import de.model.Inputs._
+import de.utils.JsObjectWithOption
+import de.utils.PlayJsonUtils.JsObjectImplicits
+import de.utils.Enums.Projection
+import de.utils.Enums.Normalization
 import com.datastax.driver.core.Row
-import de.v2.utils.NumberUtils.DoubleImplicits
+import de.utils.NumberUtils.DoubleImplicits
 
 //initialized parameters with default values. This would be used in getting tsv format data
 //when querying for a particular normalization and doesn't have any data in the database
@@ -73,13 +73,14 @@ object SampleRsemIsoformOutput {
         .parseDoubleOption("isoform_percentage",
           projectionFiledsObj
             .isoform_percentage)))
+
   }
      def readRow(row: Row,
               projectionFileds: InputDataModel = new SampleRsemIsoformProjectons()): JsResult[SampleRsemIsoformOutput] = {
 
     val projectionFiledsObj = projectionFileds
       .asInstanceOf[SampleRsemIsoformProjectons]
-    JsSuccess(SampleRsemIsoformOutput(transcript_id = row.getString("transcript_id"),
+    /*JsSuccess(SampleRsemIsoformOutput(transcript_id = row.getString("transcript_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -97,6 +98,28 @@ object SampleRsemIsoformOutput {
         .getFloat("fpkm")
         .parseDoubleOption(projectionFiledsObj.fpkm),
       isoform_percentage = row
+        .getFloat("isoform_percentage")
+        .parseDoubleOption(projectionFiledsObj.isoform_percentage)))*/
+
+      //TODO: this is temporary
+       JsSuccess(SampleRsemIsoformOutput(transcript_id = row.getString("transcript_id"),
+      sample_id = row.getString("sample_id"),
+      fpkm = row
+        .getFloat("length")
+        .parseDoubleOption(projectionFiledsObj.length),
+      length = row
+        .getFloat("effective_length")
+        .parseDoubleOption(projectionFiledsObj.effective_length),
+      effective_length = row
+        .getFloat("expected_count")
+        .parseDoubleOption(projectionFiledsObj.expected_count),
+      isoform_percentage = row
+        .getFloat("tpm")
+        .parseDoubleOption(projectionFiledsObj.tpm),
+      expected_count = row
+        .getFloat("fpkm")
+        .parseDoubleOption(projectionFiledsObj.fpkm),
+      tpm = row
         .getFloat("isoform_percentage")
         .parseDoubleOption(projectionFiledsObj.isoform_percentage)))
 
@@ -186,11 +209,11 @@ object SampleAbundanceOutput {
   }
 
     def readRow(row: Row,
-              projectionFileds: InputDataModel = new SampleAbundanceProjectons()): SampleAbundanceOutput = {
+              projectionFileds: InputDataModel = new SampleAbundanceProjectons()): JsResult[SampleAbundanceOutput] = {
 
     val projectionFiledsObj = projectionFileds
       .asInstanceOf[SampleAbundanceProjectons]
-   SampleAbundanceOutput(transcript_id = row.getString("transcript_id"),
+/*   SampleAbundanceOutput(transcript_id = row.getString("transcript_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -203,7 +226,23 @@ object SampleAbundanceOutput {
         .parseDoubleOption(projectionFiledsObj.expected_count),
       tpm = row
         .getFloat("tpm")
-        .parseDoubleOption(projectionFiledsObj.tpm))
+        .parseDoubleOption(projectionFiledsObj.tpm))*/
+
+    //TODO: this is temporary
+      JsSuccess(SampleAbundanceOutput(transcript_id = row.getString("transcript_id"),
+      sample_id = row.getString("sample_id"),
+      expected_count = row
+        .getFloat("length")
+        .parseDoubleOption(projectionFiledsObj.length),
+      length = row
+        .getFloat("effective_length")
+        .parseDoubleOption(projectionFiledsObj.effective_length),
+      effective_length = row
+        .getFloat("expected_count")
+        .parseDoubleOption(projectionFiledsObj.expected_count),
+      tpm = row
+        .getFloat("tpm")
+        .parseDoubleOption(projectionFiledsObj.tpm)))
 
   }
 
@@ -295,7 +334,7 @@ object SampleRsemGeneOutput {
 
     val projectionFiledsObj = projectionFileds
       .asInstanceOf[SampleRsemGeneProjectons]
-    JsSuccess(SampleRsemGeneOutput(gene_id = row.getString("gene_id"),
+   /* JsSuccess(SampleRsemGeneOutput(gene_id = row.getString("gene_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -311,7 +350,26 @@ object SampleRsemGeneOutput {
         .parseDoubleOption(projectionFiledsObj.tpm),
       fpkm = row
         .getFloat("fpkm")
-        .parseDoubleOption(projectionFiledsObj.fpkm)))
+        .parseDoubleOption(projectionFiledsObj.fpkm)))*/
+
+    //TODO: this is temporary, until cassandra datamodel is changed
+     JsSuccess(SampleRsemGeneOutput(gene_id = row.getString("gene_id"),
+      sample_id = row.getString("sample_id"),
+      tpm = row
+        .getFloat("length")
+        .parseDoubleOption(projectionFiledsObj.tpm),
+      length = row
+        .getFloat("effective_length")
+        .parseDoubleOption(projectionFiledsObj.length),
+      effective_length = row
+        .getFloat("expected_count")
+        .parseDoubleOption(projectionFiledsObj.effective_length),
+      fpkm = row
+        .getFloat("tpm")
+        .parseDoubleOption(projectionFiledsObj.fpkm),
+      expected_count = row
+        .getFloat("fpkm")
+        .parseDoubleOption(projectionFiledsObj.expected_count)))
 
   }
 
@@ -351,11 +409,11 @@ object SampleRsemGeneOutput {
 case class TranscriptLevelOutput(transcript_id: String,
                                  @ApiModelProperty(
                                    name = "SampleAbundanceData",
-                                   dataType = "de.v2.model.SampleAbundanceOutput",
+                                   dataType = "de.model.SampleAbundanceOutput",
                                    required = false) sample_abundance: Option[SampleAbundanceOutput],
                                  @ApiModelProperty(
                                    name = "SampleRsemIsoformData",
-                                   dataType = "de.v2.model.SampleRsemIsoformOutput",
+                                   dataType = "de.model.SampleRsemIsoformOutput",
                                    required = false) sample_rsem_isoform: Option[SampleRsemIsoformOutput])
 
 object TranscriptLevelOutput {
@@ -396,12 +454,12 @@ case class SampleDataOutput(sample_id: String,
 
                             @ApiModelProperty(
                               name = "SampleRsemGeneData",
-                              dataType = "de.v2.model.SampleRsemGeneOutput",
+                              dataType = "de.model.SampleRsemGeneOutput",
                               required = false) rsem: Option[SampleRsemGeneOutput],
 
                             @ApiModelProperty(
                               name = "TranscriptData",
-                              dataType = "de.v2.model.TranscriptLevelOutput",
+                              dataType = "de.model.TranscriptLevelOutput",
                               required = false) transcripts: Option[Seq[TranscriptLevelOutput]])
 
 object SampleDataOutput {
