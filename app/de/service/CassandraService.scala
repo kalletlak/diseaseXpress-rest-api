@@ -4,7 +4,7 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 import com.datastax.driver.core.ResultSet
 
-import de.model.{ SampleAbundanceOutput, SampleRsemGeneOutput, SampleRsemIsoformOutput }
+import de.model.{ RsemGene, RsemIsoform, Abundance }
 import de.model.Inputs.{ FilterUnit, InputDataModel }
 import de.repository.Repository
 import io.swagger.annotations.ApiModel
@@ -19,33 +19,33 @@ trait CassandraService extends ServiceComponent {
                       filters: Seq[FilterUnit]) = dao.find(collectionName, filters)
 
     def getRsemGeneData(projection: InputDataModel,
-                        filters: Seq[FilterUnit]): Iterable[SampleRsemGeneOutput] = {
+                        filters: Seq[FilterUnit]): Iterable[RsemGene] = {
 
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet].asScala.map { row =>
-          SampleRsemGeneOutput.readRow(row,
+          RsemGene.readRow(row,
             projection).get
         }
     }
 
     def getAbundanceData(projection: InputDataModel,
-                         filters: Seq[FilterUnit]): Iterable[SampleAbundanceOutput] = {
+                         filters: Seq[FilterUnit]): Iterable[Abundance] = {
 
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet]
         .asScala
         .map { row =>
-          SampleAbundanceOutput.readRow(row,
+          Abundance.readRow(row,
             projection).get
         }
     }
 
     def getIsoformData(projection: InputDataModel,
-                       filters: Seq[FilterUnit]): Iterable[SampleRsemIsoformOutput] = {
+                       filters: Seq[FilterUnit]): Iterable[RsemIsoform] = {
 
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet].asScala.map { row =>
-          SampleRsemIsoformOutput.readRow(row,
+          RsemIsoform.readRow(row,
             projection).get
         }
 

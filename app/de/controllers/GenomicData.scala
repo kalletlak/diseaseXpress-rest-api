@@ -3,7 +3,6 @@ package de.controllers
 import scala.{ Left, Right }
 
 import de.Context
-import de.model.GeneLevelOutput
 import de.model.Inputs._
 import de.service.{ CassandraService, ElasticSearchService, MongoService }
 import de.utils.{ InvalidQueryException, JsObjectWithOption, LoggingAction, SampleDataUtil }
@@ -20,6 +19,7 @@ import io.swagger.annotations.ExampleProperty
 import de.model.Inputs.InputDataModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsString
+import de.model.GeneData
 
 class Filters @Inject() (gzipFilter: GzipFilter) extends HttpFilters {
   def filters = Seq(gzipFilter)
@@ -39,17 +39,17 @@ class GenomicData @javax.inject.Inject() (
   /**
    * Converts gene data object to tsv format
    */
-  private def tsvFormat(norms: Seq[Normalization], result: Seq[GeneLevelOutput],
+  private def tsvFormat(norms: Seq[Normalization], result: Seq[GeneData],
                         projection: Projection) = {
     val rsem = norms.contains(Normalization.rsem)
     val sample_abundance = norms.contains(Normalization.sample_abundance)
     val sample_rsem_isoform = norms.contains(Normalization.sample_rsem_isoform)
-    val header = Seq(GeneLevelOutput.getHeader(rsem, sample_abundance,
+    val header = Seq(GeneData.getHeader(rsem, sample_abundance,
       sample_rsem_isoform, norms,
       projection).mkString("\t"))
     val data = result
-      .map { x =>
-        GeneLevelOutput.getValues(x, norms, projection)
+      .map { geneData =>
+        GeneData.getValues(geneData, norms, projection)
           .map { _.mkString("\t") }
           .mkString("\n")
       }
@@ -65,18 +65,18 @@ class GenomicData @javax.inject.Inject() (
     (projection match {
       case Projection.detailed => normalizations.map { x =>
         (x, x match {
-          case Normalization.rsem => SampleRsemGeneProjectons(
+          case Normalization.rsem => RsemGeneProjectons(
             length = true,
             effective_length = true,
             expected_count = true,
             tpm = true,
             fpkm = true)
-          case Normalization.sample_abundance => SampleAbundanceProjectons(
+          case Normalization.sample_abundance => AbundanceProjectons(
             length = true,
             effective_length = true,
             expected_count = true,
             tpm = true)
-          case Normalization.sample_rsem_isoform => SampleRsemIsoformProjectons(
+          case Normalization.sample_rsem_isoform => RsemIsoformProjectons(
             length = true,
             effective_length = true,
             expected_count = true,
@@ -88,11 +88,11 @@ class GenomicData @javax.inject.Inject() (
       case Projection.summary => normalizations.map { normalization =>
         (normalization,
           normalization match {
-            case Normalization.rsem => SampleRsemGeneProjectons()
+            case Normalization.rsem => RsemGeneProjectons()
             case Normalization
-              .sample_abundance => SampleAbundanceProjectons()
+              .sample_abundance => AbundanceProjectons()
             case Normalization
-              .sample_rsem_isoform => SampleRsemIsoformProjectons()
+              .sample_rsem_isoform => RsemIsoformProjectons()
           })
       }
     })
@@ -177,7 +177,7 @@ class GenomicData @javax.inject.Inject() (
   //START : data by gene Id
   @ApiOperation(value = "get all expression data for given gene entrez ids",
     notes = "Returns expression data for given gene entrez ids",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIds(
@@ -201,7 +201,7 @@ class GenomicData @javax.inject.Inject() (
 
   @ApiOperation(value = "get expression data for given gene entrez ids and studies",
     notes = "Returns expression data for given gene entrez ids and studies",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneIdsAndStudies(
@@ -284,7 +284,7 @@ class GenomicData @javax.inject.Inject() (
   // START : data by gene symbol
   @ApiOperation(value = "get expression data for given gene symbols",
     notes = "Returns expression data for given gene symbols",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbols(
@@ -306,7 +306,7 @@ class GenomicData @javax.inject.Inject() (
 
   @ApiOperation(value = "get expression data for given gene symbols and studies",
     notes = "Returns expression data for given gene symbols and studies",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByGeneSymbolsAndStudies(
@@ -388,7 +388,7 @@ class GenomicData @javax.inject.Inject() (
   // START : data by transcript id
   @ApiOperation(value = "get expression data for given transcript ids",
     notes = "Returns expression data for given transcript ids",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIds(
@@ -410,7 +410,7 @@ class GenomicData @javax.inject.Inject() (
 
   @ApiOperation(value = "get expression data for given transcript ids and studies",
     notes = "Returns expression data for given transcript ids and studies",
-    response = classOf[GeneLevelOutput],
+    response = classOf[GeneData],
     responseContainer = "List",
     httpMethod = "GET")
   def getDataByTranscriptIdsAndStudies(

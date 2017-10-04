@@ -38,7 +38,7 @@ object Inputs {
 
     def queryElasticSearchString: Option[String] =
       values match {
-        case Some(_values) => Some(s"""{ "terms" : { "$key" : ${_values.map { x => s""" "$x" """ }.mkString("[", ",", "]")} } }""")
+        case Some(_values) => Some(s"""{ "terms" : { "$key" : ${_values.map { value => s""" "$value" """ }.mkString("[", ",", "]")} } }""")
         case None          => None
       }
   }
@@ -73,52 +73,6 @@ object Inputs {
                           study_id: Option[Seq[String]] = None,
                           sample_id: Option[Seq[String]] = None)
 
-  case class Gene(chr: String,
-                  strand: String,
-                  gene_symbol: String,
-                  gene_id: String,
-                  gene_start: Long,
-                  gene_end: Long,
-                  gene_biotype: String,
-                  transcript_id: String,
-                  transcript_start: Long,
-                  transcript_end: Long,
-                  transcript_biotype: String,
-                  entrez_id: Seq[String],
-                  refseq_mrna_id: Seq[String],
-                  refseq_protein_id: Seq[String])
-
-  object Gene {
-
-    def apply(line: String): Gene = {
-      val itr = line.split("\t", 14).iterator
-      Gene(itr.next,
-        itr.next,
-        itr.next,
-        itr.next,
-        itr.next.toLong,
-        itr.next.toLong,
-        itr.next,
-        itr.next,
-        itr.next.toLong,
-        itr.next.toLong,
-        itr.next,
-        toSeq(itr.next),
-        toSeq(itr.next),
-        toSeq(itr.next))
-    }
-
-    //convert empty value as empty list
-    def toSeq(listAsString: String): Seq[String] = {
-      listAsString match {
-        case "" => Seq()
-        case nonEmptyListAsString => nonEmptyListAsString.split(",", -1)
-          .map(_.trim).toSeq
-      }
-    }
-
-  }
-
   trait InputDataModel {
     val collection_name: String
   }
@@ -127,7 +81,7 @@ object Inputs {
 
   trait GeneModel extends InputDataModel
 
-  case class SampleAbundanceProjectons(
+  case class AbundanceProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,
@@ -137,7 +91,7 @@ object Inputs {
   }
 
   // ===========================================================================
-  case class SampleRsemGeneProjectons(
+  case class RsemGeneProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,
@@ -148,7 +102,7 @@ object Inputs {
   }
 
   // ===========================================================================
-  case class SampleRsemIsoformProjectons(
+  case class RsemIsoformProjectons(
       length: Boolean = false,
       effective_length: Boolean = false,
       expected_count: Boolean = false,

@@ -1,8 +1,9 @@
 package de.service
 
-import de.model.{ SampleAbundanceOutput, SampleDataOutput, SampleRsemGeneOutput, SampleRsemIsoformOutput, TranscriptLevelOutput }
-import de.model.DomainTypes.{ GeneId, SampleId, StudyId, TranscriptId }
-import de.model.GeneLevelOutput
+import de.model.{ RsemGene, RsemIsoform, SampleData, TranscriptData }
+import de.model.Abundance
+import de.model.DomainTypes.{ GeneId, SampleId, TranscriptId }
+import de.model.GeneData
 import de.model.Inputs.{ FilterUnit, GeneIdFilter, InputDataModel, InputFilters, SampleFilter, StudyFilter, TranscriptIdFilter }
 import de.utils.Enums.Normalization
 import de.utils.GeneDataUtil
@@ -17,16 +18,16 @@ trait ServiceComponent {
              filters: Seq[FilterUnit]): Any
 
     def getRsemGeneData(projection: InputDataModel,
-                        filters: Seq[FilterUnit]): Iterable[SampleRsemGeneOutput]
+                        filters: Seq[FilterUnit]): Iterable[RsemGene]
 
     def getAbundanceData(projection: InputDataModel,
-                         filters: Seq[FilterUnit]): Iterable[SampleAbundanceOutput]
+                         filters: Seq[FilterUnit]): Iterable[Abundance]
 
     def getIsoformData(projection: InputDataModel,
-                       filters: Seq[FilterUnit]): Iterable[SampleRsemIsoformOutput]
+                       filters: Seq[FilterUnit]): Iterable[RsemIsoform]
 
     def getData(filters: InputFilters,
-                normalizations: Map[Normalization, InputDataModel]): Seq[GeneLevelOutput] = {
+                normalizations: Map[Normalization, InputDataModel]): Seq[GeneData] = {
 
       //get queried gene objects
       val genes = filters.ref_id match {
@@ -47,7 +48,7 @@ trait ServiceComponent {
 
       val studyFilters = StudyFilter(filters.study_id)
 
-      val _abundanceData: Map[(SampleId, TranscriptId), SampleAbundanceOutput] =
+      val _abundanceData: Map[(SampleId, TranscriptId), Abundance] =
         normalizations
           .get(Normalization.sample_abundance) match {
             case Some(projection) => getAbundanceData(
@@ -61,7 +62,7 @@ trait ServiceComponent {
             case None => Map() // map it to empty Map if normalization is not passed in input query
           }
 
-      val _isoformData: Map[(SampleId, TranscriptId), SampleRsemIsoformOutput] =
+      val _isoformData: Map[(SampleId, TranscriptId), RsemIsoform] =
         normalizations
           .get(Normalization.sample_rsem_isoform) match {
             case Some(projection) => getIsoformData(
@@ -75,7 +76,7 @@ trait ServiceComponent {
             case None => Map() // map it to empty Map if normalization is not passed in input query
           }
 
-      val _rsemData: Map[(SampleId, GeneId), SampleRsemGeneOutput] =
+      val _rsemData: Map[(SampleId, GeneId), RsemGene] =
         normalizations
           .get(Normalization.rsem) match {
             case Some(projection) => getRsemGeneData(
@@ -97,7 +98,7 @@ trait ServiceComponent {
       val _trancriptData = _transcriptDataKeys
         .map {
           case (sample_id, transcript_id) => (sample_id, transcript_id) ->
-            TranscriptLevelOutput(transcript_id,
+            TranscriptData(transcript_id,
               _abundanceData.get((sample_id, transcript_id)),
               _isoformData.get((sample_id, transcript_id)))
         }
@@ -139,12 +140,12 @@ trait ServiceComponent {
                 val sampleTranscriptData = transcript_ids
                   .flatMap { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
 
-                SampleDataOutput(sample_id, sampleRsemData, if (sampleTranscriptData
+                SampleData(sample_id, sampleRsemData, if (sampleTranscriptData
                   .nonEmpty) Some(sampleTranscriptData)
                 else None)
               }
             }
-            GeneLevelOutput(gene_info.gene_id, gene_symbol, gene_data)
+            GeneData(gene_info.gene_id, gene_symbol, gene_data)
 
           }
         }

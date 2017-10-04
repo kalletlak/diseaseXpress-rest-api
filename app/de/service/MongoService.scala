@@ -1,6 +1,6 @@
 package de.service
 
-import de.model.{ SampleAbundanceOutput, SampleRsemGeneOutput, SampleRsemIsoformOutput }
+import de.model.{ RsemGene, RsemIsoform, Abundance }
 import de.model.DomainTypes.{ GeneId, TranscriptId }
 import de.model.Inputs.{ FilterUnit, InputDataModel }
 import de.repository.Repository
@@ -19,7 +19,7 @@ trait MongoService extends ServiceComponent {
              filters: Seq[FilterUnit]) = dao.find(collectionName, filters)
 
     def getRsemGeneData(projection: InputDataModel,
-                        filters: Seq[FilterUnit]): Iterable[SampleRsemGeneOutput] = {
+                        filters: Seq[FilterUnit]): Iterable[RsemGene] = {
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
         .flatMap { result =>
@@ -28,7 +28,7 @@ trait MongoService extends ServiceComponent {
             result
               .parseObjectArray("data")
               .map { _data =>
-                SampleRsemGeneOutput.readJson(
+                RsemGene.readJson(
                   gene_id,
                   _data,
                   projection).get
@@ -38,7 +38,7 @@ trait MongoService extends ServiceComponent {
     }
 
     def getAbundanceData(projection: InputDataModel,
-                         filters: Seq[FilterUnit]): Iterable[SampleAbundanceOutput] = {
+                         filters: Seq[FilterUnit]): Iterable[Abundance] = {
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
         .flatMap { result =>
@@ -47,7 +47,7 @@ trait MongoService extends ServiceComponent {
             result
               .parseObjectArray("data")
               .map { _data =>
-                SampleAbundanceOutput.readJson(
+                Abundance.readJson(
                   transcript_id,
                   _data,
                   projection).get
@@ -57,7 +57,7 @@ trait MongoService extends ServiceComponent {
     }
 
     def getIsoformData(projection: InputDataModel,
-                       filters: Seq[FilterUnit]): Iterable[SampleRsemIsoformOutput] = {
+                       filters: Seq[FilterUnit]): Iterable[RsemIsoform] = {
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
         .flatMap { result =>
@@ -66,7 +66,7 @@ trait MongoService extends ServiceComponent {
             result
               .parseObjectArray("data")
               .map { _data =>
-                SampleRsemIsoformOutput.readJson(
+                RsemIsoform.readJson(
                   transcript_id,
                   _data,
                   projection).get

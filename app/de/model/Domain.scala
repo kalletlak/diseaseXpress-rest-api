@@ -24,10 +24,7 @@ object Domain {
   }
 
   case class EitherValue(value: Either[Value, unavailable]) extends Value {
-    override val formatJson = value match {
-      case Left(x)  => x.formatJson
-      case Right(x) => x.formatJson
-    }
+    override val formatJson = value.fold( l => l.formatJson , r => r.formatJson)
     override val formatQuery = s"""$value"""
   }
 
@@ -48,7 +45,9 @@ object Domain {
     val vital_status: Either[vital_status, unavailable]
     val tags: Seq[Tag]
     def getAllTags: Seq[Tag]
-    def getAllTagsAsMap: Map[String, JsValue]
+    def getAllTagsAsMap: Map[String, JsValue] = {
+      getAllTags.map { tag => (tag.key -> tag.value.formatJson) }.toMap
+    }
 
   }
 
@@ -83,10 +82,6 @@ object Domain {
         Tag("vital_status", EitherValue(vital_status)),
         Tag("age_normal_tissue_collected_in_years", Number(age_normal_tissue_collected_in_years.toString))) ++ tags
       temp
-    }
-
-    def getAllTagsAsMap = {
-      getAllTags.map { x => (x.key -> x.value.formatJson) }.toMap
     }
 
   }
@@ -132,10 +127,6 @@ object Domain {
         Tag("event_free_survival_time_in_days", EitherValue(event_free_survival_time_in_days)),
         Tag("overall_survival_time_in_days", EitherValue(overall_survival_time_in_days))) ++ tags
       temp
-    }
-
-    def getAllTagsAsMap = {
-      getAllTags.map { x => (x.key -> x.value.formatJson) }.toMap
     }
 
   }

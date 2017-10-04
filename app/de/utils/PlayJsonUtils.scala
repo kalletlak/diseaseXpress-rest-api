@@ -20,7 +20,7 @@ object JsObjectWithOption {
           case (key, value) =>
             value match {
               case Left(value)   => Some(key -> value)
-              case Right(option) => option.map(x => key -> x)
+              case Right(option) => option.map(key -> _)
             }
         })
 
