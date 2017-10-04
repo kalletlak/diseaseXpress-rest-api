@@ -9,7 +9,7 @@ class CassandraDAO(session: Session) extends Dao {
                     filters: Seq[FilterUnit]): ResultSet = {
 
     val filters_str = filters
-      .map { x => x.queryCassandraString }
+      .flatMap { _.queryCassandraString }
       .mkString(" and ")
 
     val query_str = s"select * from $collectionName where $filters_str ALLOW FILTERING"

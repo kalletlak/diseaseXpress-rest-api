@@ -16,6 +16,7 @@ import play.api.libs.json.JsValue.jsValueToJsLookup
 import de.model.Domain._
 import com.mongodb.util.JSON
 import com.mongodb.DBObject
+import scala.io.Source
 
 object Sample {
 
@@ -144,12 +145,10 @@ object Sample {
 object SampleDataUtil {
   val studySampleMap: Map[study, Seq[Sample]] = {
 
-    val stream: InputStream = getClass
-      .getResourceAsStream("/clinical_info.txt")
+    //TODO: get url from configuration file
+    val stream = Source.fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/static-files/clinical_info.txt")
 
-    val src = scala.io.Source.fromInputStream(stream)
-
-    val result = src.getLines
+    stream.getLines
       .drop(1)
       .map {
         Sample.apply
@@ -158,8 +157,6 @@ object SampleDataUtil {
       .groupBy {
         _.study
       }
-    src.close()
-    result
   }
 
   def getStudies: Seq[String] = studySampleMap.keys.toSeq.map { _.entryName }

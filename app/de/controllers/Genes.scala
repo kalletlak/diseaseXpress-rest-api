@@ -13,6 +13,7 @@ import de.utils.GeneDataUtil
 import de.model.GeneInfoOutput
 import de.model.TranscriptWithGeneInfoOutput
 import de.utils.LoggingAction
+import de.model.Inputs.GeneSymbolQuery
 
 @Api(value = "/Genes", description = "Operations with Genes and Transcripts")
 class Genes @javax.inject.Inject()(
@@ -43,7 +44,7 @@ class Genes @javax.inject.Inject()(
                  produces = "application/json",
                  httpMethod = "GET")
   def getGeneIds() = LoggingAction {
-    Ok(Json.toJson(GeneDataUtil.getGeneIds()))
+    Ok(Json.toJson(GeneDataUtil.getGeneIds))
   }
 
   @ApiOperation(value = "get All Genes",
@@ -53,7 +54,7 @@ class Genes @javax.inject.Inject()(
                  produces = "application/json",
                  httpMethod = "GET")
   def getGenesBySymbol() = LoggingAction {
-    Ok(Json.toJson(GeneDataUtil.getGeneSymbols()))
+    Ok(Json.toJson(GeneDataUtil.getGeneSymbols))
   }
 
   @ApiOperation(value = "get All Transcripts",
@@ -63,7 +64,7 @@ class Genes @javax.inject.Inject()(
                  produces = "application/json",
                  httpMethod = "GET")
   def getTranscriptIds() = LoggingAction {
-    Ok(Json.toJson(GeneDataUtil.getTranscriptIds()))
+    Ok(Json.toJson(GeneDataUtil.getTranscriptIds))
   }
 
   @ApiOperation(value = "get Gene information",
@@ -75,9 +76,7 @@ class Genes @javax.inject.Inject()(
   def getGeneInfoByIds(gene_ids: String) = LoggingAction {
     implicit request =>
       val result = gene_ids.split(",")
-        .map { GeneDataUtil.getGeneById }
-        .filter { _.isDefined }
-        .map { _.get }
+        .flatMap { GeneDataUtil.getGeneById }
       render {
         case Accepts.Json() => Ok(Json.toJson(result))
         case AcceptsTsv()   => Ok(tsvFormat(result))
@@ -93,10 +92,10 @@ class Genes @javax.inject.Inject()(
                  httpMethod = "GET")
   def getGeneInfoBySymbols(gene_symbols: String) = LoggingAction {
     implicit request =>
-      val result = gene_symbols.split(",")
-        .map { GeneDataUtil.getGeneBySymbol }
-        .filter { _.isDefined }
-        .map { _.get }
+      val geneInputRef = GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })
+      val result = GeneDataUtil.getGeneInputRef(geneInputRef)
+    /*  val result = gene_symbols.split(",")
+        .flatMap { GeneDataUtil.getGeneBySymbol }*/
       render {
         case Accepts.Json() => Ok(Json.toJson(result))
         case AcceptsTsv()   => Ok(tsvFormat(result))
@@ -112,9 +111,7 @@ class Genes @javax.inject.Inject()(
   def getTranscriptInfo(transcript_ids: String) = LoggingAction {
     implicit request =>
       val result = transcript_ids.split(",")
-        .map { GeneDataUtil.getTranscript }
-        .filter { _.isDefined }
-        .map { _.get }
+        .flatMap { GeneDataUtil.getTranscript }
         .flatMap { obj => {
           obj.transcripts
             .map { transcript =>

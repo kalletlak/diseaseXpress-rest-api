@@ -10,97 +10,52 @@ package object DomainTypes {
   type Value = String
 }
 
-/*object InputFilters {
-
-  def writeJson(instance: InputFilters): JsValue = {
-    val temp = instance.ref_id.get.writeJson.as[JsObject]
-    val t1 = JsObjectWithOption(
-      "study_id" -> Left(Json.toJson(instance.study_id)),
-      "sample_id" -> Left(Json.toJson(instance.sample_id))).as[JsObject]
-    t1.deepMerge(temp)
-  }
-
-  def getMongoQueryString(instance: InputFilters): String = {
-    Seq(
-      if (instance.study_id.size > 0) Some(s"""{study_id: {$$in: ${Inputs.seqAsMongoString(instance.study_id)}}}""") else None,
-      if (instance.sample_id.size > 0) Some(s"""{sample_id: {$$in: ${Inputs.seqAsMongoString(instance.sample_id)}}}""") else None,
-      instance.ref_id match {
-        case Some(x) => x.queryMongoString
-        case None    => None
-      })
-      .flatten
-      .mkString("{ $and : [ ", ", ", " ] }")
-  }
-
-  def getCassandraQueryString(instance: InputFilters): String = {
-    Seq(
-      if (instance.study_id.size > 0) Some(s"{study_id in : ${instance.study_id.mkString("('", "','", "')")}") else None,
-      if (instance.sample_id.size > 0) Some(s"{sample_id in : ${instance.sample_id.mkString("('", "','", "')")}") else None,
-      instance.ref_id match {
-        case Some(x) => x.queryCassandraString
-        case None    => None
-      })
-      .flatten
-      .mkString(" and ")
-  }
-
-  def getElasticSearchQueryString(instance: InputFilters): String = {
-
-    Seq(
-      if (instance.study_id.size > 0) Some(s"""{ "terms" : { "study_id" : ${instance.study_id.map { x => s""" "$x" """ }.mkString("[", ",", "]")} } }""") else None,
-      if (instance.sample_id.size > 0) Some(s"""{ "terms" : { "sample_id" : ${instance.sample_id.map { x => s""" "$x" """ }.mkString("[", ",", "]")} } }""") else None,
-      instance.ref_id match {
-        case Some(x) => x.queryElasticSearchString
-        case None    => None
-      })
-      .flatten
-      .mkString(",")
-  }
-
-}*/
 object Inputs {
 
   def stringWithDoubleQuotes(str: String) = s""""$str""""
 
-  def seqAsMongoString(values: Seq[String]) = values
-    .map {
-      stringWithDoubleQuotes
-    }
-    .mkString("[", ", ", "]")
+  def seqAsMongoString(values: Seq[String]) =
+    values
+      .map {
+        stringWithDoubleQuotes
+      }
+      .mkString("[", ", ", "]")
 
   trait FilterUnit {
     val key: String
-    val values: Seq[String]
+    val values: Option[Seq[String]]
     def queryMongoString: Option[String] =
-      if (values.size > 0)
-        Some(s"""{$key: {$$in: ${seqAsMongoString(values)}}}""")
-      else
-        None
+      values match {
+        case Some(_values) => Some(s"""{$key: {$$in: ${seqAsMongoString(_values)}}}""")
+        case None          => None
+      }
+
     def queryCassandraString: Option[String] =
-      if (values.size > 0)
-        Some(s"{$key in : ${values.mkString("('", "','", "')")}")
-      else
-        None
+      values match {
+        case Some(_values) => Some(s"$key in ${_values.mkString("('", "','", "')")}")
+        case None          => None
+      }
+
     def queryElasticSearchString: Option[String] =
-      if (values.size > 0)
-        Some(s"""{ "terms" : { "$key" : ${values.map { x => s""" "$x" """ }.mkString("[", ",", "]")} } }""")
-      else
-        None
+      values match {
+        case Some(_values) => Some(s"""{ "terms" : { "$key" : ${_values.map { x => s""" "$x" """ }.mkString("[", ",", "]")} } }""")
+        case None          => None
+      }
   }
 
-  case class StudyFilter(override val values: Seq[String]) extends FilterUnit {
+  case class StudyFilter(override val values: Option[Seq[String]]) extends FilterUnit {
     override val key = "study_id"
   }
-  case class SampleFilter(override val values: Seq[String]) extends FilterUnit {
+  case class SampleFilter(override val values: Option[Seq[String]]) extends FilterUnit {
     override val key = "sample_id"
   }
-  case class GeneIdFilter(override val values: Seq[String]) extends FilterUnit {
+  case class GeneIdFilter(override val values: Option[Seq[String]]) extends FilterUnit {
     override val key = "gene_id"
   }
-  case class GeneSymbolFilter(override val values: Seq[String]) extends FilterUnit {
+  case class GeneSymbolFilter(override val values: Option[Seq[String]]) extends FilterUnit {
     override val key = "gene_symbol"
   }
-  case class TranscriptIdFilter(override val values: Seq[String]) extends FilterUnit {
+  case class TranscriptIdFilter(override val values: Option[Seq[String]]) extends FilterUnit {
     override val key = "transcript_id"
   }
 
@@ -115,8 +70,8 @@ object Inputs {
   case class TranscriptIdQuery(override val ref_id: Seq[String]) extends GeneQueryRef
 
   case class InputFilters(ref_id: Option[GeneQueryRef] = None,
-                          study_id: Seq[String] = Seq(),
-                          sample_id: Seq[String] = Seq())
+                          study_id: Option[Seq[String]] = None,
+                          sample_id: Option[Seq[String]] = None)
 
   case class Gene(chr: String,
                   strand: String,

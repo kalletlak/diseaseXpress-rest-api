@@ -37,9 +37,14 @@ trait ServiceComponent {
 
       }
 
-      val geneIdFilters = GeneIdFilter(genes.map { _.gene_id })
-      val transcriptIdFilters = TranscriptIdFilter(genes.flatMap { _.transcripts.map { _.transcript_id } })
+      val tempGeneIdFilters = if (genes.size > 0) Some(genes.map { _.gene_id }) else Some(Seq())
+      val geneIdFilters = GeneIdFilter(tempGeneIdFilters)
+
+      val temptranscriptIdFilters = if (genes.size > 0) Some(genes.flatMap { _.transcripts.map { _.transcript_id } }) else Some(Seq())
+      val transcriptIdFilters = TranscriptIdFilter(temptranscriptIdFilters)
+
       val sampleFilters = SampleFilter(filters.sample_id)
+
       val studyFilters = StudyFilter(filters.study_id)
 
       val _abundanceData: Map[(SampleId, TranscriptId), SampleAbundanceOutput] =
@@ -110,44 +115,36 @@ trait ServiceComponent {
         .toSeq
         .distinct
 
-      val targetGeneIds = _rsemData.map { case ((_, gene_id), _) => gene_id } ++ _transcriptDataKeys.map {
+      val targetGeneIds = _rsemData.map { case ((_, gene_id), _) => gene_id } ++ _transcriptDataKeys.flatMap {
         case (_, transcript_id) => {
-          GeneDataUtil.getTranscript(transcript_id).map { x => x.gene_id }
+          GeneDataUtil.getTranscript(transcript_id)
         }
-      }.flatten
+      }.map { _.gene_id }
 
       //join sample gene rsem data with transcript data
       //TODO: need to find a better way
-      //case(gene_id, (gene_symbol, transcript_ids))
-      // val outputGeneIds = _rsemData.map { case ((_, gene_id), _) => gene_id } ++ input_ids.map { case ((gene_id, gene_symbol), transcript_ids) => gene_id }
       targetGeneIds
         .toSeq
         .distinct
-        .map { gene_id =>
+        .flatMap(GeneDataUtil.getGeneById)
+        .map { gene_info =>
           {
-            val gene_info = GeneDataUtil.getGeneById(gene_id).get
             val gene_symbol = gene_info.gene_symbol
             val transcript_ids = gene_info.transcripts.map { _.transcript_id }
 
             val gene_data = targetSamples.map { sample_id =>
               {
-                val sampleRsemData = _rsemData.get((sample_id, gene_id))
+                val sampleRsemData = _rsemData.get((sample_id, gene_info.gene_id))
 
                 val sampleTranscriptData = transcript_ids
-                  .map { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
-                  .filter {
-                    _.isDefined
-                  }
-                  .map {
-                    _.get
-                  }
+                  .flatMap { transcript_id => _trancriptData.get((sample_id, transcript_id)) }
 
                 SampleDataOutput(sample_id, sampleRsemData, if (sampleTranscriptData
                   .nonEmpty) Some(sampleTranscriptData)
                 else None)
               }
             }
-            GeneLevelOutput(gene_id, gene_symbol, gene_data)
+            GeneLevelOutput(gene_info.gene_id, gene_symbol, gene_data)
 
           }
         }

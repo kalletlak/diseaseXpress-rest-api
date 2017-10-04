@@ -133,10 +133,10 @@ class GenomicData @javax.inject.Inject() (
       var obj = Json.obj()
       obj = if (norm_invalid.size > 0) {
 
-         obj + ("normalizations" -> JsString(norm_invalid
-            .keySet
-            .mkString("", ",",
-              " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]")))
+        obj + ("normalizations" -> JsString(norm_invalid
+          .keySet
+          .mkString("", ",",
+            " , are invalid. Must be in [rsem, sample_abundance, sample_rsem_isoform]")))
       } else Json.obj()
 
       obj = if (proj_invalid) {
@@ -214,7 +214,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -267,7 +269,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -315,7 +319,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -367,7 +373,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -415,7 +423,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -467,7 +477,9 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), study_id = studies_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(
+        ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })),
+        study_id = Some(studies_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Left(studies_ids.split(",", -1)),
@@ -518,7 +530,9 @@ class GenomicData @javax.inject.Inject() (
 
       val json = request.body
       try {
-        val filters = InputFilters(ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        val filters = InputFilters(
+          ref_id = Some(GeneSymbolQuery(gene_symbols.split(",", -1).map { _.trim })),
+          sample_id = Some(SampleDataUtil.getSamples(json).toSeq))
         getData(
           filters,
           Right(SampleDataUtil.getSamples(json).toSeq),
@@ -575,7 +589,10 @@ class GenomicData @javax.inject.Inject() (
 
       val json = request.body
       try {
-        val filters = InputFilters(ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        val filters = InputFilters(
+          ref_id = Some(GeneIdQuery(gene_ids.split(",", -1).map { _.trim })),
+          sample_id = Some(SampleDataUtil.getSamples(json).toSeq))
+
         getData(
           filters,
           Right(SampleDataUtil.getSamples(json).toSeq),
@@ -632,7 +649,9 @@ class GenomicData @javax.inject.Inject() (
 
       val json = request.body
       try {
-        val filters = InputFilters(ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })), sample_id = SampleDataUtil.getSamples(json).toSeq)
+        val filters = InputFilters(
+          ref_id = Some(TranscriptIdQuery(transcript_ids.split(",", -1).map { _.trim })),
+          sample_id = Some(SampleDataUtil.getSamples(json).toSeq))
         getData(
           filters,
           Right(SampleDataUtil.getSamples(json).toSeq),
@@ -666,7 +685,7 @@ class GenomicData @javax.inject.Inject() (
       allowableValues = "summary,detailed",
       defaultValue = "summary") projection: Option[String]) = LoggingAction {
     implicit request =>
-      val filters = InputFilters(sample_id = sample_ids.split(",", -1).map { _.trim })
+      val filters = InputFilters(sample_id = Some(sample_ids.split(",", -1).map { _.trim }))
       getData(
         filters,
         Right(sample_ids.split(",", -1).map { _.trim }),

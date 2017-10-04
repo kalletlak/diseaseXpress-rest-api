@@ -1,6 +1,6 @@
 package de.utils
 
-import java.io.InputStream
+import scala.io.Source
 
 import de.model.GeneInfoOutput
 import de.model.Inputs.{ Gene, GeneIdQuery, GeneQueryRef, GeneSymbolQuery, TranscriptIdQuery }
@@ -9,14 +9,12 @@ import io.swagger.annotations.ApiModel
 object GeneDataUtil {
 
   val geneLookup = {
-    val stream: InputStream = getClass
-      .getResourceAsStream("/gencode.v23.annotation_otherids.txt")
-    val src = scala.io.Source.fromInputStream(stream)
-    val x = src.getLines.drop(1).map {
+
+    //TODO: get url from configuration file
+    val stream = Source.fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/static-files/gencode.v23.annotation_otherids.txt")
+    stream.getLines.drop(1).map {
       Gene.apply
     }.toList
-    src.close()
-    x
   }
 
   private val genes =
@@ -37,59 +35,42 @@ object GeneDataUtil {
         GeneInfoOutput.apply
       }
 
-  private val transcriptGeneMap =
-    geneLookup
-      .map { x => x.transcript_id -> x.gene_id }
-      .toMap
-
   private val geneSymbolIdMap =
     geneLookup
-      .map { x => x.gene_symbol -> x.gene_id }
+      .map { gene => gene.gene_symbol -> gene.gene_id }
       .toMap
 
   def getGeneInputRef(geneInputRef: GeneQueryRef): Seq[GeneInfoOutput] = {
-    val temp = geneInputRef match {
-      case x: GeneIdQuery => {
-        x.ref_id.map { x => genes.get(x) }
+    geneInputRef match {
+      case gene: GeneIdQuery => {
+        gene
+          .ref_id
+          .flatMap { genes.get }
 
       }
-      case x: GeneSymbolQuery => {
-        x.ref_id.map { x =>
-          geneSymbolIdMap.get(x) match {
-            case Some(_gene_id) => genes.get(_gene_id)
-            case _              => None
-          }
-        }
+      case gene: GeneSymbolQuery => {
+        gene
+          .ref_id
+          .flatMap { geneSymbolIdMap.get }
+          .flatMap { genes.get }
 
       }
-      case x: TranscriptIdQuery => {
-        x.ref_id.map { x =>  transcripts.get(x) }
-
+      case gene: TranscriptIdQuery => {
+        gene
+          .ref_id
+          .flatMap { transcripts.get }
       }
-    }
-    temp.flatten
-  }
-
-  def getGeneIds(): Seq[String] = genes.keySet.toSeq
-
-  def getGeneSymbols(): Seq[String] = geneSymbolIdMap.keySet.toSeq
-
-  def getTranscriptIds(): Seq[String] = transcriptGeneMap.keySet.toSeq
-
-  def getGeneById(gene_id: String) = {
-    genes.get(gene_id)
-  }
-
-  def getGeneBySymbol(gene_symbol: String) = {
-
-    geneSymbolIdMap.get(gene_symbol) match {
-      case Some(gene_id) => genes.get(gene_id)
-      case _             => None
     }
   }
 
-  def getTranscript(transcript_id: String) = {
-    transcripts.get(transcript_id)
-  }
+  val getGeneIds: Seq[String] = genes.keySet.toSeq
+
+  val getGeneSymbols: Seq[String] = geneSymbolIdMap.keySet.toSeq
+
+  val getTranscriptIds: Seq[String] = transcripts.keySet.toSeq
+
+  def getGeneById(gene_id: String): Option[GeneInfoOutput] = genes.get(gene_id)
+
+  def getTranscript(transcript_id: String): Option[GeneInfoOutput] = transcripts.get(transcript_id)
 
 }
