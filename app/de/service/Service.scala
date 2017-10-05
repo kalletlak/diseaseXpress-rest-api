@@ -52,16 +52,16 @@ trait Service {
         .ref_id
         .map(GeneDataUtil.getGeneInputRef)
 
-    val geneIdFilters =
+    val geneIdFilters: GeneIdFilter =
       genes
         .map(_.map(_.gene_id))
         .zen(GeneIdFilter) //val tempGeneIdFilters = if (genes.size > 0) Some(genes.map { _.gene_id }) else Some(Seq())
  
     val transcriptIdFilters: TranscriptIdFilter = 
      genes
-       .map(_.flatMap(
-           _.transcripts
-             .map(_.transcript_id)))
+       .map(
+         _.flatMap(_.transcripts
+           .map(_.transcript_id)))
        .zen(TranscriptIdFilter) // val temptranscriptIdFilters = if (genes.size > 0) Some(genes.flatMap { _.transcripts.map { _.transcript_id } }) else Some(Seq())    
 
     val sampleFilters =

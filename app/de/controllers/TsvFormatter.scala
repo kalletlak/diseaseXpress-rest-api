@@ -63,7 +63,7 @@ object TsvFormatter { // TODO: refactor all these, they all do the same thing
   // ===========================================================================
   /** converts gene data object to tsv format */ 
   def rnaSeq(
-		    result:         Seq[GeneData],
+        result:         Seq[GeneData],
         normalizations: Seq[Normalization],
         projection:     Projection)
       : String = {

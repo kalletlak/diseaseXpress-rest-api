@@ -1,15 +1,5 @@
 package de.model
 
-package object DomainTypes {
-  type GeneId = String
-  type GeneSymbol = String
-  type TranscriptId = String
-  type SampleId = String
-  type StudyId = String
-  type Key = String
-  type Value = String
-}
-
 // ===========================================================================
 object Inputs {
 
@@ -57,6 +47,7 @@ object Inputs {
     
   }
   
+  // ---------------------------------------------------------------------------
   case class SampleFilter(
         override val values: Option[Seq[String]])
       extends FilterUnit {
@@ -65,6 +56,7 @@ object Inputs {
     
   }
   
+  // ---------------------------------------------------------------------------
   case class GeneIdFilter(
         override val values: Option[Seq[String]])
       extends FilterUnit {
@@ -73,6 +65,7 @@ object Inputs {
     
   }
   
+  // ---------------------------------------------------------------------------
   case class GeneSymbolFilter(
         override val values: Option[Seq[String]])
       extends FilterUnit {
@@ -81,6 +74,7 @@ object Inputs {
     
   }
   
+  // ---------------------------------------------------------------------------
   case class TranscriptIdFilter(
         override val values: Option[Seq[String]])
       extends FilterUnit {

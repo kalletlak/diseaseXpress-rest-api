@@ -48,17 +48,17 @@ object Domain {
   trait Sample {
     
       val sample_id:       Text
-      val patient_barcode: Either[Text, unavailable]
-      val sample_barcode:  Either[Text, unavailable]
+      val patient_barcode: Either[Text,         unavailable]
+      val sample_barcode:  Either[Text,         unavailable]
       val study:           study
       val tissue:          Text
       val definition:      Text
       val library_type:    Either[library_type, unavailable]
-      val platform:        Either[platform, unavailable]
+      val platform:        Either[platform,     unavailable]
       val center:          Text
-      val gender:          Either[gender, unavailable]
-      val race:            Either[race, unavailable]
-      val ethnicity:       Either[ethnicity, unavailable]
+      val gender:          Either[gender,       unavailable]
+      val race:            Either[race,         unavailable]
+      val ethnicity:       Either[ethnicity,    unavailable]
       val vital_status:    Either[vital_status, unavailable]
       val tags:            Seq[Tag]
 
@@ -76,17 +76,17 @@ object Domain {
     // ===========================================================================
     case class NormalSample(        
           override val sample_id: Text,
-          override val patient_barcode: Either[Text, unavailable],
-          override val sample_barcode:  Either[Text, unavailable],
+          override val patient_barcode: Either[Text,         unavailable],
+          override val sample_barcode:  Either[Text,         unavailable],
           override val study:           study,
           override val tissue:          Text,
           override val definition:      Text,
           override val library_type:    Either[library_type, unavailable],
-          override val platform:        Either[platform, unavailable],
+          override val platform:        Either[platform,     unavailable],
           override val center:          Text,
-          override val gender:          Either[gender, unavailable],
-          override val race:            Either[race, unavailable],
-          override val ethnicity:       Either[ethnicity, unavailable],
+          override val gender:          Either[gender,       unavailable],
+          override val race:            Either[race,         unavailable],
+          override val ethnicity:       Either[ethnicity,    unavailable],
           override val vital_status:    Either[vital_status, unavailable],
           override val tags:            Seq[Tag],
 
