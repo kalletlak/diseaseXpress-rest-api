@@ -4,6 +4,7 @@
 *.settings/*
 *.classpath
 *.project
+*/*.log
 target/*
 */bin/*
 */.cache*
@@ -11,3 +12,5 @@ project/*
 !project/assembly.sbt
 /app/test
 application.*.conf
+logs/application.log
+conf/application.conf

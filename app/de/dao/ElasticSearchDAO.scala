@@ -20,7 +20,7 @@ class ElasticSearchDAO(session: ElasticSearchSession) extends Dao {
             "filter" : {
                  "bool" : {
                     "must" : [
-                        ${filtersList.map { x => x.queryElasticSearchString }.flatten.mkString(",")}
+                        ${filtersList.flatMap { _.queryElasticSearchString }.mkString(",")}
                     ]
                   }
               }

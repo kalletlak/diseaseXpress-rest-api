@@ -9,8 +9,8 @@ trait Comparison
 trait Logical
 
 case class InvalidQueryException(private val message: String = "",
-                           private val cause: Throwable = None.orNull)
-                      extends Exception(message, cause)
+                                 private val cause: Throwable = None.orNull)
+    extends Exception(message, cause)
 
 sealed trait OperationType extends EnumEntry
 object OperationType extends Enum[OperationType] {
@@ -86,7 +86,7 @@ case class QueryObject(key: String, value: Query) extends Query {
 
 case class Base(key: String, value: Seq[Query]) extends Query {
   val queryKey = key
-  val queryValue = value.map { x => x.formatQuery }.mkString("[", ",", "]")
+  val queryValue = value.map { _.formatQuery }.mkString("[", ",", "]")
   override val formatQuery = s"""{$queryKey : $queryValue}"""
   override val formatJson = JsString(formatQuery)
 }
@@ -128,25 +128,23 @@ object MongoQuery {
                 }
                 case (kx: String, vx: JsArray) => {
 
-                  val temp = vx.value.flatMap {_  match {
-                        case x: JsString => Some(Seq(StringValue(x.value)))
-                        case x:Any           => {
-                          assert(false,InvalidQueryException(s"""$x should be a string"""))
-                          None
-                        }
+                  val temp = vx.value.flatMap {
+                    _ match {
+                      case x: JsString => Some(Seq(StringValue(x.value)))
+                      case x: Any => {
+                        assert(false, InvalidQueryException(s"""$x should be a string"""))
+                        None
                       }
+                    }
                   }
                     .flatten
-                  val t1 = temp.map { x =>
-                    {
-                      val queryValue = x.formatQuery
-                      s""""$queryValue""""
-                    }
-                  }.mkString("[", ",", "]")
+                  val t1 = temp
+                    .map { x => s""""${x.formatQuery}"""" }
+                    .mkString("[", ",", "]")
                   Some(StringValue(s"""{$$and: [{"tags.key": "$kx"}, {"tags.value": {$$not:{$operation1: $t1}}}]}"""))
                 }
-                case x:Any => {
-                  assert(false,InvalidQueryException(s"""invalid identifier : $x"""))
+                case x: Any => {
+                  assert(false, InvalidQueryException(s"""invalid identifier : $x"""))
                   None
                 }
 
@@ -154,13 +152,13 @@ object MongoQuery {
               Some(temp)
             }
             case x: Any => {
-              assert(false,throw new InvalidQueryException(s"""$x should be comparison operator"""))
+              assert(false, throw new InvalidQueryException(s"""$x should be comparison operator"""))
               None
             }
           }
         }
-        case x:Any => {
-          assert(false,InvalidQueryException(s"""invalid $x"""))
+        case x: Any => {
+          assert(false, InvalidQueryException(s"""invalid $x"""))
           None
         }
       }.flatten.toSeq.head
@@ -189,14 +187,14 @@ object MongoQuery {
                 case OperationType.$not => { parseNotQuery(v) }
                 case operation: Logical => {
                   val x = operation.entryName
-                  assert(false,InvalidQueryException(s"""invalid cannot be logical : $x"""))
+                  assert(false, InvalidQueryException(s"""invalid cannot be logical : $x"""))
                   ???
                 }
               }
             }
             //no nested query objects
-            case x:Any => {
-              assert(false,InvalidQueryException(s"""invalid operator : $x"""))
+            case x: Any => {
+              assert(false, InvalidQueryException(s"""invalid operator : $x"""))
               ???
             }
           }
@@ -218,8 +216,8 @@ object MongoQuery {
             }
           }
         }
-        case x:Any => {
-          assert(false,InvalidQueryException(s"""invalid : $x"""))
+        case x: Any => {
+          assert(false, InvalidQueryException(s"""invalid : $x"""))
           ???
         }
       }
@@ -230,7 +228,7 @@ object MongoQuery {
     value match {
       case obj: JsObject => parseJsObject(obj, None).head
       case _ => {
-        assert(false,InvalidQueryException(s"""$value should be a object"""))
+        assert(false, InvalidQueryException(s"""$value should be a object"""))
         ???
       }
     }

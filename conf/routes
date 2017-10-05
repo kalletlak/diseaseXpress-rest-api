@@ -32,7 +32,8 @@ POST   /api/v1/tags/data/genes/symbols/:gene_symbols/normalizations/:normalizati
 POST   /api/v1/tags/data/genes/ids/:gene_ids/normalizations/:normalizations                           @de.controllers.GenomicData.getDataByGeneIdsAndTagsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
 POST   /api/v1/tags/data/transcripts/ids/:transcript_ids/normalizations/:normalizations               @de.controllers.GenomicData.getDataByTranscriptIdsAndTagsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
 
-GET    /api/v1/data/samples/:samples/normalizations/:normalizations       @de.controllers.GenomicData.getDataBySamplesAndNormalizations(samples:String,normalizations:String, projection:Option[String])
+POST    /api/v1/data/normalizations/:normalizations                                                    @de.controllers.GenomicData.getDataByTagsAndNormalizations(normalizations:String, projection:Option[String])
+
 
 GET    /                                                                                              @controllers.Default.redirect(to = "/api-docs/")
 

@@ -32,7 +32,7 @@ class MongoDAO(
     //required, toPlayJsObject throws error for ObjectId type
 
     val filters_str = filters
-      .map { x => x.queryMongoString }
+      .map { _.queryMongoString }
       .mkString("{ $and : [ ", ", ", " ] }")
 
     // set _id: 0 since converting it to JsObject throws an error

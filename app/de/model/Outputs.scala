@@ -13,39 +13,40 @@ import de.utils.Enums.Projection
 import de.utils.Enums.Normalization
 import com.datastax.driver.core.Row
 import de.utils.NumberUtils.DoubleImplicits
+import de.utils.Transcript
 
 //initialized parameters with default values. This would be used in getting tsv format data
 //when querying for a particular normalization and doesn't have any data in the database
-@ApiModel("SampleRsemIsoformData")
-case class SampleRsemIsoformOutput(transcript_id: String = "",
-                                   sample_id: String = "",
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) length: Option[Double] = None,
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) effective_length: Option[Double] = None,
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) expected_count: Option[Double] = None,
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) tpm: Option[Double] = None,
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) fpkm: Option[Double] = None,
-                                   @ApiModelProperty(
-                                     dataType = "double",
-                                     required = false) isoform_percentage: Option[Double] = None)
+@ApiModel("RsemIsoformData")
+case class RsemIsoform(transcript_id: String = "",
+                       sample_id: String = "",
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) length: Option[Double] = None,
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) effective_length: Option[Double] = None,
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) expected_count: Option[Double] = None,
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) tpm: Option[Double] = None,
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) fpkm: Option[Double] = None,
+                       @ApiModelProperty(
+                         dataType = "double",
+                         required = false) isoform_percentage: Option[Double] = None)
 
-object SampleRsemIsoformOutput {
+object RsemIsoform {
 
   def readJson(transcript_id: String,
                obj: JsObject,
-               projectionFileds: InputDataModel = new SampleRsemIsoformProjectons): JsResult[SampleRsemIsoformOutput] = {
+               projectionFileds: InputDataModel = new RsemIsoformProjectons): JsResult[RsemIsoform] = {
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleRsemIsoformProjectons]
-    JsSuccess(SampleRsemIsoformOutput(
+      .asInstanceOf[RsemIsoformProjectons]
+    JsSuccess(RsemIsoform(
       transcript_id = transcript_id,
       sample_id = (obj \ "sample_id")
         .as[String],
@@ -75,12 +76,12 @@ object SampleRsemIsoformOutput {
             .isoform_percentage)))
 
   }
-     def readRow(row: Row,
-              projectionFileds: InputDataModel = new SampleRsemIsoformProjectons()): JsResult[SampleRsemIsoformOutput] = {
+  def readRow(row: Row,
+              projectionFileds: InputDataModel = new RsemIsoformProjectons()): JsResult[RsemIsoform] = {
 
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleRsemIsoformProjectons]
-    /*JsSuccess(SampleRsemIsoformOutput(transcript_id = row.getString("transcript_id"),
+      .asInstanceOf[RsemIsoformProjectons]
+    JsSuccess(RsemIsoform(transcript_id = row.getString("transcript_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -98,44 +99,21 @@ object SampleRsemIsoformOutput {
         .getFloat("fpkm")
         .parseDoubleOption(projectionFiledsObj.fpkm),
       isoform_percentage = row
-        .getFloat("isoform_percentage")
-        .parseDoubleOption(projectionFiledsObj.isoform_percentage)))*/
-
-      //TODO: this is temporary
-       JsSuccess(SampleRsemIsoformOutput(transcript_id = row.getString("transcript_id"),
-      sample_id = row.getString("sample_id"),
-      fpkm = row
-        .getFloat("length")
-        .parseDoubleOption(projectionFiledsObj.length),
-      length = row
-        .getFloat("effective_length")
-        .parseDoubleOption(projectionFiledsObj.effective_length),
-      effective_length = row
-        .getFloat("expected_count")
-        .parseDoubleOption(projectionFiledsObj.expected_count),
-      isoform_percentage = row
-        .getFloat("tpm")
-        .parseDoubleOption(projectionFiledsObj.tpm),
-      expected_count = row
-        .getFloat("fpkm")
-        .parseDoubleOption(projectionFiledsObj.fpkm),
-      tpm = row
         .getFloat("isoform_percentage")
         .parseDoubleOption(projectionFiledsObj.isoform_percentage)))
-
   }
 
-  implicit val writeJson = new Writes[SampleRsemIsoformOutput] {
-    def writes(obj: SampleRsemIsoformOutput): JsValue = {
-      JsObjectWithOption("length" -> Right(obj.length.map(x => Json.toJson(x))),
+  implicit val writeJson = new Writes[RsemIsoform] {
+    def writes(obj: RsemIsoform): JsValue = {
+      JsObjectWithOption("length" -> Right(obj.length.map(Json.toJson(_))),
         "effective_length" -> Right(obj.effective_length
-          .map(x => Json.toJson(x))),
+          .map(Json.toJson(_))),
         "expected_count" -> Right(obj.expected_count
-          .map(x => Json.toJson(x))),
-        "tpm" -> Right(obj.tpm.map(x => Json.toJson(x))),
-        "fpkm" -> Right(obj.fpkm.map(x => Json.toJson(x))),
+          .map(Json.toJson(_))),
+        "tpm" -> Right(obj.tpm.map(Json.toJson(_))),
+        "fpkm" -> Right(obj.fpkm.map(Json.toJson(_))),
         "isoform_percentage" -> Right(obj.isoform_percentage
-          .map(x => Json.toJson(x))))
+          .map(Json.toJson(_))))
     }
   }
 
@@ -149,7 +127,7 @@ object SampleRsemIsoformOutput {
     case Projection.summary => Seq("tpm")
   }
 
-  def getValues(obj: SampleRsemIsoformOutput,
+  def getValues(obj: RsemIsoform,
                 projection: Projection) = projection match {
     case Projection.detailed => Seq(obj.length.getOrElse(""),
       obj.effective_length.getOrElse(""),
@@ -162,8 +140,8 @@ object SampleRsemIsoformOutput {
 }
 
 //initialized parameters with default values. used would be used when getting tsv format data
-@ApiModel("SampleAbundanceData")
-case class SampleAbundanceOutput(
+@ApiModel("AbundanceData")
+case class Abundance(
   transcript_id: String = "",
   sample_id: String = "",
   @ApiModelProperty(
@@ -179,15 +157,15 @@ case class SampleAbundanceOutput(
     dataType = "double",
     required = false) tpm: Option[Double] = None)
 
-object SampleAbundanceOutput {
+object Abundance {
 
   def readJson(transcript_id: String,
                obj: JsObject,
-               projectionFileds: InputDataModel = new SampleAbundanceProjectons): JsResult[SampleAbundanceOutput] = {
+               projectionFileds: InputDataModel = new AbundanceProjectons): JsResult[Abundance] = {
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleAbundanceProjectons]
+      .asInstanceOf[AbundanceProjectons]
 
-    JsSuccess(SampleAbundanceOutput(
+    JsSuccess(Abundance(
       transcript_id = transcript_id,
       sample_id = (obj \ "sample_id").as[String],
       length = obj
@@ -208,12 +186,12 @@ object SampleAbundanceOutput {
             .tpm)))
   }
 
-    def readRow(row: Row,
-              projectionFileds: InputDataModel = new SampleAbundanceProjectons()): JsResult[SampleAbundanceOutput] = {
+  def readRow(row: Row,
+              projectionFileds: InputDataModel = new AbundanceProjectons()): JsResult[Abundance] = {
 
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleAbundanceProjectons]
-/*   SampleAbundanceOutput(transcript_id = row.getString("transcript_id"),
+      .asInstanceOf[AbundanceProjectons]
+    JsSuccess(Abundance(transcript_id = row.getString("transcript_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -222,38 +200,21 @@ object SampleAbundanceOutput {
         .getFloat("effective_length")
         .parseDoubleOption(projectionFiledsObj.effective_length),
       expected_count = row
-        .getFloat("expected_count")
-        .parseDoubleOption(projectionFiledsObj.expected_count),
-      tpm = row
-        .getFloat("tpm")
-        .parseDoubleOption(projectionFiledsObj.tpm))*/
-
-    //TODO: this is temporary
-      JsSuccess(SampleAbundanceOutput(transcript_id = row.getString("transcript_id"),
-      sample_id = row.getString("sample_id"),
-      expected_count = row
-        .getFloat("length")
-        .parseDoubleOption(projectionFiledsObj.length),
-      length = row
-        .getFloat("effective_length")
-        .parseDoubleOption(projectionFiledsObj.effective_length),
-      effective_length = row
         .getFloat("expected_count")
         .parseDoubleOption(projectionFiledsObj.expected_count),
       tpm = row
         .getFloat("tpm")
         .parseDoubleOption(projectionFiledsObj.tpm)))
-
   }
 
-  implicit val writeJson = new Writes[SampleAbundanceOutput] {
-    def writes(obj: SampleAbundanceOutput): JsValue = {
-      JsObjectWithOption("length" -> Right(obj.length.map(x => Json.toJson(x))),
+  implicit val writeJson = new Writes[Abundance] {
+    def writes(obj: Abundance): JsValue = {
+      JsObjectWithOption("length" -> Right(obj.length.map(Json.toJson(_))),
         "effective_length" -> Right(obj.effective_length
-          .map(x => Json.toJson(x))),
+          .map(Json.toJson(_))),
         "expected_count" -> Right(obj.expected_count
-          .map(x => Json.toJson(x))),
-        "tpm" -> Right(obj.tpm.map(x => Json.toJson(x))))
+          .map(Json.toJson(_))),
+        "tpm" -> Right(obj.tpm.map(Json.toJson(_))))
     }
   }
 
@@ -265,7 +226,7 @@ object SampleAbundanceOutput {
     case Projection.summary => Seq("tpm")
   }
 
-  def getValues(obj: SampleAbundanceOutput,
+  def getValues(obj: Abundance,
                 projection: Projection) = projection match {
     case Projection.detailed => Seq(obj.length.getOrElse(""),
       obj.effective_length.getOrElse(""),
@@ -277,8 +238,8 @@ object SampleAbundanceOutput {
 }
 
 //initialized parameters with default values. used would be used when getting tsv format data
-@ApiModel("SampleRsemGeneData")
-case class SampleRsemGeneOutput(
+@ApiModel("RsemGeneData")
+case class RsemGene(
   gene_id: String = "",
   sample_id: String = "",
   @ApiModelProperty(
@@ -297,14 +258,14 @@ case class SampleRsemGeneOutput(
     dataType = "double",
     required = false) fpkm: Option[Double] = None)
 
-object SampleRsemGeneOutput {
+object RsemGene {
   def readJson(gene_id: String,
                obj: JsObject,
-               projectionFileds: InputDataModel = new SampleRsemGeneProjectons()): JsResult[SampleRsemGeneOutput] = {
+               projectionFileds: InputDataModel = new RsemGeneProjectons()): JsResult[RsemGene] = {
 
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleRsemGeneProjectons]
-    JsSuccess(SampleRsemGeneOutput(gene_id = gene_id,
+      .asInstanceOf[RsemGeneProjectons]
+    JsSuccess(RsemGene(gene_id = gene_id,
       sample_id = (obj \ "sample_id").as[String],
       length = obj
         .parseDoubleOption("length",
@@ -330,11 +291,11 @@ object SampleRsemGeneOutput {
   }
 
   def readRow(row: Row,
-              projectionFileds: InputDataModel = new SampleRsemGeneProjectons()): JsResult[SampleRsemGeneOutput] = {
+              projectionFileds: InputDataModel = new RsemGeneProjectons()): JsResult[RsemGene] = {
 
     val projectionFiledsObj = projectionFileds
-      .asInstanceOf[SampleRsemGeneProjectons]
-   /* JsSuccess(SampleRsemGeneOutput(gene_id = row.getString("gene_id"),
+      .asInstanceOf[RsemGeneProjectons]
+    JsSuccess(RsemGene(gene_id = row.getString("gene_id"),
       sample_id = row.getString("sample_id"),
       length = row
         .getFloat("length")
@@ -350,38 +311,18 @@ object SampleRsemGeneOutput {
         .parseDoubleOption(projectionFiledsObj.tpm),
       fpkm = row
         .getFloat("fpkm")
-        .parseDoubleOption(projectionFiledsObj.fpkm)))*/
-
-    //TODO: this is temporary, until cassandra datamodel is changed
-     JsSuccess(SampleRsemGeneOutput(gene_id = row.getString("gene_id"),
-      sample_id = row.getString("sample_id"),
-      tpm = row
-        .getFloat("length")
-        .parseDoubleOption(projectionFiledsObj.tpm),
-      length = row
-        .getFloat("effective_length")
-        .parseDoubleOption(projectionFiledsObj.length),
-      effective_length = row
-        .getFloat("expected_count")
-        .parseDoubleOption(projectionFiledsObj.effective_length),
-      fpkm = row
-        .getFloat("tpm")
-        .parseDoubleOption(projectionFiledsObj.fpkm),
-      expected_count = row
-        .getFloat("fpkm")
-        .parseDoubleOption(projectionFiledsObj.expected_count)))
-
+        .parseDoubleOption(projectionFiledsObj.fpkm)))
   }
 
-  implicit val writeJson = new Writes[SampleRsemGeneOutput] {
-    def writes(obj: SampleRsemGeneOutput): JsValue = {
-      JsObjectWithOption("length" -> Right(obj.length.map(x => Json.toJson(x))),
+  implicit val writeJson = new Writes[RsemGene] {
+    def writes(obj: RsemGene): JsValue = {
+      JsObjectWithOption("length" -> Right(obj.length.map(Json.toJson(_))),
         "effective_length" -> Right(obj.effective_length
-          .map(x => Json.toJson(x))),
+          .map(Json.toJson(_))),
         "expected_count" -> Right(obj.expected_count
-          .map(x => Json.toJson(x))),
-        "tpm" -> Right(obj.tpm.map(x => Json.toJson(x))),
-        "fpkm" -> Right(obj.fpkm.map(x => Json.toJson(x))))
+          .map(Json.toJson(_))),
+        "tpm" -> Right(obj.tpm.map(Json.toJson(_))),
+        "fpkm" -> Right(obj.fpkm.map(Json.toJson(_))))
     }
   }
 
@@ -394,7 +335,7 @@ object SampleRsemGeneOutput {
     case Projection.summary => Seq("fpkm")
   }
 
-  def getValues(obj: SampleRsemGeneOutput,
+  def getValues(obj: RsemGene,
                 projection: Projection) = projection match {
     case Projection.detailed => Seq(obj.length.getOrElse(""),
       obj.effective_length.getOrElse(""),
@@ -406,39 +347,39 @@ object SampleRsemGeneOutput {
 }
 
 @ApiModel("TranscriptData")
-case class TranscriptLevelOutput(transcript_id: String,
-                                 @ApiModelProperty(
-                                   name = "SampleAbundanceData",
-                                   dataType = "de.model.SampleAbundanceOutput",
-                                   required = false) sample_abundance: Option[SampleAbundanceOutput],
-                                 @ApiModelProperty(
-                                   name = "SampleRsemIsoformData",
-                                   dataType = "de.model.SampleRsemIsoformOutput",
-                                   required = false) sample_rsem_isoform: Option[SampleRsemIsoformOutput])
+case class TranscriptData(transcript_id: String,
+                          @ApiModelProperty(
+                            name = "SampleAbundanceData",
+                            dataType = "de.model.Abundance",
+                            required = false) sample_abundance: Option[Abundance],
+                          @ApiModelProperty(
+                            name = "RsemIsoformData",
+                            dataType = "de.model.RsemIsoform",
+                            required = false) sample_rsem_isoform: Option[RsemIsoform])
 
-object TranscriptLevelOutput {
+object TranscriptData {
 
-  implicit val WriteJson = Json.writes[TranscriptLevelOutput]
+  implicit val WriteJson = Json.writes[TranscriptData]
 
-  def getValues(obj: TranscriptLevelOutput,
+  def getValues(obj: TranscriptData,
                 norms: Seq[Normalization],
                 projection: Projection) = {
     val sample_abundance_values = obj.sample_abundance match {
-      case Some(x) => SampleAbundanceOutput.getValues(x, projection)
+      case Some(data) => Abundance.getValues(data, projection)
       case _ => {
         if (norms.contains(Normalization.sample_abundance))
-          SampleAbundanceOutput.getValues(SampleAbundanceOutput(), projection)
+          Abundance.getValues(Abundance(), projection)
         else
           Seq()
       }
     }
 
     val sample_rsem_isoform_values = obj.sample_rsem_isoform match {
-      case Some(x) => SampleRsemIsoformOutput.getValues(x, projection)
+      case Some(data) => RsemIsoform.getValues(data, projection)
       case _ => {
         if (norms.contains(Normalization.rsem))
-          SampleRsemIsoformOutput
-            .getValues(SampleRsemIsoformOutput(), projection)
+          RsemIsoform
+            .getValues(RsemIsoform(), projection)
         else
           Seq()
       }
@@ -450,30 +391,30 @@ object TranscriptLevelOutput {
 }
 
 @ApiModel("SampleData")
-case class SampleDataOutput(sample_id: String,
+case class SampleData(sample_id: String,
 
-                            @ApiModelProperty(
-                              name = "SampleRsemGeneData",
-                              dataType = "de.model.SampleRsemGeneOutput",
-                              required = false) rsem: Option[SampleRsemGeneOutput],
+                      @ApiModelProperty(
+                        name = "SampleRsemGeneData",
+                        dataType = "de.model.RsemGene",
+                        required = false) rsem: Option[RsemGene],
 
-                            @ApiModelProperty(
-                              name = "TranscriptData",
-                              dataType = "de.model.TranscriptLevelOutput",
-                              required = false) transcripts: Option[Seq[TranscriptLevelOutput]])
+                      @ApiModelProperty(
+                        name = "TranscriptData",
+                        dataType = "de.model.TranscriptData",
+                        required = false) transcripts: Option[Seq[TranscriptData]])
 
-object SampleDataOutput {
+object SampleData {
 
-  implicit val WriteJson = Json.writes[SampleDataOutput]
+  implicit val WriteJson = Json.writes[SampleData]
 
-  def getValues(obj: SampleDataOutput,
+  def getValues(obj: SampleData,
                 norms: Seq[Normalization],
                 projection: Projection) = {
     val sample_rsem_values = obj.rsem match {
-      case Some(x) => SampleRsemGeneOutput.getValues(x, projection)
+      case Some(data) => RsemGene.getValues(data, projection)
       case _ => {
         if (norms.contains(Normalization.rsem))
-          SampleRsemGeneOutput.getValues(SampleRsemGeneOutput(), projection)
+          RsemGene.getValues(RsemGene(), projection)
         else
           Seq()
       }
@@ -484,7 +425,7 @@ object SampleDataOutput {
 
     obj.transcripts match {
       case Some(transcripts) => transcripts.map { transcript =>
-        sample_rsem_values_with_sample_id ++ TranscriptLevelOutput
+        sample_rsem_values_with_sample_id ++ TranscriptData
           .getValues(transcript, norms, projection)
       }
       case _ => Seq(sample_rsem_values_with_sample_id)
@@ -494,14 +435,14 @@ object SampleDataOutput {
 }
 
 @ApiModel("GeneData")
-case class GeneLevelOutput(
+case class GeneData(
   gene_id: String,
   gene_symbol: String,
   @ApiModelProperty(
-    name = "SampleData") data: Seq[SampleDataOutput])
+    name = "SampleData") data: Seq[SampleData])
 
-object GeneLevelOutput {
-  implicit val WriteJson = Json.writes[GeneLevelOutput]
+object GeneData {
+  implicit val WriteJson = Json.writes[GeneData]
 
   def getHeader(rsem: Boolean,
                 sample_abundance: Boolean,
@@ -512,56 +453,56 @@ object GeneLevelOutput {
       norms
       .map {
         _ match {
-          case Normalization.rsem => SampleRsemGeneOutput
+          case Normalization.rsem => RsemGene
             .getHeader(projection)
-            .map { x => s"""rsem.$x""" }
+            .map { "rsem." + _ }
           case Normalization
             .sample_abundance => (Seq("transcript_id") ++
-            SampleAbundanceOutput
+            Abundance
             .getHeader(projection)
-            .map { x => s"""sample_abundance.$x""" })
-            .map { x => s"""transcripts.$x""" }
+            .map { "sample_abundance." + _ })
+            .map { "transcripts." + _ }
           case Normalization
             .sample_rsem_isoform => (Seq("transcript_id") ++
-            SampleRsemIsoformOutput
+            RsemIsoform
             .getHeader(projection)
-            .map { x => s"""sample_rsem_isoform.$x""" })
-            .map { x => s"""transcripts.$x""" }
+            .map { "sample_rsem_isoform." + _ })
+            .map { "transcripts." + _ }
         }
       }
       .flatMap {
-        _.map { x => s"""data.$x""" }
+        _.map { "data." + _ }
       }
       .distinct
 
-  def getValues(obj: GeneLevelOutput,
+  def getValues(obj: GeneData,
                 norms: Seq[Normalization],
                 projection: Projection) = {
-    obj.data.flatMap { x =>
-      SampleDataOutput.getValues(x, norms, projection)
-        .map { x => Seq(obj.gene_id, obj.gene_symbol) ++ x }
+    obj.data.flatMap { sampleData =>
+      SampleData.getValues(sampleData, norms, projection)
+        .map { Seq(obj.gene_id, obj.gene_symbol) ++ _ }
     }
   }
 }
 
 @ApiModel("TranscriptWithGeneInfo")
-case class TranscriptWithGeneInfoOutput(
+case class TranscriptWithGeneInfo(
   transcript_id: String,
   start: Long,
   end: Long,
   biotype: String,
-  entrez_ids: Seq[String],
-  refseq_mrna_ids: Seq[String],
-  refseq_protein_ids: Seq[String],
+  entrez_ids: Option[Seq[String]],
+  refseq_mrna_ids: Option[Seq[String]],
+  refseq_protein_ids: Option[Seq[String]],
   gene_id: String,
   gene_symbol: String)
 
-object TranscriptWithGeneInfoOutput {
-  def apply(obj: TranscriptInfoOutput,
+object TranscriptWithGeneInfo {
+  def apply(obj: TranscriptInfo,
             gene_id: String,
-            gene_symbol: String): TranscriptWithGeneInfoOutput = {
+            gene_symbol: String): TranscriptWithGeneInfo = {
 
-    TranscriptWithGeneInfoOutput(obj.transcript_id,
+    TranscriptWithGeneInfo(obj.transcript_id,
       obj.start,
       obj.end,
       obj.biotype,
@@ -572,7 +513,7 @@ object TranscriptWithGeneInfoOutput {
       gene_symbol)
   }
 
-  implicit val WriteJson = Json.writes[TranscriptWithGeneInfoOutput]
+  implicit val WriteJson = Json.writes[TranscriptWithGeneInfo]
 
   def getHeader = Seq("transcript_id",
     "start",
@@ -584,7 +525,7 @@ object TranscriptWithGeneInfoOutput {
     "gene_id",
     "gene_symbol")
 
-  def getValues(obj: TranscriptWithGeneInfoOutput) =
+  def getValues(obj: TranscriptWithGeneInfo) =
     Seq(obj.transcript_id,
       obj.start,
       obj.end,
@@ -598,27 +539,27 @@ object TranscriptWithGeneInfoOutput {
 }
 
 @ApiModel("Transcript")
-case class TranscriptInfoOutput(transcript_id: String,
-                                start: Long,
-                                end: Long,
-                                biotype: String,
-                                entrez_ids: Seq[String],
-                                refseq_mrna_ids: Seq[String],
-                                refseq_protein_ids: Seq[String])
+case class TranscriptInfo(transcript_id: String,
+                          start: Long,
+                          end: Long,
+                          biotype: String,
+                          entrez_ids: Option[Seq[String]],
+                          refseq_mrna_ids: Option[Seq[String]],
+                          refseq_protein_ids: Option[Seq[String]])
 
-object TranscriptInfoOutput {
-  def apply(geneTranscriptInfo: Gene): TranscriptInfoOutput = {
-    TranscriptInfoOutput(
-      geneTranscriptInfo.transcript_id,
-      geneTranscriptInfo.transcript_start,
-      geneTranscriptInfo.transcript_end,
-      geneTranscriptInfo.transcript_biotype,
-      geneTranscriptInfo.entrez_id,
-      geneTranscriptInfo.refseq_mrna_id,
-      geneTranscriptInfo.refseq_protein_id)
+object TranscriptInfo {
+  def apply(obj: Transcript): TranscriptInfo = {
+    TranscriptInfo(
+      obj.transcript_id,
+      obj.transcript_start,
+      obj.transcript_end,
+      obj.transcript_biotype,
+      obj.entrez_id,
+      obj.refseq_mrna_id,
+      obj.refseq_protein_id)
   }
 
-  implicit val WriteJson = Json.writes[TranscriptInfoOutput]
+  implicit val WriteJson = Json.writes[TranscriptInfo]
 
   def getHeader = Seq("transcript_id",
     "start",
@@ -628,7 +569,7 @@ object TranscriptInfoOutput {
     "refseq_mrna_ids",
     "refseq_protein_ids")
 
-  def getValues(obj: TranscriptInfoOutput) = Seq(obj.transcript_id,
+  def getValues(obj: TranscriptInfo) = Seq(obj.transcript_id,
     obj.start,
     obj.end,
     obj.biotype,
@@ -640,18 +581,18 @@ object TranscriptInfoOutput {
 }
 
 @ApiModel(value = "Gene")
-case class GeneInfoOutput(gene_id: String,
-                          gene_symbol: String,
-                          start: Long,
-                          end: Long,
-                          biotype: String,
-                          chr: String,
-                          strand: String,
-                          transcripts: Seq[TranscriptInfoOutput])
+case class GeneInfo(gene_id: String,
+                    gene_symbol: String,
+                    start: Long,
+                    end: Long,
+                    biotype: String,
+                    chr: String,
+                    strand: String,
+                    transcripts: Seq[TranscriptInfo])
 
-object GeneInfoOutput {
-  def apply(geneTranscriptInfo: Seq[Gene]): GeneInfoOutput = {
-    GeneInfoOutput(geneTranscriptInfo(0).gene_id,
+object GeneInfo {
+  def apply(geneTranscriptInfo: Seq[Transcript]): GeneInfo = {
+    GeneInfo(geneTranscriptInfo(0).gene_id,
       geneTranscriptInfo(0).gene_symbol,
       geneTranscriptInfo(0).gene_start,
       geneTranscriptInfo(0).gene_end,
@@ -659,11 +600,11 @@ object GeneInfoOutput {
       geneTranscriptInfo(0).chr,
       geneTranscriptInfo(0).strand,
       geneTranscriptInfo.map {
-        TranscriptInfoOutput.apply
+        TranscriptInfo.apply
       })
   }
 
-  implicit val WriteJson = Json.writes[GeneInfoOutput]
+  implicit val WriteJson = Json.writes[GeneInfo]
 
   def getHeader = Seq("gene_id",
     "gene_symbol",
@@ -671,10 +612,10 @@ object GeneInfoOutput {
     "end",
     "biotype",
     "chr",
-    "strand") ++ TranscriptInfoOutput.getHeader
-    .map { x => s"""transcripts.$x""" }
+    "strand") ++ TranscriptInfo.getHeader
+    .map { "transcripts." + _ }
 
-  def getValues(obj: GeneInfoOutput) = {
+  def getValues(obj: GeneInfo) = {
     val _genedata = Seq(obj.gene_id,
       obj.gene_symbol,
       obj.start,
@@ -684,7 +625,7 @@ object GeneInfoOutput {
       obj.strand)
     obj.transcripts
       .map { transcript =>
-        _genedata ++ TranscriptInfoOutput
+        _genedata ++ TranscriptInfo
           .getValues(transcript)
       }
   }
