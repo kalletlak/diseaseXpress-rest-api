@@ -1,65 +1,79 @@
 package de.controllers
 
-import io.swagger.annotations.Api
-import play.api.mvc.Controller
-import io.swagger.annotations.ApiOperation
+import play.api.Configuration
 import play.api.libs.json.Json
-import de.utils.SampleDataUtil
-import play.api.mvc.Accepting
-import play.api.mvc.RequestHeader
+import play.api.libs.json.{JsValue, JsString}
+import play.api.mvc.{Accepting, Controller, RequestHeader, Result}
+import io.swagger.annotations.{Api, ApiOperation}
+import de.utils.{SampleDataUtil, LoggingAction}
 import de.model.DomainTypes.StudyId
-import de.utils.LoggingAction
 
-@Api(value = "/Samples",
+// ===========================================================================
+@Api(
+  value       = "/Samples",
   description = "Operations with Samples",
-  produces = "application/json, text/tab-separated-values")
+  produces    = "application/json, text/tab-separated-values")
 class Samples @javax.inject.Inject() (
-  configuration: play.api.Configuration)
+      configuration: Configuration)
     extends Controller {
 
-  val AcceptsTsv = Accepting("text/tab-separated-values")
-
-  def getData(studies_ids: Option[StudyId])(implicit request: RequestHeader) = {
-    val _studies = studies_ids match {
-      case Some(x) => x.split(",").toSeq
-      case None    => SampleDataUtil.getStudies
+  // ---------------------------------------------------------------------------
+  @ApiOperation(
+		httpMethod        = "GET",
+		response          = classOf[String],
+		responseContainer = "List",
+    value             = "Get all samples data",
+    notes             = "Returns list of sample data")
+  def getAllSamples() =
+    LoggingAction {
+      implicit request =>
+        apply(studyIdsOpt = None)
     }
 
-    val response = SampleDataUtil.getSamplesInfo(_studies).map { sample => sample.getAllTagsAsMap }
-    render {
-      case Accepts.Json() => Ok(Json.toJson(response))
-      case AcceptsTsv() => {
-        val header = response.flatMap { sample_tags => sample_tags.keySet }.distinct
-        val data = response.map { sample_tags =>
-          {
-            header.map { tag => sample_tags.getOrElse(tag, "") }.mkString("\t")
+  // ---------------------------------------------------------------------------
+  @ApiOperation(
+		httpMethod        = "GET",
+		response          = classOf[String],
+		responseContainer = "List",
+    value             = "Get samples data by study ID",
+    notes             = "Returns list of sample data filtered by study ID")
+  def getSamplesByStudy(studyIds: String) =
+    LoggingAction {
+      implicit request =>
+        apply(studyIdsOpt = Some(studyIds))
+    }
 
-          }
-        }
-        Ok((Seq(header.mkString("\t")) ++ data).mkString("\n"))
+  // ===========================================================================  
+  private def apply
+        (         studyIdsOpt: Option[StudyId])
+        (implicit request:     RequestHeader)
+      : Result = {
+    
+    // TODO: input validation
+    
+    val studyIds: Seq[String] =
+      studyIdsOpt match {
+        case Some(x) => x.split(",", -1).toSeq
+        case None    => SampleDataUtil.getStudies
       }
+
+    val response: Seq[Map[String, JsValue]] =
+      SampleDataUtil
+        .getSamplesInfo(studyIds)
+        .map(_.getAllTagsAsMap)
+
+    render {
+      
+      case Accepts.Json() =>
+        Ok(Json.toJson(response))
+        
+      case Play.AcceptsTsv() =>
+        Ok(TsvFormatter(response))
+
     }
 
-  }
-
-  @ApiOperation(value = "get All Samples data",
-    notes = "Returns List of Sample Data",
-    response = classOf[String],
-    responseContainer = "List",
-    httpMethod = "GET")
-  def getAllSamples() = LoggingAction {
-    implicit request =>
-      getData(None)
-  }
-
-  @ApiOperation(value = "get Samples Data",
-    notes = "Returns List of Sample Data",
-    response = classOf[String],
-    responseContainer = "List",
-    httpMethod = "GET")
-  def getSamples(studyIds: String) = LoggingAction {
-    implicit request =>
-      getData(Some(studyIds))
   }
 
 }
+
+// ===========================================================================
