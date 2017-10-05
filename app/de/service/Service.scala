@@ -32,16 +32,26 @@ trait ServiceComponent {
       //get queried gene objects
       val genes = filters.ref_id match {
         case Some(gene) => {
-          GeneDataUtil.getGeneInputRef(gene)
+          Some(GeneDataUtil.getGeneInputRef(gene))
         }
-        case None => Seq()
+        case None => None
 
       }
 
-      val tempGeneIdFilters = if (genes.size > 0) Some(genes.map { _.gene_id }) else Some(Seq())
+      val tempGeneIdFilters  = genes match {
+        case Some(x) => Some(x.map { _.gene_id })
+        case None => None
+      }
+
+      //val tempGeneIdFilters = if (genes.size > 0) Some(genes.map { _.gene_id }) else Some(Seq())
       val geneIdFilters = GeneIdFilter(tempGeneIdFilters)
 
-      val temptranscriptIdFilters = if (genes.size > 0) Some(genes.flatMap { _.transcripts.map { _.transcript_id } }) else Some(Seq())
+       val temptranscriptIdFilters = genes match {
+        case Some(x) => Some(x.flatMap { _.transcripts.map { _.transcript_id } })
+        case None => None
+      }
+
+     // val temptranscriptIdFilters = if (genes.size > 0) Some(genes.flatMap { _.transcripts.map { _.transcript_id } }) else Some(Seq())
       val transcriptIdFilters = TranscriptIdFilter(temptranscriptIdFilters)
 
       val sampleFilters = SampleFilter(filters.sample_id)

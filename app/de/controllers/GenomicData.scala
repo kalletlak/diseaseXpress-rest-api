@@ -163,7 +163,7 @@ class GenomicData @javax.inject.Inject() (
         getFields(_projection_enum,
           _normalizations_enums))
 
-      println("Total Execution : " + (System.currentTimeMillis() - start))
+      println("Total Execution(ms) : " + (System.currentTimeMillis() - start))
 
       render {
         case Accepts.Json() => Ok(Json.toJson(_result))
@@ -668,14 +668,32 @@ class GenomicData @javax.inject.Inject() (
 
   }
 
-  @ApiOperation(value = "get expression data for given samples and normalizations",
-    notes = "Returns expression data for given samples and normalizations",
+  @ApiOperation(value = "get expression data for given sample tags and normalizations",
+    notes = "Returns expression data for given sample tags and normalizations",
     response = classOf[String],
     responseContainer = "List",
-    httpMethod = "GET")
-  def getDataBySamplesAndNormalizations(
-    @ApiParam(
-      value = "Comma separated list of sample ids. e.g. 3f232b7d-b473-4a2a-9549-1f61434c49c0") sample_ids: String,
+    httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(
+      name = "payload",
+      required = true,
+      value = """Its a JSON payload currently supports the following operations
+                     &ensp; Logical Operators : $and, $not, $nor, $or
+                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+                {
+                 &ensp;&ensp;"$and": [
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$eq": { "mycn_status":"amplified" }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$in": { "risk": ["high","low"] }},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$not": { "$eq": { "stage": 4 }}},
+                 &ensp;&ensp;&ensp;&ensp;&ensp;{ "$or": [
+    	           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "risk": "high" },
+                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ "stage": 4 }]
+                 &ensp;&ensp;&ensp;&ensp;&ensp;}]
+                } """,
+      paramType = "body",
+      examples = new Example(Array(new ExampleProperty(mediaType = "String", value = "\"test\""))) //examples isn't working with this swaggger version
+      )))
+  def getDataByTagsAndNormalizations(
     @ApiParam(
       value = "Comma separated list of normalization methods",
       allowableValues = "rsem,sample_abundance,sample_rsem_isoform",
@@ -683,14 +701,27 @@ class GenomicData @javax.inject.Inject() (
     @ApiParam(
       value = "Projection type summary or detailed",
       allowableValues = "summary,detailed",
-      defaultValue = "summary") projection: Option[String]) = LoggingAction {
+      defaultValue = "summary") projection: Option[String]) = LoggingAction(bodyParser = parse.json) {
     implicit request =>
-      val filters = InputFilters(sample_id = Some(sample_ids.split(",", -1).map { _.trim }))
-      getData(
-        filters,
-        Right(sample_ids.split(",", -1).map { _.trim }),
-        Some(normalizations),
-        projection)
+
+      val json = request.body
+      try {
+        val filters = InputFilters(
+          sample_id = Some(SampleDataUtil.getSamples(json).toSeq))
+        println(SampleDataUtil.getSamples(json).toSeq)
+        getData(
+          filters,
+          Right(SampleDataUtil.getSamples(json).toSeq),
+          Some(normalizations),
+          projection)
+      } catch {
+        case x: InvalidQueryException => {
+          BadRequest(x.getMessage)
+        }
+        case x: Throwable => {
+          BadRequest("Unknown Exception")
+        }
+      }
 
   }
 
