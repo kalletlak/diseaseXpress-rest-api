@@ -2,10 +2,8 @@ package de.controllers
 
 import de.utils.Enums.Projection
 import de.utils.Enums.Normalization
-import de.model.Inputs.InputDataModel
-import de.model.Inputs.RsemGeneProjectons
-import de.model.Inputs.AbundanceProjectons
-import de.model.Inputs.RsemIsoformProjectons
+import de.model.input.InputDataModel
+import de.model.input.{RsemGeneProjectons, AbundanceProjectons, RsemIsoformProjectons}
 
 // ===========================================================================
 object EnumCombo {

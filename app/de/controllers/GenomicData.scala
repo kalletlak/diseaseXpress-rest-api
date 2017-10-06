@@ -7,7 +7,7 @@ import play.api.mvc.{ Accepting, Controller, RequestHeader, Result }
 import io.swagger.annotations.{ Api, ApiImplicitParams, ApiImplicitParam, ApiModel, ApiOperation, ApiParam, Example, ExampleProperty }
 import de.Context
 import de.model.output.GeneData
-import de.model.Inputs.{GeneIdQuery, GeneSymbolQuery, InputFilters, TranscriptIdQuery}
+import de.model.input.{GeneIdQuery, GeneSymbolQuery, InputFilters, TranscriptIdQuery}
 import de.utils.{InvalidQueryException, LoggingAction, SampleDataUtil}
 import scala.{Left, Right}
 

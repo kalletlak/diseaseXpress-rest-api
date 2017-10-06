@@ -3,7 +3,7 @@ package de.repository
 import org.jongo.Jongo
 
 import com.datastax.driver.core.{Session => CassandraSession}
-import de.model.Inputs.FilterUnit
+import de.model.input.FilterUnit
 import de.dao.MongoDAO
 import de.dao.ElasticSearchSession
 import de.dao.ElasticSearchDAO

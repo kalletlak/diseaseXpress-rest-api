@@ -8,13 +8,11 @@ import com.github.fakemongo.Fongo
 import com.mongodb.DBObject
 import com.mongodb.util.JSON
 
-import de.model.Domain.Sample
-import de.model.Enums.study
+import de.model.tags.Sample
+import de.model.tags.Enums.study
 import io.swagger.annotations.ApiModel
-import play.api.libs.json.JsObject
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsObject, JsValue, Json}
 import play.api.libs.json.JsValue.jsValueToJsLookup
-import play.api.libs.json.Json
 
 // ===========================================================================
 object SampleDataUtil {
@@ -29,7 +27,7 @@ object SampleDataUtil {
     stream
       .getLines
       .drop(1)
-      .map(Sample.apply)
+      .map(SampleUtils.apply)
       .toList
       .groupBy(_.study)
   }

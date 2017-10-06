@@ -2,8 +2,7 @@ package de.service
 
 import de.model.DomainTypes.GeneId
 import de.model.DomainTypes.TranscriptId
-import de.model.Inputs.FilterUnit
-import de.model.Inputs.InputDataModel
+import de.model.input.{FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
 import de.utils.PlayJsonUtils.JsObjectImplicits

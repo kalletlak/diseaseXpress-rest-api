@@ -1,6 +1,6 @@
 package de.model.output
 
-import de.model.Inputs.{InputDataModel, AbundanceProjectons}
+import de.model.input.{InputDataModel, AbundanceProjectons}
 import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
 import de.utils.NumberUtils.DoubleImplicits

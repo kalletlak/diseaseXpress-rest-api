@@ -1,6 +1,6 @@
 package de.model.output
 
-import de.model.Inputs.{InputDataModel, RsemGeneProjectons}
+import de.model.input.{InputDataModel, RsemGeneProjectons}
 import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
 import de.utils.NumberUtils.DoubleImplicits

@@ -2,8 +2,7 @@ package de.service
 
 import com.sksamuel.elastic4s.http.search.SearchHit
 
-import de.model.Inputs.FilterUnit
-import de.model.Inputs.InputDataModel
+import de.model.input.{FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
 import io.swagger.annotations.ApiModel

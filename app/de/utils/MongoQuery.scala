@@ -1,6 +1,7 @@
 package de.utils
 
-import de.model.Domain.{ Formatter, Number, Text, Value }
+import de.model.tags.Formatter 
+import de.model.tags.Sample.{ Number, Text, Value }
 import enumeratum.{ Enum, EnumEntry }
 import play.api.libs.json.{ JsArray, JsNumber, JsObject, JsString, JsValue, Json }
 

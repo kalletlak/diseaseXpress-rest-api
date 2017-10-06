@@ -1,17 +1,13 @@
 package de.utils
 
-import scala.Left
-import scala.Right
-
-import de.model.Domain._
-import de.model.Enums._
 import io.swagger.annotations.ApiModel
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Writes
+import play.api.libs.json.{JsValue, Json, Writes}
+import de.model.tags.Enums._
+import de.model.tags.Sample._
+import de.model.tags.{Sample, Tag, NormalSample, TumorSample}
 
 // ===========================================================================
-object Sample {
+object SampleUtils {
 
   private val keyRegex =
     "[A-Za-z0-9_-]+".r
