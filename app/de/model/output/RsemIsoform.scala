@@ -54,110 +54,102 @@ case class RsemIsoform( // TODO: separate out
   // ===========================================================================
   object RsemIsoform {
   
-    def readJson(
-            transcript_id:    String,
-            obj:              JsObject,
-            projectionFileds: InputDataModel = new RsemIsoformProjectons)
-        : JsResult[RsemIsoform] = {
-
-      val projectionFiledsObj = projectionFileds.asInstanceOf[RsemIsoformProjectons]
-      
-      JsSuccess(
-        RsemIsoform(
-          transcript_id = transcript_id,
+    def fromJson(
+        transcript_id:       String,
+        obj:                 JsObject,
+        projectionFiledsObj: RsemIsoformProjectons = new RsemIsoformProjectons) =
           
-          sample_id =
-            (obj \ "sample_id")
-              .as[String],
+      RsemIsoform(
+        transcript_id = transcript_id,
+        
+        sample_id =
+          (obj \ "sample_id")
+            .as[String],
 
-          length =
-            obj
-              .parseDoubleOption(
-                "length",
-                projectionFiledsObj.length),
+        length =
+          obj
+            .parseDoubleOption(
+              "length",
+              projectionFiledsObj.length),
 
-          effective_length =
-            obj
-              .parseDoubleOption(
-                "effective_length",
-                projectionFiledsObj.effective_length),
+        effective_length =
+          obj
+            .parseDoubleOption(
+              "effective_length",
+              projectionFiledsObj.effective_length),
 
-          expected_count =
-            obj
-              .parseDoubleOption(
-                "expected_count",
-                projectionFiledsObj.expected_count),
-                
-          tpm =
-            obj
-              .parseDoubleOption(
-                "tpm",
-                projectionFiledsObj.tpm),
-                
-          fpkm =
-            obj
-              .parseDoubleOption(
-                "fpkm",
-                projectionFiledsObj.fpkm),
-                
-          isoform_percentage =
-            obj
-              .parseDoubleOption(
-                "isoform_percentage",
-                projectionFiledsObj.isoform_percentage)))  
-    }
+        expected_count =
+          obj
+            .parseDoubleOption(
+              "expected_count",
+              projectionFiledsObj.expected_count),
+              
+        tpm =
+          obj
+            .parseDoubleOption(
+              "tpm",
+              projectionFiledsObj.tpm),
+              
+        fpkm =
+          obj
+            .parseDoubleOption(
+              "fpkm",
+              projectionFiledsObj.fpkm),
+              
+        isoform_percentage =
+          obj
+            .parseDoubleOption(
+              "isoform_percentage",
+              projectionFiledsObj.isoform_percentage) )     
     
     // ---------------------------------------------------------------------------
-    def readRow(
-            row:              CassandraRow,
-            projectionFileds: InputDataModel = new RsemIsoformProjectons())
-        : JsResult[RsemIsoform] = {
-  
-      val projectionFiledsObj = projectionFileds.asInstanceOf[RsemIsoformProjectons]
+    def fromCassandra
+        (projectionFiledsObj: RsemIsoformProjectons = new RsemIsoformProjectons())
+        (row:                 CassandraRow) =
+          
+      RsemIsoform(
+        transcript_id =
+          row
+            .getString("transcript_id"),
+            
+        sample_id =
+          row
+            .getString("sample_id"),
+            
+        length =
+          row
+            .getFloat("length")
+            .parseDoubleOption(projectionFiledsObj.length),
+            
+        effective_length =
+          row
+            .getFloat("effective_length")
+            .parseDoubleOption(projectionFiledsObj.effective_length),
+            
+        expected_count =
+          row
+            .getFloat("expected_count")
+            .parseDoubleOption(projectionFiledsObj.expected_count),
+            
+        tpm =
+          row
+            .getFloat("tpm")
+            .parseDoubleOption(projectionFiledsObj.tpm),
+            
+        fpkm =
+          row
+            .getFloat("fpkm")
+            .parseDoubleOption(projectionFiledsObj.fpkm),
 
-      JsSuccess(
-        RsemIsoform(
-          transcript_id =
-            row
-              .getString("transcript_id"),
-              
-          sample_id =
-            row
-              .getString("sample_id"),
-              
-          length =
-            row
-              .getFloat("length")
-              .parseDoubleOption(projectionFiledsObj.length),
-              
-          effective_length =
-            row
-              .getFloat("effective_length")
-              .parseDoubleOption(projectionFiledsObj.effective_length),
-              
-          expected_count =
-            row
-              .getFloat("expected_count")
-              .parseDoubleOption(projectionFiledsObj.expected_count),
-              
-          tpm =
-            row
-              .getFloat("tpm")
-              .parseDoubleOption(projectionFiledsObj.tpm),
-              
-          fpkm =
-            row
-              .getFloat("fpkm")
-              .parseDoubleOption(projectionFiledsObj.fpkm),
-
-          isoform_percentage =
-            row
-              .getFloat("isoform_percentage")
-              .parseDoubleOption(projectionFiledsObj.isoform_percentage)))
-    }
+        isoform_percentage =
+          row
+            .getFloat("isoform_percentage")
+            .parseDoubleOption(projectionFiledsObj.isoform_percentage) )    
   
+            
     // ---------------------------------------------------------------------------
     implicit val writeJson = new Writes[RsemIsoform] {
+      
       def writes(obj: RsemIsoform): JsValue =
         JsObjectWithOption(
           "length" ->
@@ -176,7 +168,9 @@ case class RsemIsoform( // TODO: separate out
             Right(obj.fpkm.map(Json.toJson(_))),
           
           "isoform_percentage" ->
-            Right(obj.isoform_percentage.map(Json.toJson(_)))) }    
+            Right(obj.isoform_percentage.map(Json.toJson(_))))
+            
+    }    
   
     // ---------------------------------------------------------------------------
     def getHeader(projection: Projection) =

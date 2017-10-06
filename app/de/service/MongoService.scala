@@ -9,6 +9,9 @@ import de.utils.PlayJsonUtils.JsObjectImplicits
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue.jsValueToJsLookup
+import de.model.input.RsemIsoformProjectons
+import de.model.input.AbundanceProjectons
+import de.model.input.RsemGeneProjectons
 
 // ===========================================================================
 trait MongoService extends ServiceComponent {
@@ -35,14 +38,13 @@ trait MongoService extends ServiceComponent {
           val gene_id = (result \ "gene_id").as[GeneId]
           
           result
-            .parseObjectArray("data")
+            .parseObjectArray("data") // TODO: enums/constants for these
             .map { _data =>
               RsemGene
-                .readJson(
+                .fromJson(
                   gene_id,
                   _data,
-                  projection)
-                .get } }    
+                  projection.asInstanceOf[RsemGeneProjectons]) } }    
 
     // ---------------------------------------------------------------------------
     def getAbundanceData(
@@ -58,11 +60,10 @@ trait MongoService extends ServiceComponent {
             .parseObjectArray("data")
             .map { _data =>
               Abundance
-                .readJson(
+                .fromJson(
                   transcript_id,
                   _data,
-                  projection)
-                .get } }    
+                  projection.asInstanceOf[AbundanceProjectons]) } }    
 
     // ---------------------------------------------------------------------------
     def getIsoformData(
@@ -78,11 +79,10 @@ trait MongoService extends ServiceComponent {
             .parseObjectArray("data")
             .map { _data =>
               RsemIsoform
-                .readJson(
+                .fromJson(
                   transcript_id,
                   _data,
-                  projection)
-                .get } }    
+                  projection.asInstanceOf[RsemIsoformProjectons]) } }    
 
   }
 }

@@ -11,10 +11,12 @@ import de.dao.CassandraDAO
 
 // ===========================================================================
 trait Dao {
+  
   def find(
       collectionName: String,
       filters:        Seq[FilterUnit])
     : Any // TODO
+    
 }
 
 // ===========================================================================

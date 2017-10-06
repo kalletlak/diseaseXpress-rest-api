@@ -8,6 +8,9 @@ import de.repository.Repository
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
+import de.model.input.RsemGeneProjectons
+import de.model.input.AbundanceProjectons
+import de.model.input.RsemIsoformProjectons
 
 // ===========================================================================
 trait ElasticSearchService extends ServiceComponent {
@@ -43,11 +46,10 @@ trait ElasticSearchService extends ServiceComponent {
               .toString
           
           RsemGene
-            .readJson(
+            .fromJson(
               gene_id,
               _data,
-              projection)
-            .get }
+              projection.asInstanceOf[RsemGeneProjectons]) }
    
 
     // ---------------------------------------------------------------------------
@@ -70,11 +72,10 @@ trait ElasticSearchService extends ServiceComponent {
               .toString // TODO: don't use toString or comment why safe (not so by default)
 
           Abundance
-            .readJson(
+            .fromJson(
               transcript_id,
               _data,
-              projection)
-            .get }
+              projection.asInstanceOf[AbundanceProjectons]) }
     
 
     // ---------------------------------------------------------------------------
@@ -97,11 +98,10 @@ trait ElasticSearchService extends ServiceComponent {
             .toString
           
           RsemIsoform
-            .readJson(
+            .fromJson(
               transcript_id,
               _data,
-              projection)
-            .get }
+              projection.asInstanceOf[RsemIsoformProjectons]) }
     
   }
   

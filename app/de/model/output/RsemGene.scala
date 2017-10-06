@@ -48,15 +48,10 @@ case class RsemGene(
   // ===========================================================================
   object RsemGene {
   
-    def readJson(
-            gene_id:          String,
-            obj:              JsObject,
-            projectionFileds: InputDataModel = new RsemGeneProjectons())
-        : JsResult[RsemGene] = {
-  
-      val projectionFiledsObj = projectionFileds.asInstanceOf[RsemGeneProjectons]
-
-      JsSuccess(
+    def fromJson(
+            gene_id:             String,
+            obj:                 JsObject,
+            projectionFiledsObj: RsemGeneProjectons = new RsemGeneProjectons()) =
         RsemGene(
           gene_id = gene_id,
             
@@ -92,36 +87,48 @@ case class RsemGene(
             obj
               .parseDoubleOption(
                 "fpkm",
-                projectionFiledsObj.fpkm)))
-  
-    }
+                projectionFiledsObj.fpkm) )
+      
   
     // ---------------------------------------------------------------------------
-    def readRow(
-        row:              CassandraRow,
-        projectionFileds: InputDataModel = new RsemGeneProjectons()): JsResult[RsemGene] = {
+    def fromCassandra
+        (projectionFiledsObj: RsemGeneProjectons = new RsemGeneProjectons())
+        (row:                 CassandraRow) =
+      RsemGene(
+        gene_id =
+          row
+            .getString("gene_id"),
+            
+        sample_id =
+         row
+           .getString("sample_id"),
+             
+        length =
+          row
+            .getFloat("length")
+            .parseDoubleOption(projectionFiledsObj.length),
+            
+        effective_length =
+          row
+            .getFloat("effective_length")
+            .parseDoubleOption(projectionFiledsObj.effective_length),
+            
+        expected_count =
+          row
+            .getFloat("expected_count")
+            .parseDoubleOption(projectionFiledsObj.expected_count),
+            
+        tpm =
+          row
+            .getFloat("tpm")
+            .parseDoubleOption(projectionFiledsObj.tpm),
+            
+        fpkm =
+          row
+            .getFloat("fpkm")
+            .parseDoubleOption(projectionFiledsObj.fpkm) )    
   
-      val projectionFiledsObj = projectionFileds
-        .asInstanceOf[RsemGeneProjectons]
-      JsSuccess(RsemGene(gene_id = row.getString("gene_id"),
-        sample_id = row.getString("sample_id"),
-        length = row
-          .getFloat("length")
-          .parseDoubleOption(projectionFiledsObj.length),
-        effective_length = row
-          .getFloat("effective_length")
-          .parseDoubleOption(projectionFiledsObj.effective_length),
-        expected_count = row
-          .getFloat("expected_count")
-          .parseDoubleOption(projectionFiledsObj.expected_count),
-        tpm = row
-          .getFloat("tpm")
-          .parseDoubleOption(projectionFiledsObj.tpm),
-        fpkm = row
-          .getFloat("fpkm")
-          .parseDoubleOption(projectionFiledsObj.fpkm)))
-    }
-  
+            
     // ---------------------------------------------------------------------------
     implicit val writeJson = new Writes[RsemGene] {
       

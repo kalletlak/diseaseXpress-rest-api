@@ -43,57 +43,47 @@ case class Abundance(
   // ===========================================================================
   object Abundance {
   
-    def readJson(
-            transcript_id:    String,
-            obj:              JsObject,
-            projectionFileds: InputDataModel = new AbundanceProjectons)
-        : JsResult[Abundance] = {
-      
-      val projectionFiledsObj = projectionFileds.asInstanceOf[AbundanceProjectons]
+    def fromJson(
+        transcript_id:       String,
+        obj:                 JsObject,
+        projectionFiledsObj: AbundanceProjectons = new AbundanceProjectons) =
   
-      JsSuccess(
-        Abundance(
-          transcript_id = transcript_id,
-  
-          sample_id =
-            (obj \ "sample_id")
-              .as[String],
-  
-          length =
-            obj
-              .parseDoubleOption(
-                "length",
-                projectionFiledsObj.length),
-  
-          effective_length =
-            obj
-              .parseDoubleOption(
-                "effective_length",
-                projectionFiledsObj
-                  .effective_length),
-  
-          expected_count =
-            obj
-              .parseDoubleOption(
-                "expected_count",
-                projectionFiledsObj.expected_count),
-  
-          tpm =
-            obj
-              .parseDoubleOption(
-                "tpm",
-                projectionFiledsObj.tpm)))
-    }
+      Abundance(
+        transcript_id = transcript_id,
+
+        sample_id =
+          (obj \ "sample_id")
+            .as[String],
+
+        length =
+          obj
+            .parseDoubleOption(
+              "length",
+              projectionFiledsObj.length),
+
+        effective_length =
+          obj
+            .parseDoubleOption(
+              "effective_length",
+              projectionFiledsObj
+                .effective_length),
+
+        expected_count =
+          obj
+            .parseDoubleOption(
+              "expected_count",
+              projectionFiledsObj.expected_count),
+
+        tpm =
+          obj
+            .parseDoubleOption(
+              "tpm",
+              projectionFiledsObj.tpm) )    
   
     // ---------------------------------------------------------------------------
-    def readRow(
-            row:              CassandraRow,
-            projectionFileds: InputDataModel = new AbundanceProjectons())
-        : JsResult[Abundance] = {
-  
-      val projectionFiledsObj = projectionFileds.asInstanceOf[AbundanceProjectons]
-
-      JsSuccess(
+    def fromCassandra
+          (projectionFiledsObj: AbundanceProjectons = new AbundanceProjectons())
+          (row:                 CassandraRow) =  
         Abundance(
           transcript_id =
             row
@@ -121,8 +111,7 @@ case class Abundance(
           tpm =
             row
               .getFloat("tpm")
-              .parseDoubleOption(projectionFiledsObj.tpm)))
-    }
+              .parseDoubleOption(projectionFiledsObj.tpm) )    
   
     // ---------------------------------------------------------------------------
     implicit val writeJson = new Writes[Abundance] {

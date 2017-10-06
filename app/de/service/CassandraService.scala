@@ -4,7 +4,7 @@ import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 
 import com.datastax.driver.core.ResultSet
 
-import de.model.input.{FilterUnit, InputDataModel}
+import de.model.input.{AbundanceProjectons, RsemIsoformProjectons, RsemGeneProjectons, FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
 import io.swagger.annotations.ApiModel
@@ -31,11 +31,8 @@ trait CassandraService extends ServiceComponent {
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet]
         .asScala
-        .map { row =>
-          RsemGene
-            .readRow(row, projection)
-            .get }    
-
+        .map(RsemGene.fromCassandra(
+          projection.asInstanceOf[RsemGeneProjectons]))
     
     // ---------------------------------------------------------------------------
     def getAbundanceData(
@@ -45,11 +42,8 @@ trait CassandraService extends ServiceComponent {
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet]
         .asScala
-        .map { row =>
-          Abundance
-            .readRow(row, projection)
-            .get }
-    
+        .map(Abundance.fromCassandra(
+          projection.asInstanceOf[AbundanceProjectons]))    
     
     // ---------------------------------------------------------------------------
     def getIsoformData(
@@ -59,10 +53,8 @@ trait CassandraService extends ServiceComponent {
       find(projection.collection_name, filters)
         .asInstanceOf[ResultSet]
         .asScala
-        .map { row =>
-          RsemIsoform
-            .readRow(row, projection)
-            .get }    
+        .map(RsemIsoform.fromCassandra(
+          projection.asInstanceOf[RsemIsoformProjectons]))
 
   }
 }
