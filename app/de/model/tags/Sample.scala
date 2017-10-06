@@ -1,51 +1,15 @@
-package de.model
+package de.model.tags
 
 import scala.math.BigDecimal.double2bigDecimal
 
-import de.model.Enums.{ Tag, ethnicity, gender, library_type, platform, race, study, unavailable, vital_status }
+import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, study, unavailable, vital_status }
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
+import Sample.{Text, EitherValue, Number}
 
 // ===========================================================================
-object Domain {
-
-  trait Formatter {
-    val formatQuery: String
-    val formatJson: JsValue
-  }
-  
-  // ===========================================================================  
-  trait Value extends Formatter
-  
-    // ---------------------------------------------------------------------------
-    case class Text(value: String) extends Value {
-    
-      override val formatJson = JsString(value)
-      override val formatQuery = s""""$value""""
-      
-    }
-  
-    // ---------------------------------------------------------------------------
-    case class Number(value: String) extends Value {
-      
-      private val internal: Double = value.toDouble
-      
-      override val formatJson = JsNumber(internal)
-      override val formatQuery = s"""$internal"""
-      
-    }
-  
-    // ---------------------------------------------------------------------------
-    case class EitherValue(value: Either[Value, unavailable]) extends Value {
-      
-      override val formatJson = value.fold( l => l.formatJson , r => r.formatJson)
-      override val formatQuery = s"""$value"""
-
-    }
-
-  // ===========================================================================
-  @ApiModel("SampleAnnotation")
-  trait Sample {
+@ApiModel("SampleAnnotation")
+trait Sample {
     
       val sample_id:       Text
       val patient_barcode: Either[Text,         unavailable]
@@ -167,6 +131,39 @@ object Domain {
         tags      
   
     }
-  }
 
+    // ===========================================================================
+    object Sample {
+        
+      trait Value extends Formatter
+      
+        // ---------------------------------------------------------------------------
+        case class Text(value: String) extends Value {
+        
+          override val formatJson = JsString(value)
+          override val formatQuery = s""""$value""""
+          
+        }
+      
+        // ---------------------------------------------------------------------------
+        case class Number(value: String) extends Value {
+          
+          private val internal: Double = value.toDouble
+          
+          override val formatJson = JsNumber(internal)
+          override val formatQuery = s"""$internal"""
+          
+        }
+      
+        // ---------------------------------------------------------------------------
+        case class EitherValue(value: Either[Value, unavailable]) extends Value {
+          
+          override val formatJson = value.fold( l => l.formatJson , r => r.formatJson)
+          override val formatQuery = s"""$value"""
+      
+        }
+        
+    }
+    
 // ===========================================================================
+

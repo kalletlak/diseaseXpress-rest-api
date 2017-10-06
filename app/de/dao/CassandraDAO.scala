@@ -1,7 +1,7 @@
 package de.dao
 
 import com.datastax.driver.core.{ ResultSet, Session }
-import de.model.Inputs.FilterUnit
+import de.model.input.FilterUnit
 import de.repository.Dao
 
 // ===========================================================================

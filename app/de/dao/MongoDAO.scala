@@ -2,7 +2,7 @@ package de.dao
 
 import org.jongo.Jongo
 import com.fasterxml.jackson.databind.node.ObjectNode
-import de.model.Inputs.FilterUnit
+import de.model.input.FilterUnit
 import play.api.libs.json.{ JsObject, Json }
 import de.repository.Dao
 

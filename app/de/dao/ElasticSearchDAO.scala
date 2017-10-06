@@ -6,7 +6,7 @@ import com.sksamuel.elastic4s.IndexAndTypes.apply
 import com.sksamuel.elastic4s.http.HttpClient
 import com.sksamuel.elastic4s.http.search.SearchHit
 import com.sksamuel.elastic4s.http.search.SearchResponse
-import de.model.Inputs.FilterUnit
+import de.model.input.FilterUnit
 import de.repository.Dao
 
 // ===========================================================================

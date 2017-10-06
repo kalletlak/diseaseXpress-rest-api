@@ -1,8 +1,8 @@
 package de.utils
 
 import scala.io.Source
-import de.model.GeneInfo
-import de.model.Inputs.{ GeneIdQuery, GeneQueryRef, GeneSymbolQuery, TranscriptIdQuery }
+import de.model.output.GeneInfo
+import de.model.input.{ GeneIdQuery, GeneQueryRef, GeneSymbolQuery, TranscriptIdQuery }
 import io.swagger.annotations.ApiModel
 
 // ===========================================================================

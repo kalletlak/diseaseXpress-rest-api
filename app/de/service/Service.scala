@@ -1,14 +1,11 @@
 package de.service
 
-import de.model.{ RsemGene, RsemIsoform, SampleData, TranscriptData }
-import de.model.Abundance
+import de.model.output.{ Abundance, GeneData, GeneInfo, RsemGene, RsemIsoform, SampleData, TranscriptData }
 import de.model.DomainTypes.{ GeneId, SampleId, TranscriptId }
-import de.model.GeneData
-import de.model.Inputs.{ FilterUnit, GeneIdFilter, InputDataModel, InputFilters, SampleFilter, StudyFilter, TranscriptIdFilter }
+import de.model.input.{ FilterUnit, GeneIdFilter, InputDataModel, InputFilters, SampleFilter, StudyFilter, TranscriptIdFilter }
 import de.utils.Enums.Normalization
 import de.utils.GeneDataUtil
 import io.swagger.annotations.ApiModel
-import de.model.GeneInfo
 import utils.Implicits.AnythingImplicits
 
 // ===========================================================================
