@@ -1,6 +1,6 @@
 package de.controllers
 
-import de.model.GeneData
+import de.model.output.GeneData
 import de.model.Inputs.InputFilters
 import de.service.Service
 import de.utils.Enums.{Normalization, Projection}

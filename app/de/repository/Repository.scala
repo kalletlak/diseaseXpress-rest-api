@@ -24,6 +24,7 @@ trait Repository { def dao: Dao }
   trait MongoRepository extends Repository {
   
     val context: Jongo
+    
     def dao = { new MongoDAO(context) }
 
   }

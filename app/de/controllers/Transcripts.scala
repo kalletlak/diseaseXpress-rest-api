@@ -9,8 +9,8 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
-import de.model.GeneInfo
-import de.model.TranscriptWithGeneInfo
+import de.model.output.GeneInfo
+import de.model.output.TranscriptWithGeneInfo
 import de.model.Inputs.GeneSymbolQuery
 import de.utils.GeneDataUtil
 import de.utils.LoggingAction

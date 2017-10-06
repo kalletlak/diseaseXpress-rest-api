@@ -1,12 +1,10 @@
 package de.controllers
 
-import de.model.GeneInfo
-import de.model.TranscriptWithGeneInfo
+import de.model.output.{GeneInfo, GeneData, TranscriptWithGeneInfo}
 import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import de.utils.Enums.Projection
 import de.utils.Enums.Normalization
-import de.model.GeneData
 
 // ===========================================================================
 object TsvFormatter { // TODO: refactor all these, they all do the same thing
