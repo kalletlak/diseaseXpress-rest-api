@@ -76,5 +76,6 @@ EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Resource //
 lazy val disease_express = (project in file("."))
   .enablePlugins(PlayScala)
   .settings(
-    name := "disease-express_es_rest_api",
-    version := "1.2")
+    name    := "d3b-disease-express-server",
+    version := "0.1.2")
+
