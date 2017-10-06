@@ -1,5 +1,6 @@
 package de.model.output
 
+import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 import de.model.input.{InputDataModel, AbundanceProjectons}
 import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
@@ -43,6 +44,21 @@ case class Abundance(
   // ===========================================================================
   object Abundance {
   
+    sealed trait Fields extends EnumEntry
+      object Fields extends Enum[Fields] {
+        val values = findValues
+      
+        case object transcript_id    extends Fields
+        case object sample_id        extends Fields
+        case object length           extends Fields
+        case object effective_length extends Fields
+        case object expected_count   extends Fields
+        case object tpm              extends Fields
+      }
+      
+    import Fields._
+
+    // ---------------------------------------------------------------------------
     def fromJson(
         transcript_id:       String,
         obj:                 JsObject,
@@ -52,32 +68,32 @@ case class Abundance(
         transcript_id = transcript_id,
 
         sample_id =
-          (obj \ "sample_id")
+          (obj \ sample_id.entryName)
             .as[String],
 
         length =
           obj
             .parseDoubleOption(
-              "length",
+              length.entryName,
               projectionFiledsObj.length),
 
         effective_length =
           obj
             .parseDoubleOption(
-              "effective_length",
+              effective_length.entryName,
               projectionFiledsObj
                 .effective_length),
 
         expected_count =
           obj
             .parseDoubleOption(
-              "expected_count",
+              expected_count.entryName,
               projectionFiledsObj.expected_count),
 
         tpm =
           obj
             .parseDoubleOption(
-              "tpm",
+              tpm.entryName,
               projectionFiledsObj.tpm) )    
   
     // ---------------------------------------------------------------------------
@@ -87,30 +103,30 @@ case class Abundance(
         Abundance(
           transcript_id =
             row
-              .getString("transcript_id"),
+              .getString(transcript_id.entryName),
 
           sample_id =
             row
-              .getString("sample_id"),
+              .getString(sample_id.entryName),
 
           length =
             row
-              .getFloat("length")
+              .getFloat(length.entryName)
               .parseDoubleOption(projectionFiledsObj.length),
 
           effective_length =
             row
-              .getFloat("effective_length")
+              .getFloat(effective_length.entryName)
               .parseDoubleOption(projectionFiledsObj.effective_length),
 
           expected_count =
             row
-              .getFloat("expected_count")
+              .getFloat(expected_count.entryName)
               .parseDoubleOption(projectionFiledsObj.expected_count),
 
           tpm =
             row
-              .getFloat("tpm")
+              .getFloat(tpm.entryName)
               .parseDoubleOption(projectionFiledsObj.tpm) )    
   
     // ---------------------------------------------------------------------------
@@ -119,16 +135,16 @@ case class Abundance(
       def writes(obj: Abundance): JsValue =
         JsObjectWithOption(
 
-          "length" ->
+          length.entryName ->
             Right(obj.length.map(Json.toJson(_))),
 
-          "effective_length" ->
+          effective_length.entryName ->
             Right(obj.effective_length.map(Json.toJson(_))),
 
-          "expected_count" ->
+          expected_count.entryName ->
             Right(obj.expected_count.map(Json.toJson(_))),
 
-          "tpm" ->
+          tpm.entryName ->
             Right(obj.tpm.map(Json.toJson(_))) )
       
     }
@@ -137,14 +153,15 @@ case class Abundance(
     def getHeader(projection: Projection) = projection match {
       
       case Projection.summary =>
-        Seq("tpm")
+        Seq(tpm.entryName)
 
       case Projection.detailed =>
         Seq(
-          "length",
-          "effective_length",
-          "expected_count",
-          "tpm")
+            length,
+            effective_length,
+            expected_count,
+            tpm)
+          .map(_.entryName)
 
     }
   

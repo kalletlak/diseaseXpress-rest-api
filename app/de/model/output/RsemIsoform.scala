@@ -1,5 +1,6 @@
 package de.model.output
 
+import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 import de.model.input.{InputDataModel, RsemIsoformProjectons}
 import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
@@ -54,6 +55,23 @@ case class RsemIsoform( // TODO: separate out
   // ===========================================================================
   object RsemIsoform {
   
+    sealed trait Fields extends EnumEntry
+      object Fields extends Enum[Fields] {
+        val values = findValues
+      
+        case object transcript_id      extends Fields
+        case object sample_id          extends Fields
+        case object length             extends Fields
+        case object effective_length   extends Fields
+        case object expected_count     extends Fields
+        case object tpm                extends Fields
+        case object fpkm               extends Fields
+        case object isoform_percentage extends Fields
+      }
+      
+    import Fields._
+
+    // ---------------------------------------------------------------------------
     def fromJson(
         transcript_id:       String,
         obj:                 JsObject,
@@ -63,43 +81,43 @@ case class RsemIsoform( // TODO: separate out
         transcript_id = transcript_id,
         
         sample_id =
-          (obj \ "sample_id")
+          (obj \ sample_id.entryName)
             .as[String],
 
         length =
           obj
             .parseDoubleOption(
-              "length",
+              length.entryName,
               projectionFiledsObj.length),
 
         effective_length =
           obj
             .parseDoubleOption(
-              "effective_length",
+              effective_length.entryName,
               projectionFiledsObj.effective_length),
 
         expected_count =
           obj
             .parseDoubleOption(
-              "expected_count",
+              expected_count.entryName,
               projectionFiledsObj.expected_count),
               
         tpm =
           obj
             .parseDoubleOption(
-              "tpm",
+              tpm.entryName,
               projectionFiledsObj.tpm),
               
         fpkm =
           obj
             .parseDoubleOption(
-              "fpkm",
+              fpkm.entryName,
               projectionFiledsObj.fpkm),
               
         isoform_percentage =
           obj
             .parseDoubleOption(
-              "isoform_percentage",
+              isoform_percentage.entryName,
               projectionFiledsObj.isoform_percentage) )     
     
     // ---------------------------------------------------------------------------
@@ -110,40 +128,40 @@ case class RsemIsoform( // TODO: separate out
       RsemIsoform(
         transcript_id =
           row
-            .getString("transcript_id"),
+            .getString(transcript_id.entryName),
             
         sample_id =
           row
-            .getString("sample_id"),
+            .getString(sample_id.entryName),
             
         length =
           row
-            .getFloat("length")
+            .getFloat(length.entryName)
             .parseDoubleOption(projectionFiledsObj.length),
             
         effective_length =
           row
-            .getFloat("effective_length")
+            .getFloat(effective_length.entryName)
             .parseDoubleOption(projectionFiledsObj.effective_length),
             
         expected_count =
           row
-            .getFloat("expected_count")
+            .getFloat(expected_count.entryName)
             .parseDoubleOption(projectionFiledsObj.expected_count),
             
         tpm =
           row
-            .getFloat("tpm")
+            .getFloat(tpm.entryName)
             .parseDoubleOption(projectionFiledsObj.tpm),
             
         fpkm =
           row
-            .getFloat("fpkm")
+            .getFloat(fpkm.entryName)
             .parseDoubleOption(projectionFiledsObj.fpkm),
 
         isoform_percentage =
           row
-            .getFloat("isoform_percentage")
+            .getFloat(isoform_percentage.entryName)
             .parseDoubleOption(projectionFiledsObj.isoform_percentage) )    
   
             
@@ -152,22 +170,22 @@ case class RsemIsoform( // TODO: separate out
       
       def writes(obj: RsemIsoform): JsValue =
         JsObjectWithOption(
-          "length" ->
+          length.entryName ->
             Right(obj.length.map(Json.toJson(_))),
 
-          "effective_length" ->
+          effective_length.entryName ->
             Right(obj.effective_length.map(Json.toJson(_))),
             
-          "expected_count" ->
+          expected_count.entryName ->
             Right(obj.expected_count.map(Json.toJson(_))),
             
-          "tpm" ->
+          tpm.entryName ->
             Right(obj.tpm.map(Json.toJson(_))),
           
-          "fpkm" ->
+          fpkm.entryName ->
             Right(obj.fpkm.map(Json.toJson(_))),
           
-          "isoform_percentage" ->
+          isoform_percentage.entryName ->
             Right(obj.isoform_percentage.map(Json.toJson(_))))
             
     }    
@@ -178,17 +196,17 @@ case class RsemIsoform( // TODO: separate out
       
         // TODO: as enum
         case Projection.summary =>
-          Seq(
-            "tpm")
+          Seq(tpm.entryName)
   
         case Projection.detailed =>
           Seq(
-            "length",
-            "effective_length",
-            "expected_count",
-            "tpm",
-            "fpkm",
-            "isoform_percentage")
+              length,
+              effective_length,
+              expected_count,
+              tpm,
+              fpkm,
+              isoform_percentage)
+            .map(_.entryName)
             
       }
   

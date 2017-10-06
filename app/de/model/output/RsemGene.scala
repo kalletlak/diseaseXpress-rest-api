@@ -1,5 +1,6 @@
 package de.model.output
 
+import enumeratum.{Enum, EnumEntry, PlayJsonEnum}
 import de.model.input.{InputDataModel, RsemGeneProjectons}
 import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
@@ -46,8 +47,24 @@ case class RsemGene(
     fpkm: Option[Double] = None)
 
   // ===========================================================================
-  object RsemGene {
-  
+  object RsemGene {  
+
+    sealed trait Fields extends EnumEntry
+      object Fields extends Enum[Fields] {
+        val values = findValues
+      
+        case object gene_id          extends Fields
+        case object sample_id        extends Fields
+        case object length           extends Fields
+        case object effective_length extends Fields
+        case object expected_count   extends Fields
+        case object tpm              extends Fields
+        case object fpkm             extends Fields
+      }
+      
+    import Fields._
+    
+    // ---------------------------------------------------------------------------
     def fromJson(
             gene_id:             String,
             obj:                 JsObject,
@@ -56,37 +73,37 @@ case class RsemGene(
           gene_id = gene_id,
             
           sample_id =
-            (obj \ "sample_id")
+            (obj \ sample_id.entryName)
               .as[String],
           
           length =
             obj
               .parseDoubleOption(
-                "length",
+                length.entryName,
                 projectionFiledsObj.length),
   
           effective_length =
             obj
               .parseDoubleOption(
-                "effective_length",
+                effective_length.entryName,
                 projectionFiledsObj.effective_length),
                 
           expected_count =
             obj
               .parseDoubleOption(
-                "expected_count",
+                expected_count.entryName,
                 projectionFiledsObj.expected_count),
   
           tpm =
             obj
               .parseDoubleOption(
-                "tpm",
+                tpm.entryName,
                 projectionFiledsObj.tpm),
                 
           fpkm =
             obj
               .parseDoubleOption(
-                "fpkm",
+                fpkm.entryName,
                 projectionFiledsObj.fpkm) )
       
   
@@ -97,35 +114,35 @@ case class RsemGene(
       RsemGene(
         gene_id =
           row
-            .getString("gene_id"),
+            .getString(gene_id.entryName),
             
         sample_id =
-         row
-           .getString("sample_id"),
+          row
+            .getString(sample_id.entryName),
              
         length =
           row
-            .getFloat("length")
+            .getFloat(length.entryName)
             .parseDoubleOption(projectionFiledsObj.length),
             
         effective_length =
           row
-            .getFloat("effective_length")
+            .getFloat(effective_length.entryName)
             .parseDoubleOption(projectionFiledsObj.effective_length),
             
         expected_count =
           row
-            .getFloat("expected_count")
+            .getFloat(expected_count.entryName)
             .parseDoubleOption(projectionFiledsObj.expected_count),
             
         tpm =
           row
-            .getFloat("tpm")
+            .getFloat(tpm.entryName)
             .parseDoubleOption(projectionFiledsObj.tpm),
             
         fpkm =
           row
-            .getFloat("fpkm")
+            .getFloat(fpkm.entryName)
             .parseDoubleOption(projectionFiledsObj.fpkm) )    
   
             
@@ -134,19 +151,19 @@ case class RsemGene(
       
       def writes(obj: RsemGene): JsValue =
         JsObjectWithOption(
-          "length" ->
+          length.entryName ->
             Right(obj.length.map(Json.toJson(_))),
             
-          "effective_length" ->
+          effective_length.entryName ->
             Right(obj.effective_length.map(Json.toJson(_))),
             
-          "expected_count" ->
+          expected_count.entryName ->
             Right(obj.expected_count.map(Json.toJson(_))),
             
-          "tpm" ->
+          tpm.entryName ->
             Right(obj.tpm.map(Json.toJson(_))),
 
-          "fpkm" ->
+          fpkm.entryName ->
             Right(obj.fpkm.map(Json.toJson(_))))
       
     }
@@ -155,16 +172,16 @@ case class RsemGene(
     def getHeader(projection: Projection) = projection match {
 
       case Projection.summary =>
-        Seq(
-          "fpkm")
+        Seq(fpkm.entryName)
       
       case Projection.detailed =>
         Seq(
-          "length",
-          "effective_length",
-          "expected_count",
-          "tpm",
-          "fpkm")
+            length,
+            effective_length,
+            expected_count,
+            tpm,
+            fpkm)
+          .map(_.entryName)
         
     }
   
