@@ -2,11 +2,11 @@ package de.validators
 
 import de.utils.Enums.Normalization
 import play.api.libs.json.{ JsObject, JsString, Json }
-import de.model.input.ErrorMsg
+import de.model.Error
 
 object ValidateNormalization {
 
-  def apply(normalizations: Option[String]): Either[ErrorMsg, Seq[Normalization]] = {
+  def apply(normalizations: Option[String]): Either[Error, Seq[Normalization]] = {
     normalizations match {
 
       case Some(normalization_str) => {
@@ -18,7 +18,7 @@ object ValidateNormalization {
                   .isEmpty)
               Right(normalization_obj.flatten)
             else
-              Left(ErrorMsg("normalization", normalization_str
+              Left(Error("normalization", normalization_str
                 .split(",", -1).filter { x => Normalization.withNameOption(x).isEmpty }))
       }
 

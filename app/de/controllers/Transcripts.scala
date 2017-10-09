@@ -11,8 +11,8 @@ import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
 import de.model.output.GeneInfo
 import de.model.output.TranscriptWithGeneInfo
-import de.utils.GeneDataUtil
 import de.utils.LoggingAction
+import de.repository.GeneRepository
 
 // ===========================================================================
 @Api(
@@ -32,7 +32,7 @@ class Transcripts @javax.inject.Inject() (
     httpMethod        = "GET")
   def getTranscriptIds() =
     LoggingAction {
-      Ok(Json.toJson(GeneDataUtil.getTranscriptIds))
+      Ok(Json.toJson(GeneRepository.getTranscriptIds))
     }
   
   // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ class Transcripts @javax.inject.Inject() (
         val transcripts: Seq[TranscriptWithGeneInfo] =
           transcript_ids
             .split(",", 1).toSeq
-            .flatMap(GeneDataUtil.getTranscript)
+            .flatMap(GeneRepository.getTranscriptId)
             .flatMap { gene =>              
                 gene
                   .transcripts

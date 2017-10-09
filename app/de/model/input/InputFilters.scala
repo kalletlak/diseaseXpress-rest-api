@@ -9,6 +9,7 @@ import de.validators.SecondaryRef
 import de.validators.GeneIdQuery
 import de.validators.SecondaryIdsValidator
 import de.validators.StudyQuery
+import de.model.Error
 
 case class InputFilters(
   primary_ref_ids: Seq[GeneInfo],
@@ -25,7 +26,7 @@ object InputFilters {
     primaryIds: Option[String] = None,
     secondaryIds: Option[String] = None,
     normalizations: Option[String] = None,
-    projection: Option[String] = None): Either[Seq[ErrorMsg], InputFilters] = {
+    projection: Option[String] = None): Either[Seq[Error], InputFilters] = {
 
     val _primary_ids = primaryIds match {
       case Some(_ids) => primaryObject(_ids)

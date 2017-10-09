@@ -3,7 +3,6 @@ package de.service
 import de.model.output.{ Abundance, GeneData, GeneInfo, RsemGene, RsemIsoform, SampleData, TranscriptData }
 import de.model.input.{ FilterUnit, GeneIdFilter, InputDataModel, InputFilters, SampleFilter, StudyFilter, TranscriptIdFilter }
 import de.utils.Enums.Normalization
-import de.utils.GeneDataUtil
 import io.swagger.annotations.ApiModel
 import utils.Implicits.AnythingImplicits
 import de.validators.StudyQuery
@@ -11,6 +10,7 @@ import de.validators.SampleQuery
 import de.model.DomainTypes.SampleId
 import de.model.DomainTypes.TranscriptId
 import de.model.DomainTypes.GeneId
+import de.repository.GeneRepository
 
 // ===========================================================================
 trait ServiceComponent { def service: Service }
@@ -146,7 +146,7 @@ trait Service {
             gene_id } ++ 
         _transcriptDataKeys
           .flatMap { case (_, transcript_id) =>
-            GeneDataUtil.getTranscript(transcript_id) }
+            GeneRepository.getTranscriptId(transcript_id) }
           .map { _.gene_id } )
 
     // ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ trait Service {
     geneIds
       .toSeq
       .distinct
-      .flatMap(GeneDataUtil.getGeneById)
+      .flatMap(GeneRepository.getGeneById)
       .map(geneData(
         targetSamples,
         rsemData,

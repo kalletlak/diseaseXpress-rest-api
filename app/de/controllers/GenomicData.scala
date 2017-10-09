@@ -8,11 +8,12 @@ import io.swagger.annotations.{ Api, ApiImplicitParams, ApiImplicitParam, ApiMod
 import de.Context
 import de.model.output.GeneData
 import de.validators.{GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery}
-import de.utils.{InvalidQueryException, LoggingAction, SampleDataUtil}
+import de.utils.{InvalidQueryException, LoggingAction}
 import de.validators.{SecondaryRef, StudyQuery, PrimaryIdsValidator, SecondaryIdsValidator, SampleQuery }
 import de.utils.Enums.Projection
-import de.model.input.ErrorMsg
+import de.model.Error
 import de.model.input.InputFilters
+import de.repository.SamplesRepository
 
 // ===========================================================================
 @Api(
@@ -717,7 +718,7 @@ class GenomicData @javax.inject.Inject() (
                                           projection: Option[String] = None)
                                          (implicit request: RequestHeader): Result = {
 
-      val input: Either[Seq[ErrorMsg], InputFilters] = InputFilters(
+      val input: Either[Seq[Error], InputFilters] = InputFilters(
                                                                     primaryObject,
                                                                     secondaryObject,
                                                                     primaryIds,
@@ -757,7 +758,7 @@ class GenomicData @javax.inject.Inject() (
   
   // ===========================================================================
   def extractSampleIds(json: JsValue): Seq[String] =
-    SampleDataUtil.getSamples(json).toSeq
+    SamplesRepository.getSamples(json).toSeq
 
   // ---------------------------------------------------------------------------
   def splitCsv(csvIds: String): Seq[String] =

@@ -4,7 +4,8 @@ import play.api.Configuration
 import play.api.mvc.Controller
 import play.api.libs.json.Json
 import io.swagger.annotations.{Api, ApiOperation}
-import de.utils.{SampleDataUtil, LoggingAction}
+import de.utils.{LoggingAction}
+import de.repository.SamplesRepository
 
 // ===========================================================================
 @Api(
@@ -23,7 +24,7 @@ class Studies @javax.inject.Inject()(
   def getStudies() =
     LoggingAction {
       implicit request =>
-        Ok(Json.toJson(SampleDataUtil.getStudies))
+        Ok(Json.toJson(SamplesRepository.getStudies))
     }
 }
 

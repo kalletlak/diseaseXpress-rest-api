@@ -10,12 +10,13 @@ import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
 import de.model.output.GeneInfo
-import de.utils.GeneDataUtil
 import de.utils.LoggingAction
 import utils.Implicits.AnythingImplicits
 import de.validators.GeneSymbolQuery
+import de.repository.GeneRepository
 
 // ===========================================================================
+//TODO: add validator
 @Api(
   value       = "/Genes",
   description = "Operations with Genes")
@@ -33,7 +34,7 @@ class Genes @javax.inject.Inject() (
     httpMethod        = "GET")
   def getGeneIds() =
     LoggingAction {
-      Ok(Json.toJson(GeneDataUtil.getGeneIds))
+      Ok(Json.toJson(GeneRepository.getGeneIds))
     }
 
   // ---------------------------------------------------------------------------
@@ -46,7 +47,7 @@ class Genes @javax.inject.Inject() (
     httpMethod        = "GET")
   def getGenesBySymbol() =
     LoggingAction {
-      Ok(Json.toJson(GeneDataUtil.getGeneSymbols))
+      Ok(Json.toJson(GeneRepository.getGeneSymbols))
     }
 
   // ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ class Genes @javax.inject.Inject() (
         val genes: Seq[GeneInfo] =
           gene_ids
             .split(",", -1)
-            .flatMap(GeneDataUtil.getGeneById)
+            .flatMap(GeneRepository.getGeneById)
 
         render {
           case Accepts.Json() =>
@@ -92,7 +93,7 @@ class Genes @javax.inject.Inject() (
           GeneSymbolQuery(gene_symbols
             .split(",", -1)
             .toSeq)
-          .zen {GeneDataUtil.getGeneInputRef}
+          .zen {GeneRepository.getGeneInputRef}
 
         render {
           
