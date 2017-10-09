@@ -11,7 +11,6 @@ import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
 import de.model.output.GeneInfo
 import de.model.output.TranscriptWithGeneInfo
-import de.model.input.GeneSymbolQuery
 import de.utils.GeneDataUtil
 import de.utils.LoggingAction
 

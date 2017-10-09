@@ -12,13 +12,13 @@ case class TranscriptData(
       
       @ApiModelProperty(
         name = "SampleAbundanceData",
-        dataType = "de.model.Abundance",
+        dataType = "de.model.output.Abundance",
         required = false)
       sample_abundance: Option[Abundance],
                               
       @ApiModelProperty(
         name = "RsemIsoformData",
-        dataType = "de.model.RsemIsoform",
+        dataType = "de.model.output.RsemIsoform",
         required = false)
       sample_rsem_isoform: Option[RsemIsoform])
 

@@ -7,9 +7,12 @@ import play.api.mvc.{ Accepting, Controller, RequestHeader, Result }
 import io.swagger.annotations.{ Api, ApiImplicitParams, ApiImplicitParam, ApiModel, ApiOperation, ApiParam, Example, ExampleProperty }
 import de.Context
 import de.model.output.GeneData
-import de.model.input.{GeneIdQuery, GeneSymbolQuery, InputFilters, TranscriptIdQuery}
+import de.validators.{GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery}
 import de.utils.{InvalidQueryException, LoggingAction, SampleDataUtil}
-import scala.{Left, Right}
+import de.validators.{SecondaryRef, StudyQuery, PrimaryIdsValidator, SecondaryIdsValidator, SampleQuery }
+import de.utils.Enums.Projection
+import de.model.input.ErrorMsg
+import de.model.input.InputFilters
 
 // ===========================================================================
 @Api(
@@ -50,10 +53,9 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>          
         apply(
-          filters        = geneIdFilters(gene_ids),
-          ref_ids        = Left(Seq()),
-          normalizations = None,
-          projection)  
+            primaryObject=GeneIdQuery,
+            primaryIds=Some(gene_ids),
+            projection=projection)  
       }
 
   // ---------------------------------------------------------------------------
@@ -80,10 +82,11 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>
         apply(
-          filters        = geneIdFilters(gene_ids, study_ids),
-          ref_ids        = Left(splitCsv(study_ids)),
-          normalizations = None,
-          projection)
+              primaryObject=GeneIdQuery,
+              primaryIds=Some(gene_ids),
+              secondaryObject=StudyQuery,
+              secondaryIds=Some(study_ids),
+              projection=projection)
       }
 
   // ---------------------------------------------------------------------------
@@ -114,10 +117,10 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>        
         apply(
-          filters        = geneIdFilters(gene_ids),
-          ref_ids        = Left(Seq()),
-          normalizations = Some(normalizations),
-          projection)
+              primaryObject=GeneIdQuery,
+              primaryIds=Some(gene_ids),
+              normalizations = Some(normalizations),
+              projection=projection)
       }
 
   
@@ -151,10 +154,12 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {    
       implicit request =>      
         apply(
-          filters        = geneIdFilters(gene_ids, study_ids),
-          ref_ids        = Left(splitCsv(study_ids)),
-          normalizations = Some(normalizations),
-          projection)  
+              primaryObject=GeneIdQuery,
+              primaryIds=Some(gene_ids),
+              secondaryObject=StudyQuery,
+              secondaryIds=Some(study_ids),
+              normalizations = Some(normalizations),
+              projection=projection)  
       }
   
   // ===========================================================================
@@ -180,10 +185,9 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>      
         apply(
-          filters        = geneSymbolFilters(gene_symbols),
-          ref_ids        = Left(Seq()),
-          normalizations = None,
-          projection)  
+              primaryObject=GeneSymbolQuery,
+              primaryIds=Some(gene_symbols),
+              projection=projection)  
       }
 
   
@@ -211,10 +215,11 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {    
       implicit request =>
         apply(
-          filters        = geneSymbolFilters(gene_symbols, study_ids),
-          ref_ids        = Left(splitCsv(study_ids)),
-          normalizations = None,
-          projection)
+              primaryObject=GeneSymbolQuery,
+              primaryIds=Some(gene_symbols),
+              secondaryObject=StudyQuery,
+              secondaryIds=Some(study_ids),
+              projection=projection)
       }
 
   
@@ -245,10 +250,10 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {    
       implicit request =>      
         apply(
-          filters        = geneSymbolFilters(gene_symbols),
-          ref_ids        = Left(Seq()),
-          Some(normalizations),
-          projection)
+              primaryObject=GeneSymbolQuery,
+              primaryIds=Some(gene_symbols),
+              normalizations = Some(normalizations),
+              projection=projection)
       }
 
   
@@ -282,10 +287,12 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>
         apply(
-          filters        = geneSymbolFilters(gene_symbols, study_ids),
-          ref_ids        = Left(splitCsv(study_ids)),
-          normalizations = Some(normalizations),
-          projection)
+              primaryObject=GeneSymbolQuery,
+              primaryIds=Some(gene_symbols),
+              secondaryObject=StudyQuery,
+              secondaryIds=Some(study_ids),
+              normalizations = Some(normalizations),
+              projection=projection)
     }
   
 
@@ -311,10 +318,9 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {    
       implicit request =>      
         apply(
-          filters        = transcriptIdFilters(transcript_ids),
-          ref_ids        = Left(Seq()),
-          normalizations = None,
-          projection)
+              primaryObject=TranscriptIdQuery,
+              primaryIds=Some(transcript_ids),
+              projection=projection)
       }
 
   
@@ -342,10 +348,11 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
     implicit request =>
       apply(
-        filters        = transcriptIdFilters(transcript_ids, study_ids),
-        ref_ids        = Left(splitCsv(study_ids)),
-        normalizations = None,
-        projection)
+            primaryObject=TranscriptIdQuery,
+            primaryIds=Some(transcript_ids),
+            secondaryObject=StudyQuery,
+            secondaryIds=Some(study_ids),
+            projection=projection)
   }
 
   
@@ -376,10 +383,10 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>
         apply(
-          filters        = transcriptIdFilters(transcript_ids),
-          ref_ids        = Left(Seq()),
-          normalizations = Some(normalizations),
-          projection)
+              primaryObject=TranscriptIdQuery,
+              primaryIds=Some(transcript_ids),
+              normalizations = Some(normalizations),
+              projection=projection)
       }
 
   
@@ -413,10 +420,12 @@ class GenomicData @javax.inject.Inject() (
     LoggingAction {
       implicit request =>
         apply(
-          filters        = transcriptIdFilters(transcript_ids, study_ids),
-          ref_ids        = Left(splitCsv(study_ids)),
-          normalizations = Some(normalizations),
-          projection)  
+              primaryObject=TranscriptIdQuery,
+              primaryIds=Some(transcript_ids),
+              secondaryObject=StudyQuery,
+              secondaryIds=Some(study_ids),
+              normalizations = Some(normalizations),
+              projection=projection)  
       }
 
   
@@ -476,11 +485,12 @@ class GenomicData @javax.inject.Inject() (
   
         try {
           apply(
-            filters        = geneSymbolFilters(gene_symbols)
-                               .copy(sample_id = Some(extractSampleIds(json))),
-            ref_ids        = Right(extractSampleIds(json)),
-            normalizations = Some(normalizations),
-            projection)
+              primaryObject=GeneSymbolQuery,
+              primaryIds=Some(gene_symbols),
+              secondaryObject=SampleQuery,
+              secondaryIds=Some(extractSampleIds(json).mkString(",")),
+              normalizations = Some(normalizations),
+              projection=projection)
         } catch { // TODO: address properly instead
           case x: InvalidQueryException => {
             BadRequest(x.getMessage)
@@ -543,11 +553,12 @@ class GenomicData @javax.inject.Inject() (
         val json = request.body
         try {
           apply(
-            filters        = geneIdFilters(gene_ids)
-                               .copy(sample_id = Some(extractSampleIds(json))),
-            ref_ids        = Right(extractSampleIds(json)),
-            normalizations = Some(normalizations),
-            projection)
+              primaryObject=GeneIdQuery,
+              primaryIds=Some(gene_ids),
+              secondaryObject=SampleQuery,
+              secondaryIds=Some(extractSampleIds(json).mkString(",")),
+              normalizations = Some(normalizations),
+              projection=projection)
         } catch {
           case x: InvalidQueryException => {
             BadRequest(x.getMessage)
@@ -610,11 +621,12 @@ class GenomicData @javax.inject.Inject() (
         val json = request.body
         try {
           apply(
-            filters        = transcriptIdFilters(transcript_ids)
-                               .copy(sample_id = Some(extractSampleIds(json))),
-            ref_ids        = Right(extractSampleIds(json)),
-            normalizations = Some(normalizations),
-            projection)
+              primaryObject=TranscriptIdQuery,
+              primaryIds=Some(transcript_ids),
+              secondaryObject=SampleQuery,
+              secondaryIds=Some(extractSampleIds(json).mkString(",")),
+              normalizations = Some(normalizations),
+              projection=projection)
         } catch {
           case x: InvalidQueryException => {
             BadRequest(x.getMessage)
@@ -681,10 +693,10 @@ class GenomicData @javax.inject.Inject() (
         try {
           println(extractSampleIds(json))
           apply(
-            filters        = sampleIdFilters(json),
-            ref_ids        = Right(extractSampleIds(json)),
-            normalizations = Some(normalizations),
-            projection)
+              secondaryObject=SampleQuery,
+              secondaryIds=Some(extractSampleIds(json).mkString(",")),
+              normalizations = Some(normalizations),
+              projection=projection)
         } catch {
           case x: InvalidQueryException => {
             BadRequest(x.getMessage)
@@ -696,41 +708,52 @@ class GenomicData @javax.inject.Inject() (
       }
           
   // ===========================================================================  
-  private def apply
-      (filters:        InputFilters,
-       ref_ids:        Either[Seq[String], Seq[String]],
-       normalizations: Option[String],
-       projection:     Option[String])
-      (implicit request: RequestHeader)
-    : Result =
+   private def apply[B <: SecondaryRef](
+                                          primaryObject: PrimaryIdsValidator=GeneIdQuery,
+                                          secondaryObject: SecondaryIdsValidator[B]=StudyQuery,
+                                          primaryIds: Option[String] = None,
+                                          secondaryIds: Option[String] = None,
+                                          normalizations: Option[String] = None,
+                                          projection: Option[String] = None)
+                                         (implicit request: RequestHeader): Result = {
 
-    // TODO: earlier input validation
-    
-    GenomicDataHelper(
-        repo, 
-        filters,
-        ref_ids,
-        normalizations,
-        projection)
-      match {
-      
+      val input: Either[Seq[ErrorMsg], InputFilters] = InputFilters(
+                                                                    primaryObject,
+                                                                    secondaryObject,
+                                                                    primaryIds,
+                                                                    secondaryIds,
+                                                                    normalizations,
+                                                                    projection)
+
+      input match {
         case Left(errorObject) =>
-          BadRequest(errorObject)
+          BadRequest(Json.toJson(errorObject))
 
-        case Right(genes) =>          
+        case Right(filters) => {
+          val genes = repo
+                        .getData(filters)
           render {
-              
+  
             case Accepts.Json() =>
               Ok(Json.toJson(genes))
-              
-            case Play.AcceptsTsv() =>
-              Ok(
-                TsvFormatter.rnaSeq(
-                  genes,
-                  GenomicDataHelper.normalizations(normalizations),
-                  GenomicDataHelper.projection_enum(projection).get))
-          }          
-      }  
+  
+            case Play.AcceptsTsv() => {
+              val _projection = projection match {
+                                  case Some(projection) => Projection.withNameOption(projection)
+                                  case None             => Some(Projection.summary)
+                                }
+  
+               Ok(
+                  TsvFormatter.rnaSeq(
+                    genes,
+                    filters.normalization_combo.keySet.toSeq,
+                    _projection.get))
+            }
+        }  
+      }
+    }
+  }
+
   
   // ===========================================================================
   def extractSampleIds(json: JsValue): Seq[String] =
@@ -744,35 +767,6 @@ class GenomicData @javax.inject.Inject() (
   
   // ===========================================================================
   // utils
-  
-  // TODO: externalize
-  
-  def geneIdFilters(gene_ids: String): InputFilters =
-    InputFilters(ref_id = Some(GeneIdQuery(splitCsv(gene_ids))) )
-
-  // ---------------------------------------------------------------------------
-  def geneIdFilters(gene_ids: String, study_ids: String): InputFilters =          
-    geneIdFilters(gene_ids).copy(study_id = Some(splitCsv(study_ids)))
-
-  // ---------------------------------------------------------------------------
-  def geneSymbolFilters(gene_symbols: String): InputFilters =
-    InputFilters(ref_id = Some(GeneSymbolQuery(splitCsv(gene_symbols))))
-
-  // ---------------------------------------------------------------------------
-  def geneSymbolFilters(gene_symbols: String, study_ids: String): InputFilters =
-    geneSymbolFilters(gene_symbols).copy(study_id = Some(splitCsv(study_ids)))
-
-  // ---------------------------------------------------------------------------
-  def transcriptIdFilters(transcript_ids: String): InputFilters =
-    InputFilters(ref_id = Some(TranscriptIdQuery(splitCsv(transcript_ids))))
-
-  // ---------------------------------------------------------------------------
-  def transcriptIdFilters(transcript_ids: String, study_ids: String): InputFilters =
-    transcriptIdFilters(transcript_ids).copy(study_id = Some(splitCsv(study_ids)))  
-
-  // ---------------------------------------------------------------------------
-  def sampleIdFilters(json: JsValue): InputFilters =
-    InputFilters(sample_id = Some(extractSampleIds(json)))
   
 }
 

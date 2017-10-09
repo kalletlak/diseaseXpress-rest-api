@@ -2,8 +2,8 @@ package de.utils
 
 import scala.io.Source
 import de.model.output.GeneInfo
-import de.model.input.{ GeneIdQuery, GeneQueryRef, GeneSymbolQuery, TranscriptIdQuery }
 import io.swagger.annotations.ApiModel
+import de.validators.{IdRef, GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery}
 
 // ===========================================================================
 object GeneDataUtil { // TODO: in-memory repo instead
@@ -46,7 +46,7 @@ object GeneDataUtil { // TODO: in-memory repo instead
   val getTranscriptIds: Seq[String] = transcripts    .keySet.toSeq
       
   // ===========================================================================
-  def getGeneInputRef(geneInputRef: GeneQueryRef): Seq[GeneInfo] = {
+  def getGeneInputRef(geneInputRef: IdRef): Seq[GeneInfo] = {
     geneInputRef
       match {
       
@@ -73,8 +73,11 @@ object GeneDataUtil { // TODO: in-memory repo instead
   // ---------------------------------------------------------------------------    
   def getGeneById  (gene_id: String):       Option[GeneInfo] = genes      .get(gene_id)
   def getTranscript(transcript_id: String): Option[GeneInfo] = transcripts.get(transcript_id)
+  
+  def isGeneIdPresent(gene_id: String): Boolean = genes.get(gene_id).isDefined
+  def isGeneSymbolPresent(gene_symbol: String): Boolean = geneSymbolIdMap.get(gene_symbol).isDefined
+  def isTranscriptIdPresent(transcript_id: String): Boolean = transcripts.get(transcript_id).isDefined
 
 }
 
 // ===========================================================================
-
