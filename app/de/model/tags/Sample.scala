@@ -6,6 +6,7 @@ import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, un
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
 import Sample.{Text, EitherValue, Number}
+import de.model.Fields
 
 // ===========================================================================
 @ApiModel("SampleAnnotation")
@@ -14,7 +15,7 @@ trait Sample {
       val sample_id:       Text
       val patient_barcode: Either[Text,         unavailable]
       val sample_barcode:  Either[Text,         unavailable]
-      val study:           Text
+      val study_id:        Text
       val tissue:          Text
       val definition:      Text
       val library_type:    Either[library_type, unavailable]
@@ -42,7 +43,7 @@ trait Sample {
           override val sample_id: Text,
           override val patient_barcode: Either[Text,         unavailable],
           override val sample_barcode:  Either[Text,         unavailable],
-          override val study:           Text,
+          override val study_id:        Text,
           override val tissue:          Text,
           override val definition:      Text,
           override val library_type:    Either[library_type, unavailable],
@@ -60,21 +61,21 @@ trait Sample {
 
       def getAllTags() =
         Seq(
-            Tag("sample_id",       sample_id),
-            Tag("patient_barcode", EitherValue(patient_barcode)),
-            Tag("sample_barcode",  EitherValue(sample_barcode)),
-            Tag("study",           study),
-            Tag("tissue",          tissue),
-            Tag("definition",      definition),
-            Tag("library_type",    EitherValue(library_type)),
-            Tag("platform",        EitherValue(platform)),
-            Tag("center",          center),
-            Tag("gender",          EitherValue(gender)),
-            Tag("race",            EitherValue(race)),
-            Tag("ethnicity",       EitherValue(ethnicity)),
-            Tag("vital_status",    EitherValue(vital_status)),
+            Tag(Fields.sample_id.entryName,       sample_id),
+            Tag(Fields.patient_barcode.entryName, EitherValue(patient_barcode)),
+            Tag(Fields.sample_barcode.entryName,  EitherValue(sample_barcode)),
+            Tag(Fields.study_id.entryName,        study_id),
+            Tag(Fields.tissue.entryName,          tissue),
+            Tag(Fields.definition.entryName,      definition),
+            Tag(Fields.library_type.entryName,    EitherValue(library_type)),
+            Tag(Fields.platform.entryName,        EitherValue(platform)),
+            Tag(Fields.center.entryName,          center),
+            Tag(Fields.gender.entryName,          EitherValue(gender)),
+            Tag(Fields.race.entryName,            EitherValue(race)),
+            Tag(Fields.ethnicity.entryName,       EitherValue(ethnicity)),
+            Tag(Fields.vital_status.entryName,    EitherValue(vital_status)),
 
-            Tag("age_normal_tissue_collected_in_years", Number(age_normal_tissue_collected_in_years.toString))) ++
+            Tag(Fields.age_normal_tissue_collected_in_years.entryName, Number(age_normal_tissue_collected_in_years.toString))) ++
           tags
   
     }
@@ -85,7 +86,7 @@ trait Sample {
           override val sample_id:       Text,
           override val patient_barcode: Either[Text, unavailable],
           override val sample_barcode:  Either[Text, unavailable],
-          override val study:           Text,
+          override val study_id:        Text,
           override val tissue:          Text,
           override val definition:      Text,
           override val library_type:    Either[library_type, unavailable],
@@ -108,26 +109,26 @@ trait Sample {
 
       def getAllTags() =
           Seq(
-            Tag("sample_id",       sample_id),
-            Tag("patient_barcode", EitherValue(patient_barcode)),
-            Tag("sample_barcode",  EitherValue(sample_barcode)),
-            Tag("study",           study),
-            Tag("tissue",          tissue),
-            Tag("definition",      definition),
-            Tag("library_type",    EitherValue(library_type)),
-            Tag("platform",        EitherValue(platform)),
-            Tag("center",          center),
-            Tag("gender",          EitherValue(gender)),
-            Tag("race",            EitherValue(race)),
-            Tag("ethnicity",       EitherValue(ethnicity)),
-            Tag("vital_status",    EitherValue(vital_status)),
+            Tag(Fields.sample_id.entryName,       sample_id),
+            Tag(Fields.patient_barcode.entryName, EitherValue(patient_barcode)),
+            Tag(Fields.sample_barcode.entryName,  EitherValue(sample_barcode)),
+            Tag(Fields.study_id.entryName,        study_id),
+            Tag(Fields.tissue.entryName,          tissue),
+            Tag(Fields.definition.entryName,      definition),
+            Tag(Fields.library_type.entryName,    EitherValue(library_type)),
+            Tag(Fields.platform.entryName,        EitherValue(platform)),
+            Tag(Fields.center.entryName,          center),
+            Tag(Fields.gender.entryName,          EitherValue(gender)),
+            Tag(Fields.race.entryName,            EitherValue(race)),
+            Tag(Fields.ethnicity.entryName,       EitherValue(ethnicity)),
+            Tag(Fields.vital_status.entryName,    EitherValue(vital_status)),
             
-            Tag("disease",                          disease),
-            Tag("disease_name",                     disease_name),
-            Tag("disease_subtype",                  disease_subtype),
-            Tag("age_at_diagnosis_in_days",         EitherValue(age_at_diagnosis_in_days)),
-            Tag("event_free_survival_time_in_days", EitherValue(event_free_survival_time_in_days)),
-            Tag("overall_survival_time_in_days",    EitherValue(overall_survival_time_in_days))) ++
+            Tag(Fields.disease.entryName,                          disease),
+            Tag(Fields.disease_name.entryName,                     disease_name),
+            Tag(Fields.disease_subtype.entryName,                  disease_subtype),
+            Tag(Fields.age_at_diagnosis_in_days.entryName,         EitherValue(age_at_diagnosis_in_days)),
+            Tag(Fields.event_free_survival_time_in_days.entryName, EitherValue(event_free_survival_time_in_days)),
+            Tag(Fields.overall_survival_time_in_days.entryName,    EitherValue(overall_survival_time_in_days))) ++
         tags      
   
     }

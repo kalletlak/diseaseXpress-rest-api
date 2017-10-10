@@ -1,5 +1,8 @@
 package de.model.input
 
+import play.api.libs.json.{ JsValue, Json }
+import de.model.Fields
+
 // ===========================================================================
 trait FilterUnit {
 
@@ -7,33 +10,23 @@ trait FilterUnit {
   val values: Seq[String]
 
   // ---------------------------------------------------------------------------
-  def queryMongoString: Option[String] =
-    values.isEmpty match {
-      case false => Some(s"""{$key: {$$in: ${seqAsMongoString(values)}}}""")
-      case true  => None
-    }
+  def queryMongoString: Option[JsValue] =
+    if (values.isEmpty)
+      None
+    else
+      Some(Json.obj(key -> Json.obj(Fields.$in.entryName -> values)))
 
   def queryCassandraString: Option[String] =
-    values.isEmpty match {
-      case false => Some(s"$key in ${values.mkString("('", "','", "')")}")
-      case true  => None
-    }
+    if (values.isEmpty)
+      None
+    else
+      Some(s"$key in ${values.mkString("('", "','", "')")}")
 
-  def queryElasticSearchString: Option[String] =
-    values.isEmpty match {
-      case false => Some(s"""{ "terms" : { "$key" : ${values.map { value => s""" "$value" """ }.mkString("[", ",", "]")} } }""") // TODO: use JsObject
-      case true  => None
-    }
-
-  // ---------------------------------------------------------------------------
-  private def seqAsMongoString(values: Seq[String]) =
-    values
-      .map(stringWithDoubleQuotes)
-      .mkString("[", ", ", "]")
-
-  private def stringWithDoubleQuotes(str: String) =
-    s""""$str""""
-
+  def queryElasticSearchString: Option[JsValue] =
+    if (values.isEmpty)
+      None
+    else
+      Some(Json.obj(Fields.terms.entryName -> Json.obj(key -> values ) ))
 }
 
 // ===========================================================================  

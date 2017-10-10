@@ -35,7 +35,7 @@ object SamplesDAO {
       .drop(1)
       .map(SampleUtils.apply)
       .toList
-      .groupBy(_.study.value)
+      .groupBy(_.study_id.value)
 
     stream.close()
     results
