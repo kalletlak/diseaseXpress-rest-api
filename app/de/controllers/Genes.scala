@@ -9,13 +9,14 @@ import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import io.swagger.annotations.ApiResponses
 import io.swagger.annotations.ApiResponse
-import de.model.input.GeneSymbolQuery
 import de.model.output.GeneInfo
-import de.utils.GeneDataUtil
 import de.utils.LoggingAction
 import utils.Implicits.AnythingImplicits
+import de.validators.GeneSymbolQuery
+import de.repository.GeneRepository
 
 // ===========================================================================
+//TODO: add validator
 @Api(
   value       = "/Genes",
   description = "Operations with Genes")
@@ -33,7 +34,7 @@ class Genes @javax.inject.Inject() (
     httpMethod        = "GET")
   def getGeneIds() =
     LoggingAction {
-      Ok(Json.toJson(GeneDataUtil.getGeneIds))
+      Ok(Json.toJson(GeneRepository.getGeneIds))
     }
 
   // ---------------------------------------------------------------------------
@@ -46,7 +47,7 @@ class Genes @javax.inject.Inject() (
     httpMethod        = "GET")
   def getGenesBySymbol() =
     LoggingAction {
-      Ok(Json.toJson(GeneDataUtil.getGeneSymbols))
+      Ok(Json.toJson(GeneRepository.getGeneSymbols))
     }
 
   // ---------------------------------------------------------------------------
@@ -64,7 +65,7 @@ class Genes @javax.inject.Inject() (
         val genes: Seq[GeneInfo] =
           gene_ids
             .split(",", -1)
-            .flatMap(GeneDataUtil.getGeneById)
+            .flatMap(GeneRepository.getGeneById)
 
         render {
           case Accepts.Json() =>
@@ -88,13 +89,11 @@ class Genes @javax.inject.Inject() (
     LoggingAction {
       implicit request =>
 
-        val genes: Seq[GeneInfo] =
-          gene_symbols
-            .split(",", -1).toSeq
-            .map(_.trim) // TODO: don't
-            .zen(
-                GeneSymbolQuery andThen 
-                GeneDataUtil.getGeneInputRef)
+        val genes: Seq[GeneInfo] = 
+          GeneSymbolQuery(gene_symbols
+            .split(",", -1)
+            .toSeq)
+          .zen {GeneRepository.getGeneInputRef}
 
         render {
           
@@ -106,7 +105,6 @@ class Genes @javax.inject.Inject() (
   
         }
   }
-
 
 }
 

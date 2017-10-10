@@ -5,8 +5,9 @@ import play.api.libs.json.Json
 import play.api.libs.json.{JsValue, JsString}
 import play.api.mvc.{Accepting, Controller, RequestHeader, Result}
 import io.swagger.annotations.{Api, ApiOperation}
-import de.utils.{SampleDataUtil, LoggingAction}
+import de.utils.{LoggingAction}
 import de.model.DomainTypes.StudyId
+import de.repository.SamplesRepository
 
 // ===========================================================================
 @Api(
@@ -54,11 +55,11 @@ class Samples @javax.inject.Inject() (
     val studyIds: Seq[String] =
       studyIdsOpt match {
         case Some(x) => x.split(",", -1).toSeq
-        case None    => SampleDataUtil.getStudies
+        case None    => SamplesRepository.getStudies
       }
 
     val response: Seq[Map[String, JsValue]] =
-      SampleDataUtil
+      SamplesRepository
         .getSamplesInfo(studyIds)
         .map(_.getAllTagsAsMap)
 

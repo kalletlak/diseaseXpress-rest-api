@@ -12,13 +12,13 @@ case class SampleData(
 
     @ApiModelProperty(
       name = "SampleRsemGeneData",
-      dataType = "de.model.RsemGene",
+      dataType = "de.model.output.RsemGene",
       required = false)
     rsem: Option[RsemGene],
 
     @ApiModelProperty(
       name = "TranscriptData",
-      dataType = "de.model.TranscriptData",
+      dataType = "de.model.output.TranscriptData",
       required = false)
     transcripts: Option[Seq[TranscriptData]])
 
