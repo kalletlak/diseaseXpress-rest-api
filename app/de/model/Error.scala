@@ -1,11 +1,42 @@
 package de.model
 
 import play.api.libs.json.Json
+import play.api.libs.json.JsObject
+import play.api.libs.json.JsString
 
-case class Error(key: String, value: Seq[String])
+trait Error {
+  val key: String
+  val value: Seq[String]
+  //TODO: format depending on error type
+  def formatJson(): JsObject = Json.obj(
+    "key" -> key,
+    "value" -> value)
+}
 
-object Error {
-  implicit val readsError = Json.reads[Error]
+case class GeneIdError(override val value: Seq[String]) extends Error {
+  override val key = "gene_id"
+}
 
-  implicit val writesError = Json.writes[Error]
+case class GeneSymbolError(override val value: Seq[String]) extends Error {
+  override val key = "gene_symbol"
+}
+
+case class TranscriptIdError(override val value: Seq[String]) extends Error {
+  override val key = "transcript_id"
+}
+
+case class StudyIdError(override val value: Seq[String]) extends Error {
+  override val key = "study_id"
+}
+
+case class SampleIdError(override val value: Seq[String]) extends Error {
+  override val key = "sample_id"
+}
+
+case class NormalizationError(override val value: Seq[String]) extends Error {
+  override val key = "normalization"
+}
+
+case class PorjectionError(override val value: Seq[String]) extends Error {
+  override val key = "projection"
 }

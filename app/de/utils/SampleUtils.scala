@@ -111,7 +111,7 @@ object SampleUtils {
             
             patient_barcode = readValue(_patient_barcode, Text.apply),
             sample_barcode  = readValue(_sample_barcode, Text.apply),
-            study           = study.withName(_study),
+            study           = Text(_study),
             tissue          = Text(_tissue),
             definition      = Text(_definition),
             library_type    = readEnum(_library_type, library_type.withNameOption),
@@ -133,7 +133,7 @@ object SampleUtils {
             
             patient_barcode = readValue(_patient_barcode, Text.apply),
             sample_barcode  = readValue(_sample_barcode, Text.apply),
-            study           = study.withName(_study),
+            study           = Text(_study),
             tissue          = Text(_tissue),
             definition      = Text(_definition),
             library_type    = readEnum(_library_type, library_type.withNameOption),

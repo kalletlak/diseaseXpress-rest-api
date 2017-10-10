@@ -1,9 +1,11 @@
 package de.dao
 
-import de.utils.Transcript
 import scala.io.Source
+
+import de.model.DomainTypes.{ GeneId, GeneSymbol, TranscriptId }
 import de.model.output.GeneInfo
-import de.model.DomainTypes._
+import de.utils.Transcript
+import io.swagger.annotations.ApiModel
 
 object GeneDAO {
   private val transcriptsTmp: List[Transcript] = {
@@ -12,11 +14,14 @@ object GeneDAO {
       Source
         .fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/static-files/gencode.v23.annotation_otherids.txt")
 
-    stream // TODO: close
+    val results = stream
       .getLines
       .drop(1)
       .map(Transcript.apply)
       .toList
+
+    stream.close()
+    results
   }
   
     // ===========================================================================
@@ -32,7 +37,7 @@ object GeneDAO {
       .mapValues(GeneInfo.apply)
 
   // ---------------------------------------------------------------------------      
-  private val geneSymbolIdMap: Map[GeneSymbol, List[String /* gene ID */]] =
+  private val geneSymbolIdMap: Map[GeneSymbol, List[GeneId]] =
     transcriptsTmp
       .groupBy(_.gene_symbol)
       .mapValues(_.map(_.gene_id).distinct)
@@ -43,12 +48,16 @@ object GeneDAO {
   def getGeneSymbols:   Seq[GeneSymbol]   = geneSymbolIdMap.keySet.toSeq
   def getTranscriptIds: Seq[TranscriptId] = transcripts    .keySet.toSeq
       
-  // ===========================================================================
+  def getGeneById     (gene_id: GeneId):             Option[GeneInfo] = genes.get(gene_id)
   
-  def getGeneById  (gene_id: String):         Option[GeneInfo] = genes          .get(gene_id)
-  def getTranscriptId(transcript_id: String): Option[GeneInfo] = transcripts    .get(transcript_id)
-  def getGeneBySymbol(gene_id: String):       Seq[GeneInfo]    = geneSymbolIdMap.get(gene_id) match {
-    case Some(gene_ids) => gene_ids.flatMap(genes.get)
-    case _       => Seq()
-  }
+  def getTranscriptId (transcript_id: TranscriptId): Option[GeneInfo] = transcripts.get(transcript_id)
+  
+  def getGeneBySymbol (gene_id: GeneId):             Seq[GeneInfo]    = 
+    geneSymbolIdMap
+      .getOrElse(gene_id, Seq())
+      .flatMap { genes.get }
+  
+  
+  // ===========================================================================
+
 }

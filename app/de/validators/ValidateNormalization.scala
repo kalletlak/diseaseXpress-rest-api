@@ -1,32 +1,29 @@
 package de.validators
 
+import de.model.{ Error, NormalizationError }
 import de.utils.Enums.Normalization
-import play.api.libs.json.{ JsObject, JsString, Json }
-import de.model.Error
 
 object ValidateNormalization {
 
-  def apply(normalizations: Option[String]): Either[Error, Seq[Normalization]] = {
-    normalizations match {
+  private def getAllNormalization = Normalization.values.map { _.entryName }.toSeq
 
-      case Some(normalization_str) => {
-            val normalization_obj = normalization_str
-                                      .split(",", -1)
-                                      .map { Normalization.withNameOption }.toSeq
-            if (normalization_obj
-                  .filter(_.isEmpty)
-                  .isEmpty)
-              Right(normalization_obj.flatten)
-            else
-              Left(Error("normalization", normalization_str
-                .split(",", -1).filter { x => Normalization.withNameOption(x).isEmpty }))
-      }
-
-      case None => Right(
-        Seq(Normalization.rsem,
-          Normalization.sample_abundance,
-          Normalization.sample_rsem_isoform))
+  def apply(normalizations_str: Option[String]): Either[Error, Seq[Normalization]] = {
+    
+    val normalizations =  normalizations_str match {
+      case Some(_normalizations) => _normalizations.split(",", -1).toSeq
+      case None    => getAllNormalization
     }
+      
+    val invalid_normalizations = 
+      normalizations
+        .filter { normalization => Normalization
+                                      .withNameOption(normalization)
+                                      .isEmpty }
+    
+    if (invalid_normalizations.isEmpty)
+      Right(normalizations.map { Normalization.withName })
+    else
+      Left(NormalizationError(invalid_normalizations))
+      
   }
-
 }

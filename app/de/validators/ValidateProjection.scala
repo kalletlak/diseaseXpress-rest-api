@@ -1,8 +1,7 @@
 package de.validators
 
+import de.model.{ Error, PorjectionError }
 import de.utils.Enums.Projection
-import play.api.libs.json.{ JsObject, JsString, Json }
-import de.model.Error
 
 object ValidateProjection {
 
@@ -12,7 +11,7 @@ object ValidateProjection {
       case Some(projection) => Projection.withNameOption(projection) match {
 
         case Some(projection) => Right(projection)
-        case None             =>  Left(Error("projection", Seq(projection)))
+        case None             =>  Left(PorjectionError(Seq(projection)))
       }
 
       case None => Right(Projection.summary)

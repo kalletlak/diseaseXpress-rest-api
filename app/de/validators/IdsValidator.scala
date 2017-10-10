@@ -1,95 +1,104 @@
 package de.validators
 
-import de.model.tags.Enums.study
+import de.model.{ Error, GeneIdError, GeneSymbolError, StudyIdError, TranscriptIdError }
 import de.model.output.GeneInfo
-import de.model.Error
-import de.repository.GeneRepository
+import de.repository.{ GeneRepository, SamplesRepository }
+import io.swagger.annotations.ApiModel
 
 // ===========================================================================
 sealed trait IdRef {
   val ref_id: Seq[String]
 }
 
-sealed trait SecondaryIdRef    extends IdRef
-sealed trait PrimaryIdRef      extends IdRef
+sealed trait SecondaryIdRef extends IdRef
+sealed trait PrimaryIdRef extends IdRef
 
-sealed trait GeneQuery       extends PrimaryIdRef
+sealed trait GeneQuery extends PrimaryIdRef
 sealed trait TranscriptQuery extends PrimaryIdRef
 
-
 sealed trait PrimaryIdsValidator {
-  def apply(ids: String): Either[Error, Seq[GeneInfo]]
+  def apply(ids: Seq[String]): Either[Error, Seq[GeneInfo]]
 }
 
-sealed trait SecondaryIdsValidator{
-  def apply(ids: String): Either[Error, SecondaryIdRef]
+sealed trait SecondaryIdsValidator {
+  def apply(ids: Seq[String]): Either[Error, SecondaryIdRef]
 }
 
-case class GeneIdQuery      (override val ref_id: Seq[String]) extends GeneQuery
-case class GeneSymbolQuery  (override val ref_id: Seq[String]) extends GeneQuery
+case class GeneIdQuery(override val ref_id: Seq[String]) extends GeneQuery
+case class GeneSymbolQuery(override val ref_id: Seq[String]) extends GeneQuery
 case class TranscriptIdQuery(override val ref_id: Seq[String]) extends TranscriptQuery
 
-case class StudyQuery       (override val ref_id: Seq[String]) extends SecondaryIdRef
-case class SampleQuery      (override val ref_id: Seq[String]) extends SecondaryIdRef
+case class StudyQuery(override val ref_id: Seq[String]) extends SecondaryIdRef
+case class SampleQuery(override val ref_id: Seq[String]) extends SecondaryIdRef
 
 // ===========================================================================
 
-object GeneIdQuery extends PrimaryIdsValidator {
-  override def apply(ids: String): Either[Error, Seq[GeneInfo]] = {
-    val gene_ids = ids.split(",", -1)
-    val invalid_gene_ids = gene_ids
-      .filterNot { GeneRepository.isGeneIdPresent }
+object GeneIdFilters extends PrimaryIdsValidator {
+  override def apply(ids: Seq[String]): Either[Error, Seq[GeneInfo]] = {
+
+    val invalid_gene_ids =
+      ids
+        .filterNot { GeneRepository.isGeneIdPresent }
+
     if (invalid_gene_ids.isEmpty)
-      Right(GeneRepository.getGeneInputRef(GeneIdQuery(gene_ids)))
+      Right(GeneRepository.getGeneInputRef(GeneIdQuery(ids)))
+
     else
-      Left(Error("gene_ids", invalid_gene_ids))
+      Left(GeneIdError(invalid_gene_ids))
   }
 }
 
 // ===========================================================================
 
-object GeneSymbolQuery extends PrimaryIdsValidator {
-  override def apply(ids: String): Either[Error, Seq[GeneInfo]] = {
-    val gene_symbols = ids.split(",", -1)
-    val invalid_gene_symbols = gene_symbols
-      .filterNot { GeneRepository.isGeneSymbolPresent }
-    if (invalid_gene_symbols
-      .isEmpty)
-      Right(GeneRepository.getGeneInputRef(GeneSymbolQuery(gene_symbols)))
+object GeneSymbolFilters extends PrimaryIdsValidator {
+
+  override def apply(ids: Seq[String]): Either[Error, Seq[GeneInfo]] = {
+
+    val invalid_gene_symbols =
+      ids
+        .filterNot { GeneRepository.isGeneSymbolPresent }
+
+    if (invalid_gene_symbols.isEmpty)
+      Right(GeneRepository.getGeneInputRef(GeneSymbolQuery(ids)))
+
     else
-      Left(Error("gene_symbols", invalid_gene_symbols))
+      Left(GeneSymbolError(invalid_gene_symbols))
   }
 }
 
 // ===========================================================================
 
-object TranscriptIdQuery extends PrimaryIdsValidator {
-  override def apply(ids: String): Either[Error, Seq[GeneInfo]] = {
-    val transcript_ids = ids.split(",", -1)
-    val invalid_transcript_ids = transcript_ids
-      .filterNot { GeneRepository.isTranscriptIdPresent }
-    if (invalid_transcript_ids
-      .isEmpty)
-      Right(GeneRepository.getGeneInputRef(TranscriptIdQuery(transcript_ids)))
+object TranscriptIdFilters extends PrimaryIdsValidator {
+
+  override def apply(ids: Seq[String]): Either[Error, Seq[GeneInfo]] = {
+
+    val invalid_transcript_ids =
+      ids
+        .filterNot { GeneRepository.isTranscriptIdPresent }
+
+    if (invalid_transcript_ids.isEmpty)
+      Right(GeneRepository.getGeneInputRef(TranscriptIdQuery(ids)))
+
     else
-      Left(Error("transcript_ids", invalid_transcript_ids))
+      Left(TranscriptIdError(invalid_transcript_ids))
   }
 }
 
 // ===========================================================================
 
-object StudyQuery extends SecondaryIdsValidator {
+object StudyIdFilters extends SecondaryIdsValidator {
 
-  override def apply(studies: String): Either[Error, SecondaryIdRef] = {
+  override def apply(studies: Seq[String]): Either[Error, SecondaryIdRef] = {
 
-    val study_ids = studies.split(",", -1)
-    val invalid_study_ids = study_ids
-      .filterNot { study_id => study.withNameOption(study_id).isDefined }
-    if (invalid_study_ids
-      .isEmpty)
-      Right(StudyQuery(study_ids))
+    val invalid_study_ids =
+      studies
+        .filterNot { SamplesRepository.isStudyPresent }
+
+    if (invalid_study_ids.isEmpty)
+      Right(StudyQuery(studies))
+
     else
-      Left(Error("study_ids", invalid_study_ids))
+      Left(StudyIdError(invalid_study_ids))
 
   }
 }
@@ -97,9 +106,10 @@ object StudyQuery extends SecondaryIdsValidator {
 // ===========================================================================
 
 //TODO: update sample id validator
-object SampleQuery extends SecondaryIdsValidator {
+//Currently sample ids are not passed as a request parameter
+object SampleIdFilters extends SecondaryIdsValidator {
 
-  override def apply(samples: String): Either[Error, SecondaryIdRef] = {
-    Right(SampleQuery(samples.split(",", -1)))
+  override def apply(samples: Seq[String]): Either[Error, SecondaryIdRef] = {
+    Right(SampleQuery(samples))
   }
 }

@@ -2,7 +2,7 @@ package de.model.tags
 
 import scala.math.BigDecimal.double2bigDecimal
 
-import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, study, unavailable, vital_status }
+import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, unavailable, vital_status }
 import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
 import Sample.{Text, EitherValue, Number}
@@ -14,7 +14,7 @@ trait Sample {
       val sample_id:       Text
       val patient_barcode: Either[Text,         unavailable]
       val sample_barcode:  Either[Text,         unavailable]
-      val study:           study
+      val study:           Text
       val tissue:          Text
       val definition:      Text
       val library_type:    Either[library_type, unavailable]
@@ -42,7 +42,7 @@ trait Sample {
           override val sample_id: Text,
           override val patient_barcode: Either[Text,         unavailable],
           override val sample_barcode:  Either[Text,         unavailable],
-          override val study:           study,
+          override val study:           Text,
           override val tissue:          Text,
           override val definition:      Text,
           override val library_type:    Either[library_type, unavailable],
@@ -63,7 +63,7 @@ trait Sample {
             Tag("sample_id",       sample_id),
             Tag("patient_barcode", EitherValue(patient_barcode)),
             Tag("sample_barcode",  EitherValue(sample_barcode)),
-            Tag("study",           Text(study.entryName)),
+            Tag("study",           study),
             Tag("tissue",          tissue),
             Tag("definition",      definition),
             Tag("library_type",    EitherValue(library_type)),
@@ -85,7 +85,7 @@ trait Sample {
           override val sample_id:       Text,
           override val patient_barcode: Either[Text, unavailable],
           override val sample_barcode:  Either[Text, unavailable],
-          override val study:           study,
+          override val study:           Text,
           override val tissue:          Text,
           override val definition:      Text,
           override val library_type:    Either[library_type, unavailable],
@@ -111,7 +111,7 @@ trait Sample {
             Tag("sample_id",       sample_id),
             Tag("patient_barcode", EitherValue(patient_barcode)),
             Tag("sample_barcode",  EitherValue(sample_barcode)),
-            Tag("study",           Text(study.entryName)),
+            Tag("study",           study),
             Tag("tissue",          tissue),
             Tag("definition",      definition),
             Tag("library_type",    EitherValue(library_type)),

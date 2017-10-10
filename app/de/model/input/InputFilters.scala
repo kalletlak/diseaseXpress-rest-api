@@ -5,11 +5,11 @@ import de.validators.{ ValidateNormalization, ValidateProjection }
 import de.model.output.GeneInfo
 import de.controllers.EnumCombo
 import de.validators.PrimaryIdsValidator
-import de.validators.GeneIdQuery
 import de.validators.SecondaryIdsValidator
-import de.validators.StudyQuery
 import de.model.Error
 import de.validators.SecondaryIdRef
+import de.validators.GeneIdFilters
+import de.validators.StudyIdFilters
 
 case class InputFilters(
   primary_ref_ids: Seq[GeneInfo],
@@ -21,22 +21,16 @@ case class InputFilters(
 object InputFilters {
 
   def apply(
-    primaryObject: PrimaryIdsValidator=GeneIdQuery,
-    secondaryObject: SecondaryIdsValidator=StudyQuery,
-    primaryIds: Option[String] = None,
-    secondaryIds: Option[String] = None,
+    primaryObject: PrimaryIdsValidator=GeneIdFilters,
+    secondaryObject: SecondaryIdsValidator=StudyIdFilters,
+    primaryIds: Seq[String],
+    secondaryIds: Seq[String],
     normalizations: Option[String] = None,
     projection: Option[String] = None): Either[Seq[Error], InputFilters] = {
 
-    val _primary_ids = primaryIds match {
-      case Some(_ids) => primaryObject(_ids)
-      case _       => Right(Seq())
-    }
+    val _primary_ids = primaryObject(primaryIds)
 
-    val _secondary_ids = secondaryIds match {
-      case Some(_ids) => secondaryObject(_ids)
-      case _       => Right(StudyQuery(ref_id = Seq()))
-    }
+    val _secondary_ids = secondaryObject(secondaryIds)
 
     val _normalizations = ValidateNormalization(normalizations)
 
