@@ -10,21 +10,27 @@ sealed trait IdRef {
   val ref_id: Seq[String]
 }
 
-sealed trait SecondaryRef extends IdRef
+sealed trait SecondaryIdRef    extends IdRef
+sealed trait PrimaryIdRef      extends IdRef
+
+sealed trait GeneQuery       extends PrimaryIdRef
+sealed trait TranscriptQuery extends PrimaryIdRef
+
 
 sealed trait PrimaryIdsValidator {
   def apply(ids: String): Either[Error, Seq[GeneInfo]]
 }
 
-sealed trait SecondaryIdsValidator[T <: IdRef] {
-  def apply(ids: String): Either[Error, T]
+sealed trait SecondaryIdsValidator{
+  def apply(ids: String): Either[Error, SecondaryIdRef]
 }
 
-case class GeneIdQuery(override val ref_id: Seq[String]) extends IdRef
-case class GeneSymbolQuery(override val ref_id: Seq[String]) extends IdRef
-case class TranscriptIdQuery(override val ref_id: Seq[String]) extends IdRef
-case class StudyQuery(override val ref_id: Seq[String]) extends SecondaryRef
-case class SampleQuery(override val ref_id: Seq[String]) extends SecondaryRef
+case class GeneIdQuery      (override val ref_id: Seq[String]) extends GeneQuery
+case class GeneSymbolQuery  (override val ref_id: Seq[String]) extends GeneQuery
+case class TranscriptIdQuery(override val ref_id: Seq[String]) extends TranscriptQuery
+
+case class StudyQuery       (override val ref_id: Seq[String]) extends SecondaryIdRef
+case class SampleQuery      (override val ref_id: Seq[String]) extends SecondaryIdRef
 
 // ===========================================================================
 
@@ -72,9 +78,9 @@ object TranscriptIdQuery extends PrimaryIdsValidator {
 
 // ===========================================================================
 
-object StudyQuery extends SecondaryIdsValidator[StudyQuery] {
+object StudyQuery extends SecondaryIdsValidator {
 
-  override def apply(studies: String): Either[Error, StudyQuery] = {
+  override def apply(studies: String): Either[Error, SecondaryIdRef] = {
 
     val study_ids = studies.split(",", -1)
     val invalid_study_ids = study_ids
@@ -91,9 +97,9 @@ object StudyQuery extends SecondaryIdsValidator[StudyQuery] {
 // ===========================================================================
 
 //TODO: update sample id validator
-object SampleQuery extends SecondaryIdsValidator[SampleQuery] {
+object SampleQuery extends SecondaryIdsValidator {
 
-  override def apply(samples: String): Either[Error, SampleQuery] = {
+  override def apply(samples: String): Either[Error, SecondaryIdRef] = {
     Right(SampleQuery(samples.split(",", -1)))
   }
 }

@@ -7,9 +7,9 @@ import play.api.mvc.{ Accepting, Controller, RequestHeader, Result }
 import io.swagger.annotations.{ Api, ApiImplicitParams, ApiImplicitParam, ApiModel, ApiOperation, ApiParam, Example, ExampleProperty }
 import de.Context
 import de.model.output.GeneData
-import de.validators.{GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery}
-import de.utils.{InvalidQueryException, LoggingAction}
-import de.validators.{SecondaryRef, StudyQuery, PrimaryIdsValidator, SecondaryIdsValidator, SampleQuery }
+import de.validators.{ GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery, SampleQuery, StudyQuery}
+import de.utils.{ InvalidQueryException, LoggingAction }
+import de.validators.{ PrimaryIdsValidator, SecondaryIdsValidator, SecondaryIdRef }
 import de.utils.Enums.Projection
 import de.model.Error
 import de.model.input.InputFilters
@@ -709,22 +709,22 @@ class GenomicData @javax.inject.Inject() (
       }
           
   // ===========================================================================  
-   private def apply[B <: SecondaryRef](
-                                          primaryObject: PrimaryIdsValidator=GeneIdQuery,
-                                          secondaryObject: SecondaryIdsValidator[B]=StudyQuery,
-                                          primaryIds: Option[String] = None,
-                                          secondaryIds: Option[String] = None,
-                                          normalizations: Option[String] = None,
-                                          projection: Option[String] = None)
-                                         (implicit request: RequestHeader): Result = {
+   private def apply(
+                    primaryObject: PrimaryIdsValidator=GeneIdQuery,
+                    secondaryObject: SecondaryIdsValidator=StudyQuery,
+                    primaryIds: Option[String] = None,
+                    secondaryIds: Option[String] = None,
+                    normalizations: Option[String] = None,
+                    projection: Option[String] = None)
+                   (implicit request: RequestHeader): Result = {
 
       val input: Either[Seq[Error], InputFilters] = InputFilters(
-                                                                    primaryObject,
-                                                                    secondaryObject,
-                                                                    primaryIds,
-                                                                    secondaryIds,
-                                                                    normalizations,
-                                                                    projection)
+                                                                primaryObject,
+                                                                secondaryObject,
+                                                                primaryIds,
+                                                                secondaryIds,
+                                                                normalizations,
+                                                                projection)
 
       input match {
         case Left(errorObject) =>
@@ -764,7 +764,6 @@ class GenomicData @javax.inject.Inject() (
   def splitCsv(csvIds: String): Seq[String] =
     csvIds
       .split(",", -1)
-      .map(_.trim) // TODO: don't
   
   // ===========================================================================
   // utils

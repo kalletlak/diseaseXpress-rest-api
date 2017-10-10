@@ -1,16 +1,14 @@
 package de.repository
 
-import de.validators.IdRef
 import de.model.output.GeneInfo
-import de.validators.GeneIdQuery
-import de.validators.GeneSymbolQuery
-import de.validators.TranscriptIdQuery
+import de.validators.{GeneIdQuery, GeneSymbolQuery, TranscriptIdQuery}
 import de.dao.GeneDAO
+import de.validators.PrimaryIdRef
 
 object GeneRepository {
   
   private val dao = GeneDAO
-  def getGeneInputRef(geneInputRef: IdRef): Seq[GeneInfo] = {
+  def getGeneInputRef(geneInputRef: PrimaryIdRef): Seq[GeneInfo] = {
     geneInputRef
       match {
       
@@ -34,7 +32,7 @@ object GeneRepository {
 
   // ---------------------------------------------------------------------------    
   def getGeneById  (gene_id: String):       Option[GeneInfo] = dao.getGeneById(gene_id)
-  def getTranscriptId(transcript_id: String): Option[GeneInfo] = dao.getGeneById(transcript_id)
+  def getTranscriptId(transcript_id: String): Option[GeneInfo] = dao.getTranscriptId(transcript_id)
   
   def isGeneIdPresent(gene_id: String): Boolean = getGeneById(gene_id).isDefined
   def isGeneSymbolPresent(gene_symbol: String): Boolean = dao.getGeneBySymbol(gene_symbol).size>0

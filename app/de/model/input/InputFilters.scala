@@ -5,24 +5,24 @@ import de.validators.{ ValidateNormalization, ValidateProjection }
 import de.model.output.GeneInfo
 import de.controllers.EnumCombo
 import de.validators.PrimaryIdsValidator
-import de.validators.SecondaryRef
 import de.validators.GeneIdQuery
 import de.validators.SecondaryIdsValidator
 import de.validators.StudyQuery
 import de.model.Error
+import de.validators.SecondaryIdRef
 
 case class InputFilters(
   primary_ref_ids: Seq[GeneInfo],
-  secondary_ref_ids: SecondaryRef,
+  secondary_ref_ids: SecondaryIdRef,
   normalization_combo:Map[Normalization, InputDataModel])
 
 // ===========================================================================
 
 object InputFilters {
 
-  def apply[B <: SecondaryRef](
+  def apply(
     primaryObject: PrimaryIdsValidator=GeneIdQuery,
-    secondaryObject: SecondaryIdsValidator[B]=StudyQuery,
+    secondaryObject: SecondaryIdsValidator=StudyQuery,
     primaryIds: Option[String] = None,
     secondaryIds: Option[String] = None,
     normalizations: Option[String] = None,
@@ -30,12 +30,12 @@ object InputFilters {
 
     val _primary_ids = primaryIds match {
       case Some(_ids) => primaryObject(_ids)
-      case None       => Right(Seq())
+      case _       => Right(Seq())
     }
 
     val _secondary_ids = secondaryIds match {
       case Some(_ids) => secondaryObject(_ids)
-      case None       => Right(StudyQuery(ref_id = Seq()))
+      case _       => Right(StudyQuery(ref_id = Seq()))
     }
 
     val _normalizations = ValidateNormalization(normalizations)
