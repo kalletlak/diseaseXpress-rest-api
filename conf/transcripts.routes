@@ -1,0 +1,37 @@
+###
+#      summary: get All Transcripts
+#      description: Returns List of Transcript Ids
+#      operationId: getTranscriptIds
+#      produces:
+#        - application/json
+#      parameters: []
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /                  @de.controllers.Transcripts.getTranscriptIds()
+###
+#      summary: get Transcript information
+#      description: Returns Transcript information
+#      operationId: getTranscriptInfo
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: transcript_ids
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.TranscriptWithGeneInfo'
+###
+GET   /:transcript_ids   @de.controllers.Transcripts.getTranscriptInfo(transcript_ids:String)

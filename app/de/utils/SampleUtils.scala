@@ -1,6 +1,5 @@
 package de.utils
 
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.{JsValue, Json, Writes}
 import de.model.tags.Enums._
 import de.model.tags.Sample._

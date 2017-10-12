@@ -7,7 +7,6 @@ import com.datastax.driver.core.ResultSet
 import de.model.input.{AbundanceProjectons, RsemIsoformProjectons, RsemGeneProjectons, FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
-import io.swagger.annotations.ApiModel
 
 // ===========================================================================
 trait CassandraService extends ServiceComponent {

@@ -5,7 +5,6 @@ import com.sksamuel.elastic4s.http.search.SearchHit
 import de.model.input.{FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import de.model.input.RsemGeneProjectons

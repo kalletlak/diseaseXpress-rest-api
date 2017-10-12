@@ -4,7 +4,6 @@ import de.dao.SamplesDAO
 import de.model.DomainTypes.{ SampleId, StudyId }
 import de.model.tags.Sample
 import de.utils.MongoQuery
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsValue
 
 object SamplesRepository {

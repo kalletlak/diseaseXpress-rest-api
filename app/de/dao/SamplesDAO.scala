@@ -11,7 +11,6 @@ import com.mongodb.util.JSON
 import de.model.DomainTypes.{ SampleId, StudyId }
 import de.model.tags.Sample
 import de.utils.{ Query, SampleUtils }
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
@@ -63,10 +62,13 @@ object SamplesDAO {
             .asInstanceOf[DBObject])
     }
   // ---------------------------------------------------------------------------
-  def getSamplesInfo(studies: Seq[StudyId] = getStudies): Seq[Sample] =
-    studies
+  def getSamplesInfo(studies: Seq[StudyId]): Seq[Sample] = {
+    val studiesTmp = if(studies.isEmpty) getStudies else studies 
+    studiesTmp
       .flatMap { studySampleMap.get }
       .flatten
+  }
+    
       
   // ---------------------------------------------------------------------------
   def getStudies: Seq[String] =

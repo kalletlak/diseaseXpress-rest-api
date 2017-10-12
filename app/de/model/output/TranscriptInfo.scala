@@ -1,12 +1,10 @@
 package de.model.output
 
 import de.utils.Enums.{Normalization, Projection}
-import io.swagger.annotations.{ApiModel, ApiModelProperty}
 import play.api.libs.json.Json
 import de.utils.Transcript
 
 // ===========================================================================
-@ApiModel("Transcript")
 case class TranscriptInfo(
     transcript_id:      String,
     start:              Long,

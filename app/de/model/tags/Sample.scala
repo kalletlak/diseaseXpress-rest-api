@@ -3,13 +3,11 @@ package de.model.tags
 import scala.math.BigDecimal.double2bigDecimal
 
 import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, unavailable, vital_status }
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
 import Sample.{Text, EitherValue, Number}
 import de.model.Fields
 
 // ===========================================================================
-@ApiModel("SampleAnnotation")
 trait Sample {
     
       val sample_id:       Text

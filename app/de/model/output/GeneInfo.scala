@@ -2,12 +2,9 @@ package de.model.output
 
 import de.utils.Transcript
 import de.utils.Enums.{Normalization, Projection}
-import io.swagger.annotations.{ApiModel, ApiModelProperty}
 import play.api.libs.json.Json
 
-
 // ===========================================================================
-@ApiModel(value = "Gene")
 case class GeneInfo(
     gene_id:     String,
     gene_symbol: String,

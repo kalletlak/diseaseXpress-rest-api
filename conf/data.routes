@@ -1,0 +1,706 @@
+###
+#      summary: get all expression data for given gene entrez ids
+#      description: Returns expression data for given gene entrez ids
+#      operationId: getDataByGeneIds
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_ids
+#          in: path
+#          description: >-
+#            Comma separated list of gene entrez ids. e.g.
+#            ENSG00000136997.14,ENSG00000000003.14
+#          required: true
+#          type: string
+#        - name: projection
+#          in: query
+#          description: Projection type summary or detailed
+#          required: false
+#          type: string
+#          default: summary
+#          enum:
+#            - summary
+#            - detailed
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/ids/:gene_ids                                                               @de.controllers.GenomicData.getByGeneIds(gene_ids: String, projection: Option[String])
+###
+#      summary: get expression data for given gene entrez ids and studies
+#      description: Returns expression data for given gene entrez ids and studies
+#      operationId: getDataByGeneIdsAndStudies
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_ids
+#          in: path
+#          description: >-
+#            Comma separated list of gene entrez ids. e.g.
+#            ENSG00000136997.14,ENSG00000000003.14
+#          required: true
+#          type: string
+#        - name: studies
+#          in: path
+#          description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#          required: true
+#          type: string
+#        - name: projection
+#          in: query
+#          description: Projection type summary or detailed
+#          required: false
+#          type: string
+#          default: summary
+#          enum:
+#            - summary
+#            - detailed
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/ids/:gene_ids/studies/:studies                                              @de.controllers.GenomicData.getByGeneIdsAndStudies(gene_ids:String,studies:String, projection:Option[String])
+###
+#      summary: get expression data for given gene entrez ids
+#      description: Returns expression data for given gene entrez ids
+#      operationId: getDataByGeneIdsAndNormalizations
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_ids
+#          in: path
+#          description: >-
+#            Comma separated list of gene entrez ids. e.g.
+#            ENSG00000136997.14,ENSG00000000003.14
+#          required: true
+#          type: string
+#        - name: normalizations
+#          in: path
+#          description: Comma separated list of normalization methods
+#          required: true
+#          type: array
+#          items:
+#            type: string
+#            enum:
+#              - rsem
+#              - sample_abundance
+#              - sample_rsem_isoform
+#            default: rsem
+#          collectionFormat: csv
+#        - name: projection
+#          in: query
+#          description: Projection type summary or detailed
+#          required: false
+#          type: string
+#          default: summary
+#          enum:
+#            - summary
+#            - detailed
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/ids/:gene_ids/normalizations/:normalizations                                @de.controllers.GenomicData.getByGeneIdsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
+###
+#      summary: get expression data for given gene entrez ids and studies
+#      description: Returns expression data for given gene entrez ids and studies
+#      operationId: getDataByGeneIdsAndStudiesAndNormalizations
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_ids
+#          in: path
+#          description: >-
+#            Comma separated list of gene entrez ids. e.g.
+#            ENSG00000136997.14,ENSG00000000003.14
+#          required: true
+#          type: string
+#        - name: studies
+#          in: path
+#          description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#          required: true
+#          type: string
+#        - name: normalizations
+#          in: path
+#          description: Comma separated list of normalization methods
+#          required: true
+#          type: array
+#          items:
+#            type: string
+#            enum:
+#              - rsem
+#              - sample_abundance
+#              - sample_rsem_isoform
+#            default: ''
+#          collectionFormat: csv
+#        - name: projection
+#          in: query
+#          description: Projection type summary or detailed
+#          required: false
+#          type: string
+#          default: summary
+#          enum:
+#            - summary
+#            - detailed
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/ids/:gene_ids/studies/:studies/normalizations/:normalizations               @de.controllers.GenomicData.getByGeneIdsAndStudiesAndNormalizations(gene_ids:String,studies:String,normalizations:String, projection:Option[String])
+
+
+###
+#       summary: get expression data for given gene symbols
+#       description: Returns expression data for given gene symbols
+#       operationId: getDataByGeneSymbols
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_symbols
+#           in: path
+#           description: 'Comma separated list of gene symbols. e.g. MYCN,TP53'
+#           required: true
+#           type: string
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/symbols/:gene_symbols                                                       @de.controllers.GenomicData.getByGeneSymbols(gene_symbols:String, projection:Option[String])
+###
+#       summary: get expression data for given gene symbols
+#       description: Returns expression data for given gene symbols
+#       operationId: getDataByGeneSymbolsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_symbols
+#           in: path
+#           description: 'Comma separated list of gene symbols. e.g. MYCN,TP53'
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/symbols/:gene_symbols/normalizations/:normalizations                        @de.controllers.GenomicData.getByGeneSymbolsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given gene symbols and studies
+#       description: Returns expression data for given gene symbols and studies
+#       operationId: getDataByGeneSymbolsAndStudies
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_symbols
+#           in: path
+#           description: 'Comma separated list of gene symbols. e.g. MYCN,TP53'
+#           required: true
+#           type: string
+#         - name: studies
+#           in: path
+#           description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#           required: true
+#           type: string
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/symbols/:gene_symbols/studies/:studies                                      @de.controllers.GenomicData.getByGeneSymbolsAndStudies(gene_symbols:String,studies:String, projection:Option[String])
+###
+#       summary: get expression data for given gene symbols and studies
+#       description: Returns expression data for given gene symbols and studies
+#       operationId: getDataByGeneSymbolsAndStudiesAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_symbols
+#           in: path
+#           description: 'Comma separated list of gene symbols. e.g. MYCN,TP53'
+#           required: true
+#           type: string
+#         - name: studies
+#           in: path
+#           description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /genes/symbols/:gene_symbols/studies/:studies/normalizations/:normalizations       @de.controllers.GenomicData.getByGeneSymbolsAndStudiesAndNormalizations(gene_symbols:String,studies:String,normalizations:String, projection:Option[String])
+
+###
+#       summary: get expression data for given transcript ids
+#       description: Returns expression data for given transcript ids
+#       operationId: getDataByTranscriptIds
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: transcript_ids
+#           in: path
+#           description: >-
+#             Comma separated list of transcript ids. e.g.
+#             ENST00000373031.4,ENST00000514373.2
+#           required: true
+#           type: string
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /transcripts/ids/:transcript_ids                                                   @de.controllers.GenomicData.getByTranscriptIds(transcript_ids:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids and studies
+#       description: Returns expression data for given transcript ids and studies
+#       operationId: getDataByTranscriptIdsAndStudies
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: transcript_ids
+#           in: path
+#           description: >-
+#             Comma separated list of transcript ids. e.g.
+#             ENST00000373031.4,ENST00000514373.2
+#           required: true
+#           type: string
+#         - name: studies
+#           in: path
+#           description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#           required: true
+#           type: string
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /transcripts/ids/:transcript_ids/studies/:studies                                  @de.controllers.GenomicData.getByTranscriptIdsAndStudies(transcript_ids:String,studies:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids
+#       description: Returns expression data for given transcript ids
+#       operationId: getDataByTranscriptIdsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: transcript_ids
+#           in: path
+#           description: >-
+#             Comma separated list of transcript ids. e.g.
+#             ENST00000373031.4,ENST00000514373.2
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /transcripts/ids/:transcript_ids/normalizations/:normalizations                    @de.controllers.GenomicData.getByTranscriptIdsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids and studies
+#       description: Returns expression data for given transcript ids and studies
+#       operationId: getDataByTranscriptIdsAndStudiesAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: transcript_ids
+#           in: path
+#           description: >-
+#             Comma separated list of transcript ids. e.g.
+#             ENST00000373031.4,ENST00000514373.2
+#           required: true
+#           type: string
+#         - name: studies
+#           in: path
+#           description: 'Comma separated list of study ids. e.g. PNOC,TARGET'
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+GET    /transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normalizations   @de.controllers.GenomicData.getByTranscriptIdsAndStudiesAndNormalizations(transcript_ids:String,studies:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids and studies
+#       description: Returns expression data for given transcript ids and studies
+#       operationId: getDataByGeneSymbolsAndTagsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_symbols
+#           in: path
+#           description: 'Comma separated list of gene symbols. e.g. MYCN,TP53'
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#         - in: body
+#           name: payload
+#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           required: true
+#           schema:
+#             type: string
+#           x-examples:
+#             String: '"test"'
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+POST   /api/tags/data/genes/symbols/:gene_symbols/normalizations/:normalizations          @de.controllers.GenomicData.getByGeneSymbolsAndTagsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids and studies
+#       description: Returns expression data for given transcript ids and studies
+#       operationId: getDataByGeneIdsAndTagsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: gene_ids
+#           in: path
+#           description: >-
+#             Comma separated list of gene entrez ids. e.g.
+#             ENSG00000136997.14,ENSG00000000003.14
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#         - in: body
+#           name: payload
+#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           required: true
+#           schema:
+#             type: string
+#           x-examples:
+#             String: '"test"'
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+POST   /api/tags/data/genes/ids/:gene_ids/normalizations/:normalizations                  @de.controllers.GenomicData.getByGeneIdsAndTagsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given transcript ids and studies
+#       description: Returns expression data for given transcript ids and studies
+#       operationId: getDataByTranscriptIdsAndTagsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: transcript_ids
+#           in: path
+#           description: >-
+#             Comma separated list of transcript ids. e.g.
+#             ENST00000373031.4,ENST00000514373.2
+#           required: true
+#           type: string
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#         - in: body
+#           name: payload
+#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           required: true
+#           schema:
+#             type: string
+#           x-examples:
+#             String: '"test"'
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+POST   /api/tags/data/transcripts/ids/:transcript_ids/normalizations/:normalizations      @de.controllers.GenomicData.getByTranscriptIdsAndTagsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
+###
+#       summary: get expression data for given sample tags and normalizations
+#       description: Returns expression data for given sample tags and normalizations
+#       operationId: getDataByTagsAndNormalizations
+#       produces:
+#         - application/json
+#         - text/tab-separated-values
+#       parameters:
+#         - name: normalizations
+#           in: path
+#           description: Comma separated list of normalization methods
+#           required: true
+#           type: array
+#           items:
+#             type: string
+#             enum:
+#               - rsem
+#               - sample_abundance
+#               - sample_rsem_isoform
+#             default: ''
+#           collectionFormat: csv
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: summary
+#           enum:
+#             - summary
+#             - detailed
+#         - in: body
+#           name: payload
+#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           required: true
+#           schema:
+#             type: string
+#           x-examples:
+#             String: '"test"'
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneData'
+###
+POST   /normalizations/:normalizations                                                    @de.controllers.GenomicData.getByTagsAndNormalizations(normalizations:String, projection:Option[String])
