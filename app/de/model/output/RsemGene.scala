@@ -6,45 +6,20 @@ import de.utils.Enums.Projection
 import de.utils.JsObjectWithOption
 import de.utils.NumberUtils.DoubleImplicits
 import de.utils.PlayJsonUtils.JsObjectImplicits
-import io.swagger.annotations.{ApiModel, ApiModelProperty}
 import play.api.libs.json._
 import play.api.libs.json.JsValue.jsValueToJsLookup
 import com.datastax.driver.core.{Row => CassandraRow}
 
 // ===========================================================================
-@ApiModel("RsemGeneData")
 case class RsemGene(
-    
     // initialized parameters with default values. used would be used when getting tsv format data
-      
-    gene_id:   String = "",
-    
-    sample_id: String = "",
-    
-    @ApiModelProperty(
-      dataType = "double",
-      required = false)
-    length: Option[Double] = None,
-    
-    @ApiModelProperty(
-      dataType = "double",
-      required = false)
+    gene_id:          String         = "",
+    sample_id:        String         = "",
+    length:           Option[Double] = None,
     effective_length: Option[Double] = None,
-    
-    @ApiModelProperty(
-      dataType = "double",
-      required = false)
-    expected_count: Option[Double] = None,
-    
-    @ApiModelProperty(
-      dataType = "double",
-      required = false)
-    tpm: Option[Double] = None,
-    
-    @ApiModelProperty(
-      dataType = "double",
-      required = false)
-    fpkm: Option[Double] = None)
+    expected_count:   Option[Double] = None,
+    tpm:              Option[Double] = None,
+    fpkm:             Option[Double] = None)
 
   // ===========================================================================
   object RsemGene {  

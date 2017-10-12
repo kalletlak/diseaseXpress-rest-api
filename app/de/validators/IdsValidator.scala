@@ -3,7 +3,6 @@ package de.validators
 import de.model.{ Error, GeneIdError, GeneSymbolError, StudyIdError, TranscriptIdError }
 import de.model.output.GeneInfo
 import de.repository.{ GeneRepository, SamplesRepository }
-import io.swagger.annotations.ApiModel
 
 // ===========================================================================
 sealed trait IdRef {

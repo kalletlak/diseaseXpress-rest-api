@@ -8,9 +8,13 @@ import com.sksamuel.elastic4s.http.search.SearchHit
 import com.sksamuel.elastic4s.http.search.SearchResponse
 import de.model.input.FilterUnit
 import de.repository.Dao
+import play.api.libs.json.Json
 
 // ===========================================================================
-case class ElasticSearchSession(client: HttpClient)
+case class ElasticSearchSession(
+    client:      HttpClient, 
+    size:        Int       = 200000, 
+    timeout_min: Int       = 5)
 
 // ===========================================================================
 class ElasticSearchDAO(session: ElasticSearchSession) extends Dao {
@@ -23,28 +27,19 @@ class ElasticSearchDAO(session: ElasticSearchSession) extends Dao {
       : Iterable[SearchHit] = {
 
     val jsonQuery =
-      s"""{
-        "constant_score" : {
-            "filter" : {
-                 "bool" : {
-                    "must" : [
-                        ${filtersList.flatMap { _.queryElasticSearchString }.mkString(",")}
-                    ]
-                  }
-              }
-          }
-        }"""
-
+      Json.obj("constant_score" ->
+        Json.obj("filter" ->
+          Json.obj("bool" ->
+            Json.obj("must" -> filtersList.flatMap { _.queryElasticSearchString }))))
+    
     //some of the queries take lot of time
     implicit val duration: Duration =
-      Duration.apply(2, TimeUnit.MINUTES)
+      Duration.apply(session.timeout_min, TimeUnit.MINUTES)
 
-    //TODO: elastic search type is hardcoded for now
-    //and set size to 200000 i.e number of transcripts
     val query =
       search(collectionName / "default")
-        .rawQuery(jsonQuery)
-        .size(200000)
+        .rawQuery(jsonQuery.toString())
+        .size(session.size)
 
     val result: SearchResponse =
       session

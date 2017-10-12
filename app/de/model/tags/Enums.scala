@@ -45,23 +45,6 @@ object Enums {
     }
 
   // ---------------------------------------------------------------------------
-    //TODO: study can't be a Enum as new data is added dynamically
-/*  sealed trait study extends EnumEntry with Value {
-      override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
-    }
-  
-    object study extends Enum[study] {
-      val values = findValues
-      
-      case object TCGA   extends study
-      case object GTEx   extends study
-      case object TARGET extends study
-      case object PNOC   extends study
-      case object CBTTC  extends study
-    }*/
-
-  // ---------------------------------------------------------------------------
   sealed trait gender extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
       override val formatQuery = s""""entryName""""

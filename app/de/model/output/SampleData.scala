@@ -1,25 +1,12 @@
 package de.model.output
 
 import de.utils.Enums.{Normalization, Projection}
-import io.swagger.annotations.{ApiModel, ApiModelProperty}
 import play.api.libs.json.Json
 
 // ===========================================================================
-@ApiModel("SampleData")
 case class SampleData(
-    
-    sample_id: String,
-
-    @ApiModelProperty(
-      name = "SampleRsemGeneData",
-      dataType = "de.model.output.RsemGene",
-      required = false)
-    rsem: Option[RsemGene],
-
-    @ApiModelProperty(
-      name = "TranscriptData",
-      dataType = "de.model.output.TranscriptData",
-      required = false)
+    sample_id:   String,
+    rsem:        Option[RsemGene],
     transcripts: Option[Seq[TranscriptData]])
 
   // ===========================================================================

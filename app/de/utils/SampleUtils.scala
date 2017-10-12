@@ -1,6 +1,5 @@
 package de.utils
 
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.{JsValue, Json, Writes}
 import de.model.tags.Enums._
 import de.model.tags.Sample._
@@ -111,7 +110,7 @@ object SampleUtils {
             
             patient_barcode = readValue(_patient_barcode, Text.apply),
             sample_barcode  = readValue(_sample_barcode, Text.apply),
-            study           = Text(_study),
+            study_id        = Text(_study),
             tissue          = Text(_tissue),
             definition      = Text(_definition),
             library_type    = readEnum(_library_type, library_type.withNameOption),
@@ -133,7 +132,7 @@ object SampleUtils {
             
             patient_barcode = readValue(_patient_barcode, Text.apply),
             sample_barcode  = readValue(_sample_barcode, Text.apply),
-            study           = Text(_study),
+            study_id        = Text(_study),
             tissue          = Text(_tissue),
             definition      = Text(_definition),
             library_type    = readEnum(_library_type, library_type.withNameOption),

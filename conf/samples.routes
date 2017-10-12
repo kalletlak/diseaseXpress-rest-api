@@ -1,0 +1,38 @@
+###
+#      summary: get All Samples data
+#      description: Returns List of Sample Data
+#      operationId: getAllSamples
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters: []
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /             @de.controllers.Samples.getAllSamples()
+###
+#      summary: get Samples Data
+#      description: Returns List of Sample Data
+#      operationId: getSamples
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: study_ids
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /:study_ids   @de.controllers.Samples.getSamplesByStudy(study_ids:String)

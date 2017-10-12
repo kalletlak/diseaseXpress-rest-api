@@ -3,7 +3,6 @@ package de.service
 import de.model.output.{ Abundance, GeneData, GeneInfo, RsemGene, RsemIsoform, SampleData, TranscriptData }
 import de.model.input.{ FilterUnit, GeneIdFilter, InputDataModel, InputFilters, SampleFilter, StudyFilter, TranscriptIdFilter }
 import de.utils.Enums.Normalization
-import io.swagger.annotations.ApiModel
 import utils.Implicits.AnythingImplicits
 import de.validators.StudyQuery
 import de.validators.SampleQuery

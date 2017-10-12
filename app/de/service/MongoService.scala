@@ -6,7 +6,6 @@ import de.model.input.{FilterUnit, InputDataModel}
 import de.model.output.{Abundance, RsemGene, RsemIsoform}
 import de.repository.Repository
 import de.utils.PlayJsonUtils.JsObjectImplicits
-import io.swagger.annotations.ApiModel
 import play.api.libs.json.JsObject
 import play.api.libs.json.JsValue.jsValueToJsLookup
 import de.model.input.RsemIsoformProjectons

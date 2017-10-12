@@ -1,0 +1,81 @@
+###
+#      summary: get All Genes
+#      description: Returns List of Gene Ids
+#      operationId: getGeneIds
+#      produces:
+#        - application/json
+#      parameters: []
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /ids                     @de.controllers.Genes.getGeneIds()
+
+
+###
+#      summary: get Gene information
+#      description: Returns Gene information
+#      operationId: getGeneInfoByIds
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_ids
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneInfo'
+###
+GET   /ids/:gene_ids           @de.controllers.Genes.getGeneInfoByIds(gene_ids:String)
+
+
+###
+#      summary: get All Genes
+#      description: Returns List of Gene Symbols
+#      operationId: getGenesBySymbol
+#      produces:
+#        - application/json
+#      parameters: []
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /symbols                 @de.controllers.Genes.getGenesBySymbol()
+
+
+
+###
+#      summary: get Gene information
+#      description: Returns Gene information
+#      operationId: getGeneInfoBySymbols
+#      produces:
+#        - application/json
+#        - text/tab-separated-values
+#      parameters:
+#        - name: gene_symbols
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              $ref: '#/definitions/de.model.output.GeneInfo'
+###
+GET   /symbols/:gene_symbols   @de.controllers.Genes.getGeneInfoBySymbols(gene_symbols:String)

@@ -1,42 +1,19 @@
-#make this as first line of the file, else swagger page doesn't load
-GET    /api-docs/swagger.json                                                                         @controllers.ApiHelpController.getResources
+### NoDocs ###
+GET   /                  controllers.Default.redirect(to = "/api-docs/")
+### NoDocs ###
+GET   /api-docs          controllers.Default.redirect(to = "/api-docs/")
+### NoDocs ###
+GET   /api-docs/         controllers.Assets.at(path="/swagger-ui",file="index.html")
+### NoDocs ###
+GET   /api-docs/*file    controllers.Assets.at(path="/swagger-ui",file)
+### NoDocs ###
+GET   /swagger.json      @de.controllers.ApiSpecs.specs
 
-GET    /                                                                                              @controllers.Default.redirect(to = "/api-docs/")
-GET    /api-docs                                                                                      @controllers.Default.redirect(to = "/api-docs/")
-GET    /api-docs/                                                                                      controllers.Assets.at(path="/swagger-ui",file="index.html")
-GET    /api-docs/*file                                                                                 controllers.Assets.at(path="/swagger-ui",file)
+->    /api/genes         genes.Routes
 
-GET    /api/v1/studies                                                                                @de.controllers.Studies.getStudies()
+->    /api/studies       studies.Routes
+->    /api/samples       samples.Routes
 
-GET    /api/v1/samples                                                                                @de.controllers.Samples.getAllSamples()
-GET    /api/v1/samples/:study_ids                                                                     @de.controllers.Samples.getSamplesByStudy(study_ids:String)
+->    /api/transcripts   transcripts.Routes
 
-GET    /api/v1/genes/ids                                                                              @de.controllers.Genes.getGeneIds()
-GET    /api/v1/genes/symbols                                                                          @de.controllers.Genes.getGenesBySymbol()
-GET    /api/v1/genes/ids/:gene_ids                                                                    @de.controllers.Genes.getGeneInfoByIds(gene_ids:String)
-GET    /api/v1/genes/symbols/:gene_symbols                                                            @de.controllers.Genes.getGeneInfoBySymbols(gene_symbols:String)
-
-GET    /api/v1/transcripts/ids                                                                        @de.controllers.Transcripts.getTranscriptIds()
-GET    /api/v1/transcripts/ids/:transcript_ids                                                        @de.controllers.Transcripts.getTranscriptInfo(transcript_ids:String)
-
-GET    /api/v1/data/genes/ids/:gene_ids                                                               @de.controllers.GenomicData.getByGeneIds(gene_ids: String, projection: Option[String])
-GET    /api/v1/data/genes/ids/:gene_ids/studies/:studies                                              @de.controllers.GenomicData.getByGeneIdsAndStudies(gene_ids:String,studies:String, projection:Option[String])
-GET    /api/v1/data/genes/ids/:gene_ids/normalizations/:normalizations                                @de.controllers.GenomicData.getByGeneIdsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
-GET    /api/v1/data/genes/ids/:gene_ids/studies/:studies/normalizations/:normalizations               @de.controllers.GenomicData.getByGeneIdsAndStudiesAndNormalizations(gene_ids:String,studies:String,normalizations:String, projection:Option[String])
-
-GET    /api/v1/data/genes/symbols/:gene_symbols                                                       @de.controllers.GenomicData.getByGeneSymbols(gene_symbols:String, projection:Option[String])
-GET    /api/v1/data/genes/symbols/:gene_symbols/normalizations/:normalizations                        @de.controllers.GenomicData.getByGeneSymbolsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
-GET    /api/v1/data/genes/symbols/:gene_symbols/studies/:studies                                      @de.controllers.GenomicData.getByGeneSymbolsAndStudies(gene_symbols:String,studies:String, projection:Option[String])
-GET    /api/v1/data/genes/symbols/:gene_symbols/studies/:studies/normalizations/:normalizations       @de.controllers.GenomicData.getByGeneSymbolsAndStudiesAndNormalizations(gene_symbols:String,studies:String,normalizations:String, projection:Option[String])
-
-GET    /api/v1/data/transcripts/ids/:transcript_ids                                                   @de.controllers.GenomicData.getByTranscriptIds(transcript_ids:String, projection:Option[String])
-GET    /api/v1/data/transcripts/ids/:transcript_ids/studies/:studies                                  @de.controllers.GenomicData.getByTranscriptIdsAndStudies(transcript_ids:String,studies:String, projection:Option[String])
-GET    /api/v1/data/transcripts/ids/:transcript_ids/normalizations/:normalizations                    @de.controllers.GenomicData.getByTranscriptIdsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
-GET    /api/v1/data/transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normalizations   @de.controllers.GenomicData.getByTranscriptIdsAndStudiesAndNormalizations(transcript_ids:String,studies:String,normalizations:String, projection:Option[String])
-
-POST   /api/v1/tags/data/genes/symbols/:gene_symbols/normalizations/:normalizations                   @de.controllers.GenomicData.getByGeneSymbolsAndTagsAndNormalizations(gene_symbols:String,normalizations:String, projection:Option[String])
-POST   /api/v1/tags/data/genes/ids/:gene_ids/normalizations/:normalizations                           @de.controllers.GenomicData.getByGeneIdsAndTagsAndNormalizations(gene_ids:String,normalizations:String, projection:Option[String])
-POST   /api/v1/tags/data/transcripts/ids/:transcript_ids/normalizations/:normalizations               @de.controllers.GenomicData.getByTranscriptIdsAndTagsAndNormalizations(transcript_ids:String,normalizations:String, projection:Option[String])
-
-POST    /api/v1/data/normalizations/:normalizations                                                   @de.controllers.GenomicData.getByTagsAndNormalizations(normalizations:String, projection:Option[String])
-
+->    /api/data          data.Routes

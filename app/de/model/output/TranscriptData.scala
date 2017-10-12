@@ -1,25 +1,12 @@
 package de.model.output
 
 import de.utils.Enums.{Normalization, Projection}
-import io.swagger.annotations.{ApiModel, ApiModelProperty}
 import play.api.libs.json.Json
 
 // ===========================================================================
-@ApiModel("TranscriptData")
 case class TranscriptData(
-    
-      transcript_id: String,
-      
-      @ApiModelProperty(
-        name = "SampleAbundanceData",
-        dataType = "de.model.output.Abundance",
-        required = false)
-      sample_abundance: Option[Abundance],
-                              
-      @ApiModelProperty(
-        name = "RsemIsoformData",
-        dataType = "de.model.output.RsemIsoform",
-        required = false)
+      transcript_id:       String,
+      sample_abundance:    Option[Abundance],
       sample_rsem_isoform: Option[RsemIsoform])
 
   // ===========================================================================

@@ -5,7 +5,6 @@ import scala.io.Source
 import de.model.DomainTypes.{ GeneId, GeneSymbol, TranscriptId }
 import de.model.output.GeneInfo
 import de.utils.Transcript
-import io.swagger.annotations.ApiModel
 
 object GeneDAO {
   private val transcriptsTmp: List[Transcript] = {
