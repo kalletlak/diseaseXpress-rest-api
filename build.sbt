@@ -85,3 +85,6 @@ lazy val disease_express = (project in file("."))
   .settings(
     name    := "d3b-disease-express-server",
     version := "0.1.2")
+    
+//add domain package names for play-swagger to auto generate swagger definitions for domain classes mentioned in your routes
+swaggerDomainNameSpaces := Seq("de.model.output")
