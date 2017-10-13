@@ -3,8 +3,7 @@ package de.repository
 import de.dao.SamplesDAO
 import de.model.DomainTypes.{ SampleId, StudyId }
 import de.model.tags.Sample
-import de.utils.MongoQuery
-import play.api.libs.json.JsValue
+import de.utils.Query
 
 object SamplesRepository {
   
@@ -17,10 +16,7 @@ object SamplesRepository {
                                                                   
   def getSamplesInfo (studies: Seq[SampleId] = Nil): Seq[Sample] = dao.getSamplesInfo(studies)
   
-  def getSamples(value: JsValue):                    Seq[String] = {
-    val query = MongoQuery.getMongoQuery(value)
-    dao.getSamples(query)
-  }
+  def getSamples(query: Query):                      Seq[String] = dao.getSamples(query)
   
   def isStudyPresent(studyId:StudyId):               Boolean     = dao.isStudyPresent(studyId)
 }

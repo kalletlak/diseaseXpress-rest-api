@@ -40,3 +40,7 @@ case class NormalizationError(override val value: Seq[String]) extends Error {
 case class PorjectionError(override val value: Seq[String]) extends Error {
   override val key = "projection"
 }
+
+case class TagError(override val value: Seq[String]) extends Error {
+  override val key = "tag"
+}

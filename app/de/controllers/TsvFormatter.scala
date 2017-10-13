@@ -5,6 +5,7 @@ import play.api.libs.json.JsString
 import play.api.libs.json.JsValue
 import de.utils.Enums.Projection
 import de.utils.Enums.Normalization
+import play.api.libs.json.JsObject
 
 // ===========================================================================
 object TsvFormatter { // TODO: refactor all these, they all do the same thing
@@ -24,8 +25,7 @@ object TsvFormatter { // TODO: refactor all these, they all do the same thing
           header
             .map(tags.get)
             .map(_.getOrElse(JsString(TsvMissing)))
-            .map(_.as[JsString]) // TODO: confirm with kk
-            .map(_.value) }
+            .map(_.toString) }
     
     (header +: data)
       .map(_.mkString("\t"))

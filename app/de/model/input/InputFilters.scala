@@ -1,15 +1,11 @@
 package de.model.input
 
-import de.utils.Enums.{ Normalization, Projection }
-import de.validators.{ ValidateNormalization, ValidateProjection }
-import de.model.output.GeneInfo
 import de.controllers.EnumCombo
-import de.validators.PrimaryIdsValidator
-import de.validators.SecondaryIdsValidator
 import de.model.Error
-import de.validators.SecondaryIdRef
-import de.validators.GeneIdFilters
-import de.validators.StudyIdFilters
+import de.model.output.GeneInfo
+import de.utils.Enums.Normalization
+import de.validators._
+import play.api.libs.json.JsValue
 
 case class InputFilters(
   primary_ref_ids: Seq[GeneInfo],
@@ -21,16 +17,18 @@ case class InputFilters(
 object InputFilters {
 
   def apply(
-    primaryObject: PrimaryIdsValidator=GeneIdFilters,
-    secondaryObject: SecondaryIdsValidator=StudyIdFilters,
-    primaryIds: Seq[String],
-    secondaryIds: Seq[String],
+    primaryObject:  PrimaryIdsValidator = GeneIdFilters,
+    primaryIds:     Seq[String],
+    secondaryIds:   Option[Either[Seq[String], JsValue]],
     normalizations: Option[String] = None,
-    projection: Option[String] = None): Either[Seq[Error], InputFilters] = {
+    projection:     Option[String] = None): Either[Seq[Error], InputFilters] = {
 
     val _primary_ids = primaryObject(primaryIds)
 
-    val _secondary_ids = secondaryObject(secondaryIds)
+    val _secondary_ids = secondaryIds match {
+      case Some(obj) => SecondaryIds(obj)
+      case None      => Right(StudyQuery(Seq()))
+    }
 
     val _normalizations = ValidateNormalization(normalizations)
 
@@ -44,8 +42,8 @@ object InputFilters {
 
     if (errors.isEmpty) {
       Right(InputFilters(
-        primary_ref_ids = _primary_ids.right.get,
-        secondary_ref_ids = _secondary_ids.right.get,
+        primary_ref_ids     = _primary_ids.right.get,
+        secondary_ref_ids   = _secondary_ids.right.get,
         normalization_combo = EnumCombo(
                                         _projection.right.get,
                                         _normalizations.right.get).toMap))
