@@ -229,7 +229,6 @@ class GenomicData @javax.inject.Inject() (
         val json: JsValue =
           request.body
   
-        try {
           apply(
               primaryObject   = GeneSymbolFilters,
               primaryIds      = splitCsv(gene_symbols),
@@ -237,11 +236,6 @@ class GenomicData @javax.inject.Inject() (
               normalizations  = Some(normalizations),
               projection      = projection)
               
-        } catch {
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
@@ -255,18 +249,12 @@ class GenomicData @javax.inject.Inject() (
       implicit request =>
   
         val json = request.body
-        try {
           apply(
               primaryObject   = GeneIdFilters,
               primaryIds      = splitCsv(gene_ids),
               secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
@@ -280,18 +268,12 @@ class GenomicData @javax.inject.Inject() (
       implicit request =>
   
         val json = request.body
-        try {
           apply(
               primaryObject   = TranscriptIdFilters,
               primaryIds      = splitCsv(transcript_ids),
               secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
@@ -307,17 +289,10 @@ class GenomicData @javax.inject.Inject() (
         val json: JsValue =
           request.body
   
-        // TODO: address properly
-        try {
           apply(
               secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
           
   // ===========================================================================  
@@ -329,40 +304,51 @@ class GenomicData @javax.inject.Inject() (
                     projection:      Option[String]                       = None)
           (implicit request:         RequestHeader): Result = {
 
-     val input: Either[Seq[Error], InputFilters] = InputFilters(
-                                                                primaryObject,
-                                                                primaryIds,
-                                                                secondaryIds,
-                                                                normalizations,
-                                                                projection)
-
-      input match {
-       
-        case Left(errorObject) =>
-          BadRequest(Json.toJson(errorObject.map {_.formatJson}))
-
-        case Right(filters) => {
-          val genes = repo
-                        .getData(filters)
-          render {
-  
-            case Accepts.Json() =>
-              Ok(Json.toJson(genes))
-  
-            case Play.AcceptsTsv() => {
-              val _projection = projection match {
-                                  case Some(projection) => Projection.withNameOption(projection)
-                                  case None             => Some(Projection.summary)
-                                }
-  
-               Ok(TsvFormatter.rnaSeq(
-                                  genes,
-                                  filters.normalization_combo.keySet.toSeq,
-                                  _projection.get))
+     try {
+         val input: Either[Seq[Error], InputFilters] = InputFilters(
+                                                                    primaryObject,
+                                                                    primaryIds,
+                                                                    secondaryIds,
+                                                                    normalizations,
+                                                                    projection)
+    
+          input match {
+           
+            case Left(errorObject) =>{
+              val error_str = errorObject
+                                .map { error => s"""invalid ${error.key} -> ${error.value.mkString(",")}""" }
+                                .mkString("\n")
+               BadRequest(error_str)
             }
-        }  
-      }
-    }
+             
+    
+            case Right(filters) => {
+              val genes = repo
+                            .getData(filters)
+              render {
+      
+                case Accepts.Json() =>
+                  Ok(Json.toJson(genes))
+      
+                case Play.AcceptsTsv() => {
+                  val _projection = projection match {
+                                      case Some(projection) => Projection.withNameOption(projection)
+                                      case None             => Some(Projection.summary)
+                                    }
+      
+                   Ok(TsvFormatter.rnaSeq(
+                                      genes,
+                                      filters.normalization_combo.keySet.toSeq,
+                                      _projection.get))
+                                      
+                }
+              }  
+           }
+         }
+     } catch {
+         case x: IllegalStateException => BadRequest(x.getMessage)
+         case x: Throwable             => BadRequest("Error while processing request")
+     } 
   }
 
   

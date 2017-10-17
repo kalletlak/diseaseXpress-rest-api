@@ -11,7 +11,7 @@ object Enums {
   
   sealed trait unavailable extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object unavailable extends Enum[unavailable] {
@@ -23,7 +23,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed trait platform extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object platform extends Enum[platform] {
@@ -35,7 +35,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed abstract class library_type(override val entryName: String) extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object library_type extends Enum[library_type] {  
@@ -47,7 +47,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed trait gender extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object gender extends Enum[gender] {
@@ -60,7 +60,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed trait group extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object group extends Enum[group] {
@@ -73,7 +73,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed abstract class race(override val entryName: String) extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+      //override val formatQuery = s""""entryName""""
     }
   
     object race extends Enum[race] {  
@@ -90,7 +90,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed abstract class ethnicity(override val entryName: String) extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+     // override val formatQuery = s""""entryName""""
     }
   
     object ethnicity extends Enum[ethnicity] {  
@@ -103,7 +103,7 @@ object Enums {
   // ---------------------------------------------------------------------------
   sealed trait vital_status extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
-      override val formatQuery = s""""entryName""""
+     // override val formatQuery = s""""entryName""""
     }
   
     object vital_status extends Enum[vital_status] {

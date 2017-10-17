@@ -140,7 +140,7 @@ trait Sample {
         case class Text(value: String) extends Value {
         
           override val formatJson = JsString(value)
-          override val formatQuery = s""""$value""""
+          //override val formatQuery = s""""$value""""
           
         }
       
@@ -150,7 +150,7 @@ trait Sample {
           private val internal: Double = value.toDouble
           
           override val formatJson = JsNumber(internal)
-          override val formatQuery = s"""$internal"""
+         // override val formatQuery = s"""$internal"""
           
         }
       
@@ -158,7 +158,7 @@ trait Sample {
         case class EitherValue(value: Either[Value, unavailable]) extends Value {
           
           override val formatJson = value.fold( l => l.formatJson , r => r.formatJson)
-          override val formatQuery = s"""$value"""
+          //override val formatQuery = s"""$value"""
       
         }
         

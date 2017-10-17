@@ -4,17 +4,21 @@ import de.model.{ Error, TagError }
 import de.model.tags.Formatter
 import de.model.tags.Sample.{ Number, Text, Value }
 import enumeratum.{ Enum, EnumEntry }
-import play.api.libs.json.{ JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue }
+import play.api.libs.json.{ JsArray, JsBoolean, JsNull, JsNumber, JsObject, JsString, JsValue, Json }
+
 // ===========================================================================
 
-trait Query extends Formatter
+sealed trait Query extends Formatter
 
-trait Comparison
-trait SingleValue
-trait ArrayValue
-trait Logical
+sealed trait Comparison
+sealed trait Logical
 
-sealed case class InvalidTag(tag: String)
+sealed trait Operands
+sealed trait Unary extends Operands
+sealed trait Nary  extends Operands
+
+
+case class InvalidTag(tag: String)
 
 // ===========================================================================
 
@@ -22,23 +26,23 @@ sealed trait Operator extends EnumEntry
 object Operator extends Enum[Operator] {
   val values = findValues
 
-  case object $in  extends Operator with Comparison with ArrayValue
-  case object $lt  extends Operator with Comparison with SingleValue
-  case object $lte extends Operator with Comparison with SingleValue
-  case object $gt  extends Operator with Comparison with SingleValue
-  case object $gte extends Operator with Comparison with SingleValue
-  case object $ne  extends Operator with Comparison with SingleValue
-  case object $nin extends Operator with Comparison with ArrayValue
+  case object $in  extends Operator with Comparison with Nary
+  case object $lt  extends Operator with Comparison with Unary
+  case object $lte extends Operator with Comparison with Unary
+  case object $gt  extends Operator with Comparison with Unary
+  case object $gte extends Operator with Comparison with Unary
+  case object $ne  extends Operator with Comparison with Unary
+  case object $nin extends Operator with Comparison with Nary
 
   //as $eq is predefined in scala
-  case object eq   extends Operator with Comparison with SingleValue {
+  case object eq   extends Operator with Comparison with Unary {
     override def toString = "$eq"
   }
 
-  case object $and extends Operator with Logical with ArrayValue
-  case object $or  extends Operator with Logical with ArrayValue
-  case object $nor extends Operator with Logical with ArrayValue
-  case object $not extends Operator with Logical with SingleValue
+  case object $and extends Operator with Logical with Nary
+  case object $or  extends Operator with Logical with Nary
+  case object $nor extends Operator with Logical with Nary
+  case object $not extends Operator with Logical with Unary
 
 }
 
@@ -47,18 +51,10 @@ sealed trait QueryConstants extends EnumEntry
 object QueryConstants extends Enum[QueryConstants] {
   val values = findValues
 
-  case object $and         extends QueryConstants{
-    override def toString = s"""$$and"""
-  }
-  case object $not         extends QueryConstants{
-    override def toString = s"""$$not"""
-  }
-  case object tagskey   extends QueryConstants{
-    override def toString = s""""tags.key""""
-  }
-  case object tagsvalue extends QueryConstants{
-    override def toString = s""""tags.value""""
-  }
+  case object $and         extends QueryConstants
+  case object $not         extends QueryConstants
+  case object `tags.key`   extends QueryConstants
+  case object `tags.value` extends QueryConstants
 
 }
 
@@ -69,16 +65,19 @@ case class QueryUnit(
     operator: Operator = Operator.eq,
     not:      Boolean  = false) extends Query {
 
-  override val formatQuery = {
-    val queryTmp = 
+  override val formatJson = {
+    val queryValue = 
           if (not) 
-              s"""{ ${QueryConstants.tagsvalue}: { ${QueryConstants.$not}: { ${operator.entryName}: ${value.formatQuery} } } }"""
-          else 
-              s"""{ ${QueryConstants.tagsvalue}: { ${operator.entryName}: ${value.formatQuery} } }"""
+            Json.obj(QueryConstants.`tags.value`.entryName -> 
+                     Json.obj(QueryConstants.$not.entryName -> 
+                              Json.obj(operator.entryName -> value.formatJson)))
+          else
+            Json.obj(QueryConstants.`tags.value`.entryName -> 
+                     Json.obj(operator.entryName -> value.formatJson))
 
-    s"""{ ${QueryConstants.$and}: [ {  ${QueryConstants.tagskey}: "$key" }, $queryTmp ]}"""
+    Json.obj(QueryConstants.$and.entryName -> 
+             JsArray(Seq(Json.obj(QueryConstants.`tags.key`.entryName -> key),queryValue)))
   }
-  override val formatJson = JsString(formatQuery)
 
 }
 
@@ -89,29 +88,21 @@ case class QueryArray(
     operator: Operator = Operator.$in,
     not:      Boolean  = false) extends Query {
 
-  override val formatQuery = {
-    val queryValue = value.map { _.formatQuery }.mkString("[", ",", "]")
+  override val formatJson = {
+    val queryTmp = JsArray(value.map { _.formatJson })
 
-    val queryTmp = 
-      if (not) 
-          s"""{ ${QueryConstants.tagsvalue}: { ${QueryConstants.$not}: { ${operator.entryName}: $queryValue } } }"""
-      else 
-          s"""{ ${QueryConstants.tagsvalue}: { ${operator.entryName}: $queryValue } }"""
-    
-    s"""{${QueryConstants.$and}: [{${QueryConstants.tagskey}: "$key"}, $queryTmp]}"""
+    val queryValue = 
+      if (not)
+        Json.obj(QueryConstants.`tags.value`.entryName -> 
+                 Json.obj(QueryConstants.$not.entryName -> 
+                          Json.obj(operator.entryName -> queryTmp)))
+      else
+        Json.obj(QueryConstants.`tags.value`.entryName -> 
+                 Json.obj(operator.entryName -> queryTmp))
+
+    Json.obj(QueryConstants.$and.entryName -> 
+             JsArray(Seq(Json.obj(QueryConstants.`tags.key`.entryName -> key),queryValue)))
   }
-  override val formatJson = JsString(formatQuery)
-  
-}
-
-// ===========================================================================
-case class QueryObject(
-    key:   String, 
-    value: Query) extends Query {
-  
-  val queryValue = value.formatQuery
-  override val formatQuery = s"""$queryValue"""
-  override val formatJson = JsString(formatQuery)
   
 }
 
@@ -120,9 +111,7 @@ case class Base(
     key:   String, 
     value: Seq[Query]) extends Query {
   
-  val queryValue = value.map { _.formatQuery }.mkString("[", ",", "]")
-  override val formatQuery = s"""{$key : $queryValue}"""
-  override val formatJson = JsString(formatQuery)
+  override val formatJson =  Json.obj(key -> JsArray(value.map { _.formatJson })) 
   
 }
 
@@ -130,15 +119,17 @@ case class Base(
 case class StringValue(
     value: String) extends Query {
   
-  override val formatQuery = s""""$value""""
-  override val formatJson = JsString(formatQuery)
+  override val formatJson = JsString(value)
   
 }
 
 // ===========================================================================
 object Queryparser {
 
-  private def getResult(obj: Seq[Either[Seq[InvalidTag], Seq[Query]]]) = {
+  //TODO: implement ADT for Either foldLeft/foldRight
+  private def getResult(
+      obj: Seq[Either[Seq[InvalidTag], Seq[Query]]])
+                :Either[Seq[InvalidTag], Seq[Query]] = {
     
     val error = obj
       .foldLeft(Seq[InvalidTag]()) {
@@ -157,85 +148,88 @@ object Queryparser {
   
   // ---------------------------------------------------------------------------
   private def parseJsBoolean(
-              k:   String,
-              v:   JsBoolean,
-              not: Boolean = false): Either[Seq[InvalidTag], Seq[Query]] = 
+              key:   String,
+              value:   JsBoolean,
+              not: Boolean = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = 
         
-        Right(Seq(QueryUnit(k, Text(v.value.toString), not = not)))
+        Right(Seq(QueryUnit(key, Text(Json.stringify(value)), not = not)))
         
   // ---------------------------------------------------------------------------
   private def parseJsString(
-              k:        String, 
-              v:        JsString, 
+              key:        String, 
+              value:        JsString, 
               operator: Operator = Operator.eq, 
-              not:      Boolean  = false): Either[Seq[InvalidTag], Seq[Query]] = 
+              not:      Boolean  = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = 
         
-        Right(Seq(QueryUnit(k, Text(v.value), operator, not)))
+        Right(Seq(QueryUnit(key, Text(value.value), operator, not)))
   
   // ---------------------------------------------------------------------------
   private def parseJsNumber(
-      k:        String,
-      v:        JsNumber,
-      operator: Operator = Operator.eq,
-      not:      Boolean  = false): Either[Seq[InvalidTag], Seq[Query]] = 
+              key:        String,
+              value:        JsNumber,
+              operator: Operator = Operator.eq,
+              not:      Boolean  = false)
+           : Either[Seq[InvalidTag], Seq[Query]] = 
         
-        Right(Seq(QueryUnit(k, Number(v.value.toString), operator, not)))
+        Right(Seq(QueryUnit(key, Number(value.value.toString()), operator, not)))
   
   // ---------------------------------------------------------------------------
   private def parseJsObject(
-        k:        String, 
-        v:        JsObject, 
-        operator: Operator = Operator.eq, 
-        not:      Boolean  = false): Either[Seq[InvalidTag], Seq[Query]] = {
+              key:        String, 
+              value:        JsObject, 
+              operator: Operator = Operator.eq, 
+              not:      Boolean  = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = {
     
-      Operator.withNameOption(k) match {
+      Operator.withNameOption(key) match {
         
         case Some(operator) => 
           operator match {
-              case operation: Comparison => parseObjectValue(v, operator, not)
-              case operation: Logical    => 
-                  if (not) 
-                    Left(Seq(InvalidTag(operation.entryName)))
-                  else 
-                    operation match {
-                       case Operator.$not => parseObjectValue(v, not = true)
-                       case _             => Left(Seq(InvalidTag(operator.entryName)))//for any other operator
-                    }
+              case operation: Comparison                 => parseObjectValue(value, operator, not)
+              
+              case operation: Logical 
+                    if(operation.equals(Operator.$not))  => parseObjectValue(value, not = true)
+              //for any other operator      
+              case _                                     => Left(Seq(InvalidTag(operator.entryName)))
          }
         //no nested query objects
-        case None         => Left(Seq(InvalidTag(k))) 
+        case None         => Left(Seq(InvalidTag(key))) 
       }
     }
   // ---------------------------------------------------------------------------
   private def parseJsArray(
-        k:   String, 
-        v:   JsArray, 
-        not: Boolean = false): Either[Seq[InvalidTag], Seq[Query]] = 
+              key:   String, 
+              value:   JsArray, 
+              not: Boolean = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = 
 
-      Operator.withNameOption(k) match {
+      Operator.withNameOption(key) match {
         case Some(operator) => operator match {
           
-            case operation: Logical with ArrayValue => 
-                  parseArrayValue(v, not= not) match {
+            case operation: Logical with Nary => 
+                  parseArrayValue(value, not= not) match {
                     case Left(error)   => Left(error)
                     case Right(result) => Right(Seq(Base(operation.entryName, result)))
                   }
-            case _                                  => Left(Seq(InvalidTag(operator.entryName))) //for any other operator 
+            case _                            => Left(Seq(InvalidTag(operator.entryName))) //for any other operator 
             
           }
         
         case None         =>
-                  parseArrayValue(v, not= not) match {
+                  parseArrayValue(value, not= not) match {
                     case Left(error)   => Left(error)
-                    case Right(result) => Right(Seq(QueryArray(k, result)))
+                    case Right(result) => Right(Seq(QueryArray(key, result)))
                   }
       }
 
   // ---------------------------------------------------------------------------
   private def parseObjectValue(
-      value:    JsObject,
-      operator: Operator = Operator.eq,
-      not:      Boolean  = false): Either[Seq[InvalidTag], Seq[Query]] = {
+              value:    JsObject,
+              operator: Operator = Operator.eq,
+              not:      Boolean  = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = {
     
     val result: Seq[Either[Seq[InvalidTag], Seq[Query]]] = 
       value
@@ -246,7 +240,7 @@ object Queryparser {
             case (k: String, v: JsObject)  => parseJsObject(k, v, not=not)
             case (k: String, v: JsArray)   => parseJsArray(k, v, not)
             case (k: String, v: JsBoolean) => parseJsBoolean(k, v, not)
-            case (k: String, JsNull)       => Left(Seq(InvalidTag(JsNull.toString()))) // TODO: is null allowed?
+            case (k: String, JsNull)       => throw new IllegalStateException("null not allowed")
         }
         .toSeq
 
@@ -256,30 +250,28 @@ object Queryparser {
   
   // ---------------------------------------------------------------------------
   private def parseArrayValue(
-      value:    JsArray,
-      operator: Operator = Operator.$in,
-      not:      Boolean  = false): Either[Seq[InvalidTag], Seq[Query]] = {
+              value:    JsArray,
+              operator: Operator = Operator.$in,
+              not:      Boolean  = false)
+          : Either[Seq[InvalidTag], Seq[Query]] = {
     
     val result = 
            value
              .value
              .map {
-                case obj: JsObject => if (not) 
-                                        Left(Seq(InvalidTag(obj.toString))) 
-                                      else 
-                                        parseObjectValue(obj,not =not)
+                //not operator cannot have object array as value
+                case obj: JsObject if (!not) => parseObjectValue(obj,not =not)
                                         
-                case obj: JsString => Right(Seq(StringValue(obj.value)))
-                
-                case x             => Left(Seq(InvalidTag(x.toString))) // for any other JsValue make it as error
+                case obj: JsString           => Right(Seq(StringValue(obj.value)))
+                // for any other JsValue make it as error
+                case x                       => Left(Seq(InvalidTag(Json.stringify(x))))
              }
     
     getResult(result)
   }
 
   // ---------------------------------------------------------------------------
-  def getMongoQuery(
-      value: JsValue): Either[Error, Query] = {
+  def getMongoQuery(value: JsValue): Either[Error, Query] = {
     
     val result = 
       if (value.isInstanceOf[JsObject])
@@ -287,7 +279,7 @@ object Queryparser {
       else if (value.isInstanceOf[JsArray])
           parseArrayValue(value.asInstanceOf[JsArray])
       else
-          Left(Seq(InvalidTag(value.toString)))
+          Left(Seq(InvalidTag(Json.stringify(value))))
 
     result match {
       case Left(errors)  => Left(TagError(errors.map { _.tag }))
