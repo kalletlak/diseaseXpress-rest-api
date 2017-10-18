@@ -78,7 +78,7 @@ object SamplesDAO {
   
   // ---------------------------------------------------------------------------
   def getSamples(query: Query): Seq[SampleId] = {
-    val querystr = query.formatQuery
+    val querystr = Json.stringify(query.formatJson)
     val projection_str = s"""{sample_id: 1, _id: 0}"""
 
     collection

@@ -3,24 +3,21 @@ package de.validators
 import de.model.{ Error, GeneIdError, GeneSymbolError, StudyIdError, TranscriptIdError }
 import de.model.output.GeneInfo
 import de.repository.{ GeneRepository, SamplesRepository }
+import play.api.libs.json.JsValue
+import de.utils.Queryparser
 
 // ===========================================================================
 sealed trait IdRef {
   val ref_id: Seq[String]
 }
 
-sealed trait SecondaryIdRef extends IdRef
 sealed trait PrimaryIdRef extends IdRef
-
+sealed trait SecondaryIdRef extends IdRef
 sealed trait GeneQuery extends PrimaryIdRef
 sealed trait TranscriptQuery extends PrimaryIdRef
 
 sealed trait PrimaryIdsValidator {
   def apply(ids: Seq[String]): Either[Error, Seq[GeneInfo]]
-}
-
-sealed trait SecondaryIdsValidator {
-  def apply(ids: Seq[String]): Either[Error, SecondaryIdRef]
 }
 
 case class GeneIdQuery(override val ref_id: Seq[String]) extends GeneQuery
@@ -85,30 +82,31 @@ object TranscriptIdFilters extends PrimaryIdsValidator {
 
 // ===========================================================================
 
-object StudyIdFilters extends SecondaryIdsValidator {
+object SecondaryIds {
+  def apply(obj: Either[Seq[String], JsValue]):Either[Error, SecondaryIdRef] = {
+    obj match {
+      case Left(studies) => {
+        val invalid_study_ids =
+          studies
+            .filterNot { SamplesRepository.isStudyPresent }
 
-  override def apply(studies: Seq[String]): Either[Error, SecondaryIdRef] = {
+        if (invalid_study_ids.isEmpty)
+          Right(StudyQuery(studies))
 
-    val invalid_study_ids =
-      studies
-        .filterNot { SamplesRepository.isStudyPresent }
+        else
+          Left(StudyIdError(invalid_study_ids))
+      }
 
-    if (invalid_study_ids.isEmpty)
-      Right(StudyQuery(studies))
+      case Right(tags) => {
 
-    else
-      Left(StudyIdError(invalid_study_ids))
+        val query = Queryparser.getMongoQuery(tags)
+        val result = query match {
+          case Left(error)   => Left(error)
+          case Right(result) => Right(SampleQuery(SamplesRepository.getSamples(query.right.get)))
+        }
+        result
 
-  }
-}
-
-// ===========================================================================
-
-//TODO: update sample id validator
-//Currently sample ids are not passed as a request parameter
-object SampleIdFilters extends SecondaryIdsValidator {
-
-  override def apply(samples: Seq[String]): Either[Error, SecondaryIdRef] = {
-    Right(SampleQuery(samples))
+      }
+    }
   }
 }

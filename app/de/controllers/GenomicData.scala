@@ -3,12 +3,9 @@ package de.controllers
 import de.Context
 import de.model.Error
 import de.model.input.InputFilters
-import de.model.output.GeneData
-import de.repository.SamplesRepository
-import de.utils.{ InvalidQueryException, LoggingAction }
 import de.utils.Enums.Projection
-import de.validators._
-import javax.inject.Singleton
+import de.utils.LoggingAction
+import de.validators.{ GeneIdFilters, GeneSymbolFilters, PrimaryIdsValidator, TranscriptIdFilters }
 import play.api.Configuration
 import play.api.libs.json.{ JsValue, Json }
 import play.api.mvc.{ Controller, RequestHeader, Result }
@@ -20,9 +17,6 @@ class GenomicData @javax.inject.Inject() (
       context:       Context)
     extends Controller {
 
-  
-  // mostly boilerplate code in this class (TODO: generate from specification instead)
-  
   
   private val repo = context.getService.service
   
@@ -52,8 +46,7 @@ class GenomicData @javax.inject.Inject() (
         apply(
               primaryObject    = GeneIdFilters,
               primaryIds       = splitCsv(gene_ids),
-              secondaryObject  = StudyIdFilters,
-              secondaryIds     = splitCsv(study_ids),
+              secondaryIds     = Some(Left(splitCsv(study_ids))),
               projection       = projection)
       }
 
@@ -85,8 +78,7 @@ class GenomicData @javax.inject.Inject() (
         apply(
               primaryObject   = GeneIdFilters,
               primaryIds      = splitCsv(gene_ids),
-              secondaryObject = StudyIdFilters,
-              secondaryIds    = splitCsv(study_ids),
+              secondaryIds    = Some(Left(splitCsv(study_ids))),
               normalizations  = Some(normalizations),
               projection      = projection)  
       }
@@ -118,8 +110,7 @@ class GenomicData @javax.inject.Inject() (
         apply(
               primaryObject   = GeneSymbolFilters,
               primaryIds      = splitCsv(gene_symbols),
-              secondaryObject = StudyIdFilters,
-              secondaryIds    = splitCsv(study_ids),
+              secondaryIds    = Some(Left(splitCsv(study_ids))),
               projection      = projection)
       }
 
@@ -152,8 +143,7 @@ class GenomicData @javax.inject.Inject() (
         apply(
               primaryObject   = GeneSymbolFilters,
               primaryIds      = splitCsv(gene_symbols),
-              secondaryObject = StudyIdFilters,
-              secondaryIds    = splitCsv(study_ids),
+              secondaryIds    = Some(Left(splitCsv(study_ids))),
               normalizations  = Some(normalizations),
               projection      = projection)
     }
@@ -186,8 +176,7 @@ class GenomicData @javax.inject.Inject() (
       apply(
             primaryObject   = TranscriptIdFilters,
             primaryIds      = splitCsv(transcript_ids),
-            secondaryObject = StudyIdFilters,
-            secondaryIds    = splitCsv(study_ids),
+            secondaryIds    = Some(Left(splitCsv(study_ids))),
             projection      = projection)
   }
 
@@ -220,8 +209,7 @@ class GenomicData @javax.inject.Inject() (
         apply(
               primaryObject   = TranscriptIdFilters,
               primaryIds      = splitCsv(transcript_ids),
-              secondaryObject = StudyIdFilters,
-              secondaryIds    = splitCsv(study_ids),
+              secondaryIds    = Some(Left(splitCsv(study_ids))),
               normalizations  = Some(normalizations),
               projection      = projection)  
       }
@@ -241,23 +229,13 @@ class GenomicData @javax.inject.Inject() (
         val json: JsValue =
           request.body
   
-        try {
           apply(
               primaryObject   = GeneSymbolFilters,
               primaryIds      = splitCsv(gene_symbols),
-              secondaryObject = SampleIdFilters,
-              secondaryIds    = extractSampleIds(json),
+              secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
               
-        } catch { // TODO: address properly instead
-          case x: InvalidQueryException => {
-            BadRequest(x.getMessage)
-          }
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
@@ -271,22 +249,12 @@ class GenomicData @javax.inject.Inject() (
       implicit request =>
   
         val json = request.body
-        try {
           apply(
               primaryObject   = GeneIdFilters,
               primaryIds      = splitCsv(gene_ids),
-              secondaryObject = SampleIdFilters,
-              secondaryIds    = extractSampleIds(json),
+              secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: InvalidQueryException => {
-            BadRequest(x.getMessage)
-          }
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
@@ -300,26 +268,16 @@ class GenomicData @javax.inject.Inject() (
       implicit request =>
   
         val json = request.body
-        try {
           apply(
               primaryObject   = TranscriptIdFilters,
               primaryIds      = splitCsv(transcript_ids),
-              secondaryObject = SampleIdFilters,
-              secondaryIds    = extractSampleIds(json),
+              secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: InvalidQueryException => {
-            BadRequest(x.getMessage)
-          }
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
 
   
-  // ===========================================================================
+  // ---------------------------------------------------------------------------
   // by sample ID
   def getByTagsAndNormalizations(
       normalizations: String,
@@ -331,75 +289,69 @@ class GenomicData @javax.inject.Inject() (
         val json: JsValue =
           request.body
   
-        // TODO: address properly
-        try {
           apply(
-              secondaryObject = SampleIdFilters,
-              secondaryIds    = extractSampleIds(json),
+              secondaryIds    = Some(Right(json)),
               normalizations  = Some(normalizations),
               projection      = projection)
-        } catch {
-          case x: InvalidQueryException => {
-            BadRequest(x.getMessage)
-          }
-          case x: Throwable => {
-            BadRequest("Unknown Exception")
-          }
-        }  
       }
           
   // ===========================================================================  
    private def apply(
-                    primaryObject:   PrimaryIdsValidator   = GeneIdFilters,
-                    secondaryObject: SecondaryIdsValidator = StudyIdFilters,
-                    primaryIds:      Seq[String]           = Nil,
-                    secondaryIds:    Seq[String]           = Nil,
-                    normalizations:  Option[String]        = None,
-                    projection:      Option[String]        = None)
+                    primaryObject:   PrimaryIdsValidator                  = GeneIdFilters,
+                    primaryIds:      Seq[String]                          = Nil,
+                    secondaryIds:    Option[Either[Seq[String], JsValue]] = None,
+                    normalizations:  Option[String]                       = None,
+                    projection:      Option[String]                       = None)
           (implicit request:         RequestHeader): Result = {
 
-     val input: Either[Seq[Error], InputFilters] = InputFilters(
-                                                                primaryObject,
-                                                                secondaryObject,
-                                                                primaryIds,
-                                                                secondaryIds,
-                                                                normalizations,
-                                                                projection)
-
-      input match {
-       
-        case Left(errorObject) =>
-          BadRequest(Json.toJson(errorObject.map {_.formatJson}))
-
-        case Right(filters) => {
-          val genes = repo
-                        .getData(filters)
-          render {
-  
-            case Accepts.Json() =>
-              Ok(Json.toJson(genes))
-  
-            case Play.AcceptsTsv() => {
-              val _projection = projection match {
-                                  case Some(projection) => Projection.withNameOption(projection)
-                                  case None             => Some(Projection.summary)
-                                }
-  
-               Ok(TsvFormatter.rnaSeq(
-                                  genes,
-                                  filters.normalization_combo.keySet.toSeq,
-                                  _projection.get))
+     try {
+         val input: Either[Seq[Error], InputFilters] = InputFilters(
+                                                                    primaryObject,
+                                                                    primaryIds,
+                                                                    secondaryIds,
+                                                                    normalizations,
+                                                                    projection)
+    
+          input match {
+           
+            case Left(errorObject) =>{
+              val error_str = errorObject
+                                .map { error => s"""invalid ${error.key} -> ${error.value.mkString(",")}""" }
+                                .mkString("\n")
+               BadRequest(error_str)
             }
-        }  
-      }
-    }
+             
+    
+            case Right(filters) => {
+              val genes = repo
+                            .getData(filters)
+              render {
+      
+                case Accepts.Json() =>
+                  Ok(Json.toJson(genes))
+      
+                case Play.AcceptsTsv() => {
+                  val _projection = projection match {
+                                      case Some(projection) => Projection.withNameOption(projection)
+                                      case None             => Some(Projection.summary)
+                                    }
+      
+                   Ok(TsvFormatter.rnaSeq(
+                                      genes,
+                                      filters.normalization_combo.keySet.toSeq,
+                                      _projection.get))
+                                      
+                }
+              }  
+           }
+         }
+     } catch {
+         case x: IllegalStateException => BadRequest(x.getMessage)
+         case x: Throwable             => BadRequest("Error while processing request")
+     } 
   }
 
   
-  // ===========================================================================
-  def extractSampleIds(json: JsValue): Seq[String] =
-    SamplesRepository.getSamples(json).toSeq
-
   // ---------------------------------------------------------------------------
   def splitCsv(csvIds: String): Seq[String] =
     csvIds

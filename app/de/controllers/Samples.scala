@@ -1,13 +1,12 @@
 package de.controllers
 
-import play.api.Configuration
-import play.api.libs.json.Json
-import play.api.libs.json.{JsValue, JsString}
-import play.api.mvc.{Accepting, Controller, RequestHeader, Result}
-import de.utils.{LoggingAction}
 import de.model.DomainTypes.StudyId
 import de.repository.SamplesRepository
-import de.validators.StudyIdFilters
+import de.utils.LoggingAction
+import de.validators.SecondaryIds
+import play.api.Configuration
+import play.api.libs.json.{ JsValue, Json }
+import play.api.mvc.{ Controller, RequestHeader, Result }
 
 // ===========================================================================
 class Samples @javax.inject.Inject() (
@@ -34,7 +33,7 @@ class Samples @javax.inject.Inject() (
         (implicit request:     RequestHeader)
       : Result = {
     
-        StudyIdFilters(studyIds) match {
+        SecondaryIds(Left(studyIds)) match {
           
           case Left(errorObject) =>
             BadRequest(Json.toJson(errorObject.formatJson))
