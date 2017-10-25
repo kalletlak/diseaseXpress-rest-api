@@ -3,7 +3,7 @@ package de.repository
 import de.dao.SamplesDAO
 import de.model.DomainTypes.{ SampleId, StudyId }
 import de.model.tags.Sample
-import de.utils.Query
+import de.utils.Queryparser.Query
 
 object SamplesRepository {
   

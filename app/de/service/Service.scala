@@ -46,24 +46,27 @@ trait Service {
       : Seq[GeneData] = {
 
     // get queried gene objects
-    val genes: Seq[GeneInfo] =
+    val genes: Option[Seq[GeneInfo]] = 
       filters.primary_ref_ids
 
-    val geneIdFilters: GeneIdFilter =
+    val geneIdFilters: Option[GeneIdFilter] = 
       genes
-        .map(_.gene_id)
-        .zen(GeneIdFilter) //val tempGeneIdFilters = if (genes.size > 0) Some(genes.map { _.gene_id }) else Some(Seq())
+        .map( _.map(_.gene_id)
+               .zen(GeneIdFilter))
 
-    val transcriptIdFilters:TranscriptIdFilter =
-     genes
-       .flatMap(_.transcripts
-           .map(_.transcript_id))
-       .zen(TranscriptIdFilter) // val temptranscriptIdFilters = if (genes.size > 0) Some(genes.flatMap { _.transcripts.map { _.transcript_id } }) else Some(Seq())
-
-    val secondary_filters:FilterUnit = filters.secondary_ref_ids match {
-      case SampleQuery(x) => SampleFilter(x)
-      case StudyQuery(x)  => StudyFilter(x)
-    }
+    val transcriptIdFilters: Option[TranscriptIdFilter] = 
+      genes
+        .map( _.flatMap(_.transcripts
+                            .map(_.transcript_id))
+               .zen(TranscriptIdFilter))
+       
+    val secondary_filters:   Option[FilterUnit] = 
+      filters
+        .secondary_ref_ids
+        .map ( _ match {
+                       case SampleQuery(x) => SampleFilter(x)
+                       case StudyQuery(x)  => StudyFilter(x)
+              })
 
     // ---------------------------------------------------------------------------
     // map them to empty Map if normalization is not passed in input query
@@ -74,7 +77,7 @@ trait Service {
         .map(projection =>
           getAbundanceData(
               projection,
-              filters = Seq(transcriptIdFilters, secondary_filters))
+              filters = Seq(transcriptIdFilters, secondary_filters).flatten)
             .map { sampleAbundance =>
               (sampleAbundance.sample_id, sampleAbundance.transcript_id) ->
                 sampleAbundance }
@@ -87,7 +90,7 @@ trait Service {
         .map(projection =>
           getIsoformData(
             projection,
-            Seq(transcriptIdFilters, secondary_filters))
+            Seq(transcriptIdFilters, secondary_filters).flatten)
           .map { sampleRsemIsoform =>
             (sampleRsemIsoform.sample_id, sampleRsemIsoform.transcript_id) ->
               sampleRsemIsoform }
@@ -100,7 +103,7 @@ trait Service {
         .map(projection =>
           getRsemGeneData(
             projection,
-            Seq(geneIdFilters, secondary_filters))
+            Seq(geneIdFilters, secondary_filters).flatten)
           .map { sampleRsemGene =>
             (sampleRsemGene.sample_id, sampleRsemGene.gene_id) ->
               sampleRsemGene }

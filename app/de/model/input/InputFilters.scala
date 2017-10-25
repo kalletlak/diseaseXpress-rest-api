@@ -8,8 +8,8 @@ import de.validators._
 import play.api.libs.json.JsValue
 
 case class InputFilters(
-  primary_ref_ids: Seq[GeneInfo],
-  secondary_ref_ids: SecondaryIdRef,
+  primary_ref_ids: Option[Seq[GeneInfo]],
+  secondary_ref_ids: Option[SecondaryIdRef],
   normalization_combo:Map[Normalization, InputDataModel])
 
 // ===========================================================================
@@ -23,11 +23,15 @@ object InputFilters {
     normalizations: Option[String] = None,
     projection:     Option[String] = None): Either[Seq[Error], InputFilters] = {
 
-    val _primary_ids = primaryObject(primaryIds)
+    val _primary_ids: Either[Error, Option[Seq[GeneInfo]]] = if(primaryIds.isEmpty) {
+      Right(None)
+    } else {
+      primaryObject(primaryIds).right.map { x => Some(x) }
+    }
 
-    val _secondary_ids = secondaryIds match {
-      case Some(obj) => SecondaryIds(obj)
-      case None      => Right(StudyQuery(Seq()))
+    val _secondary_ids: Either[Error, Option[SecondaryIdRef]] = secondaryIds match {
+      case Some(obj) => SecondaryIds(obj).right.map { x => Some(x) } //project right as an option
+      case None      => Right(None)
     }
 
     val _normalizations = ValidateNormalization(normalizations)

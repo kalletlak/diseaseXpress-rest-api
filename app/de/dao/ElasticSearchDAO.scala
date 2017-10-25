@@ -30,7 +30,7 @@ class ElasticSearchDAO(session: ElasticSearchSession) extends Dao {
       Json.obj("constant_score" ->
         Json.obj("filter" ->
           Json.obj("bool" ->
-            Json.obj("must" -> filtersList.flatMap { _.queryElasticSearchString }))))
+            Json.obj("must" -> filtersList.map { _.queryElasticSearchString }))))
     
     //some of the queries take lot of time
     implicit val duration: Duration =
