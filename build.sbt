@@ -11,6 +11,8 @@ lazy val elastic4sVersion 	= "5.4.12"
 lazy val mongoVersion 		= "3.4.2"
 lazy val fongoVersion 		= "2.1.0"
 lazy val cassandraVersion 	= "3.3.0"
+lazy val junitVersion          = "4.12"
+lazy val junitInterfaceVersion = "0.11" // see https://github.com/sbt/junit-interface
 
 
 libraryDependencies ++= Seq(
@@ -49,7 +51,11 @@ libraryDependencies ++= Seq(
 	  
 	  "net.databinder.dispatch" %% "dispatch-core"  % "0.13.1" withSources () withJavadoc (),
 	  "org.apache.logging.log4j" % "log4j-api" 		% "2.6.2"  withSources () withJavadoc (),
-	  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.6.2"  withSources () withJavadoc ()
+	  "org.apache.logging.log4j" % "log4j-to-slf4j" % "2.6.2"  withSources () withJavadoc (),
+	  
+	  // tests
+      "junit"        % "junit"           % junitVersion          % "test" withSources() withJavadoc(),
+	  "com.novocode" % "junit-interface" % junitInterfaceVersion % "test" withSources() withJavadoc()
   
   )
   
@@ -84,7 +90,8 @@ lazy val disease_express = (project in file("."))
   .enablePlugins(PlayScala, SwaggerPlugin)
   .settings(
     name    := "d3b-disease-express-server",
-    version := "0.1.2")
+    version := "0.1.2",
+    resourceDirectory in Test := baseDirectory.value / "test/resources")
     
 //add domain package names for play-swagger to auto generate swagger definitions for domain classes mentioned in your routes
 swaggerDomainNameSpaces := Seq("de.model.output")

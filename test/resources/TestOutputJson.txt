@@ -1,0 +1,14 @@
+{"$and":[{"tags.key":"stage"},{"tags.value":{"$eq":"4"}}]}
+{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]}
+{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$eq":4}}}]}
+{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$lt":4}}}]}
+{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$not":{"$eq":"4"}}}}]}
+{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$not":{"$lt":4}}}}]}
+{"$and":[{"tags.key":"risk"},{"tags.value":{"$in":["high","low"]}}]}
+{"$and":[{"tags.key":"risk"},{"tags.value":{"$nin":["high","low"]}}]}
+{"$and":[{"tags.key":"risk"},{"tags.value":{"$not":{"$in":["high","low"]}}}]}
+{"$or":[{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]},{"$and":[{"tags.key":"stage"},{"tags.value":{"$eq":"4"}}]}]}
+{"$and":[{"$and":[{"tags.key":"stage"},{"tags.value":{"$eq":"4"}}]},{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]}]}
+{"$or":[{"$and":[{"tags.key":"stage"},{"tags.value":{"$eq":"4"}}]},{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]}]}
+{"$and":[{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]},{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$eq":4}}}]}]}
+{"$and":[{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]},{"$and":[{"tags.key":"risk"},{"tags.value":{"$in":["high","low"]}}]},{"$and":[{"tags.key":"stage"},{"tags.value":{"$not":{"$eq":4}}}]},{"$and":[{"tags.key":"stage"},{"tags.value":{"$lt":4}}]},{"$or":[{"$and":[{"tags.key":"mycn_status"},{"tags.value":{"$eq":"amplified"}}]},{"$and":[{"tags.key":"stage"},{"tags.value":{"$eq":"4"}}]}]}]}

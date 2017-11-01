@@ -1,0 +1,14 @@
+{ "stage": "4" }
+{ "$eq": { "mycn_status":"amplified" }}
+{ "$not": { "stage": 4 }}
+{ "$not": { "$lt": { "stage": 4 }}}
+{ "$not": { "$not": { "stage": "4" }}}
+{ "$not": { "$not": { "$lt": { "stage": 4 }}}}
+{ "risk": ["high","low"] }
+{ "$nin": { "risk": ["high","low"] }}
+{ "$not": { "$in": { "risk": ["high","low"] }}}
+{ "$or": [{ "$eq": { "mycn_status":"amplified" }},{ "stage": "4" } ] }
+{ "stage": "4", "mycn_status":"amplified" }
+[{ "stage": "4" },{ "mycn_status":"amplified" } ]
+{ "$eq": { "mycn_status": "amplified" }, "$not": { "stage": 4 } }
+{ "$and": [ { "$eq": { "mycn_status":"amplified" }}, { "$in": { "risk": ["high","low"] }}, { "$not": { "$eq": { "stage": 4 }}}, { "$lt": { "stage": 4 }}, { "$or": [ { "$eq": { "mycn_status":"amplified" }}, { "stage": "4" } ] } ] }
