@@ -50,8 +50,10 @@ object Queryparser {
   
     case object $and         extends QueryConstants
     case object $not         extends QueryConstants
-    case object `tags.key`   extends QueryConstants
-    case object `tags.value` extends QueryConstants
+    case object `tags`       extends QueryConstants
+    case object `key`        extends QueryConstants
+    case object `value`      extends QueryConstants
+    case object `$elemMatch` extends QueryConstants
   
   }
   
@@ -73,7 +75,7 @@ object Queryparser {
     
     
   case class _Key(obj:String)  extends QueryKey{
-    def formatJson = Json.obj(QueryConstants.`tags.key`.entryName -> obj)
+    def formatJson = JsString(obj)
   }
   
   case class _Value(obj:Value) extends QueryValue{
@@ -91,17 +93,17 @@ object Queryparser {
   case class ValueAsQuery(override val value:QueryValue) extends Query {
     def formatJson =  value.formatJson
   }
-    
+  
   case class QueryKV(
-                  override val key:      _Key, 
+                  override val key:       QueryKey, 
                   override val value:     QueryValue,
                   override val operation: Operation=Operation.eq) extends Query {
     
     override def formatJson =  {
-      Json.obj(QueryConstants.$and.entryName -> 
-               JsArray( Seq(key.formatJson, 
-                            Json.obj(QueryConstants.`tags.value`.entryName ->  
-                                     Json.obj(operation.entryName ->  value.formatJson)))))
+      Json.obj("tags" -> 
+               Json.obj(QueryConstants.$elemMatch.entryName -> 
+                        Json.obj(QueryConstants.key.entryName   -> key.formatJson,
+                                 QueryConstants.value.entryName -> Json.obj(operation.entryName ->  value.formatJson)) ))
                  
     }
   }
@@ -117,10 +119,10 @@ object Queryparser {
     }
     
     override def formatJson =  {
-      Json.obj(QueryConstants.$and.entryName -> 
-               JsArray( Seq(key.formatJson, 
-                            Json.obj(QueryConstants.`tags.value`.entryName ->  
-                                     Json.obj(operation.entryName ->  value.formatJson)))))
+       Json.obj("tags" -> 
+                Json.obj(QueryConstants.$elemMatch.entryName -> 
+                        Json.obj(QueryConstants.key.entryName   -> key.formatJson,
+                                 QueryConstants.value.entryName -> Json.obj(operation.entryName ->  value.formatJson))))
                
     }
   }
