@@ -1,0 +1,14 @@
+{"tags":{"$elemMatch":{"key":"stage","value":{"$eq":"4"}}}}
+{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}}
+{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$eq":4}}}}}
+{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$lt":4}}}}}
+{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$not":{"$eq":"4"}}}}}}
+{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$not":{"$lt":4}}}}}}
+{"tags":{"$elemMatch":{"key":"risk","value":{"$in":["high","low"]}}}}
+{"tags":{"$elemMatch":{"key":"risk","value":{"$nin":["high","low"]}}}}
+{"tags":{"$elemMatch":{"key":"risk","value":{"$not":{"$in":["high","low"]}}}}}
+{"$or":[{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}},{"tags":{"$elemMatch":{"key":"stage","value":{"$eq":"4"}}}}]}
+{"$and":[{"tags":{"$elemMatch":{"key":"stage","value":{"$eq":"4"}}}},{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}}]}
+{"$or":[{"tags":{"$elemMatch":{"key":"stage","value":{"$eq":"4"}}}},{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}}]}
+{"$and":[{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}},{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$eq":4}}}}}]}
+{"$and":[{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}},{"tags":{"$elemMatch":{"key":"risk","value":{"$in":["high","low"]}}}},{"tags":{"$elemMatch":{"key":"stage","value":{"$not":{"$eq":4}}}}},{"tags":{"$elemMatch":{"key":"stage","value":{"$lt":4}}}},{"$or":[{"tags":{"$elemMatch":{"key":"mycn_status","value":{"$eq":"amplified"}}}},{"tags":{"$elemMatch":{"key":"stage","value":{"$eq":"4"}}}}]}]}

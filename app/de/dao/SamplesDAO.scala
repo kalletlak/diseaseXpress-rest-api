@@ -10,10 +10,11 @@ import com.mongodb.util.JSON
 
 import de.model.DomainTypes.{ SampleId, StudyId }
 import de.model.tags.Sample
-import de.utils.{ Query, SampleUtils }
+import de.utils.SampleUtils
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJsFieldJsValueWrapper
+import de.utils.Queryparser.Query
 
 object SamplesDAO {
 

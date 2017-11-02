@@ -10,23 +10,14 @@ trait FilterUnit {
   val values: Seq[String]
 
   // ---------------------------------------------------------------------------
-  def queryMongoString: Option[JsValue] =
-    if (values.isEmpty)
-      None
-    else
-      Some(Json.obj(key -> Json.obj(Fields.$in.entryName -> values)))
+  def queryMongoString: JsValue =
+    Json.obj(key -> Json.obj(Fields.$in.entryName -> values))
 
-  def queryCassandraString: Option[String] =
-    if (values.isEmpty)
-      None
-    else
-      Some(s"$key in ${values.mkString("('", "','", "')")}")
+  def queryCassandraString: String =
+    s"$key in ${values.mkString("('", "','", "')")}"
 
-  def queryElasticSearchString: Option[JsValue] =
-    if (values.isEmpty)
-      None
-    else
-      Some(Json.obj(Fields.terms.entryName -> Json.obj(key -> values ) ))
+  def queryElasticSearchString: JsValue =
+    Json.obj(Fields.terms.entryName -> Json.obj(key -> values ) )
 }
 
 // ===========================================================================  

@@ -14,3 +14,4 @@ project/*
 application.*.conf
 logs/application.log
 conf/application.conf
+.cache-tests

@@ -38,7 +38,7 @@ class MongoDAO(
 
     val filters_str =
       filters
-        .flatMap { _.queryMongoString }
+        .map { _.queryMongoString }
         .mkString("{ $and : [ ", ", ", " ] }")
 
     // set _id: 0 since converting it to JsObject throws an error
