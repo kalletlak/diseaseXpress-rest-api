@@ -28,7 +28,7 @@ class Transcripts @javax.inject.Inject() (
         
         val transcripts: Seq[TranscriptWithGeneInfo] =
           transcript_ids
-            .split(",", 1).toSeq
+            .split(",", -1).toSeq
             .flatMap(GeneRepository.getTranscriptId)
             .flatMap { gene =>              
                 gene
