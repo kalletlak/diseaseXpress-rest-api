@@ -1,13 +1,10 @@
 ### NoDocs ###
-GET   /                  controllers.Default.redirect(to = "/api-docs/")
+GET   /                  controllers.Assets.at(path="/swagger-ui",file="index.html")
 ### NoDocs ###
-GET   /api-docs          controllers.Default.redirect(to = "/api-docs/")
-### NoDocs ###
-GET   /api-docs/         controllers.Assets.at(path="/swagger-ui",file="index.html")
-### NoDocs ###
-GET   /api-docs/*file    controllers.Assets.at(path="/swagger-ui",file)
+GET   /docs              controllers.Assets.at(path="/swagger-ui",file="index.html")
 ### NoDocs ###
 GET   /swagger.json      @de.controllers.ApiSpecs.specs
+
 
 ->    /api/genes         genes.Routes
 
@@ -17,3 +14,6 @@ GET   /swagger.json      @de.controllers.ApiSpecs.specs
 ->    /api/transcripts   transcripts.Routes
 
 ->    /api/data          data.Routes
+
+### NoDocs ###
+GET   /*file             controllers.Assets.at(path="/swagger-ui",file)
