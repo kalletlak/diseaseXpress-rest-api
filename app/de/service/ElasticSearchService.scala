@@ -39,14 +39,8 @@ trait ElasticSearchService extends ServiceComponent {
               .parse(searchResult.sourceAsString)
               .as[JsObject]
           
-          val gene_id =
-            searchResult
-              .sourceAsMap("gene_id") // TODO: create enums for those
-              .toString
-          
           RsemGene
             .fromJson(
-              gene_id,
               _data,
               projection.asInstanceOf[RsemGeneProjectons]) }
    
@@ -65,14 +59,8 @@ trait ElasticSearchService extends ServiceComponent {
               .parse(searchResult.sourceAsString)
               .as[JsObject]
           
-          val transcript_id =
-            searchResult
-              .sourceAsMap("transcript_id")
-              .toString // TODO: don't use toString or comment why safe (not so by default)
-
           Abundance
             .fromJson(
-              transcript_id,
               _data,
               projection.asInstanceOf[AbundanceProjectons]) }
     
@@ -91,14 +79,8 @@ trait ElasticSearchService extends ServiceComponent {
               .parse(searchResult.sourceAsString)
               .as[JsObject]
 
-          val transcript_id =
-            searchResult
-            .sourceAsMap("transcript_id")
-            .toString
-          
           RsemIsoform
             .fromJson(
-              transcript_id,
               _data,
               projection.asInstanceOf[RsemIsoformProjectons]) }
     

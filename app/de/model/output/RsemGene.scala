@@ -41,11 +41,11 @@ case class RsemGene(
     
     // ---------------------------------------------------------------------------
     def fromJson(
-            gene_id:             String,
             obj:                 JsObject,
             projectionFiledsObj: RsemGeneProjectons = new RsemGeneProjectons()) =
         RsemGene(
-          gene_id = gene_id,
+          gene_id = (obj \ gene_id.entryName)
+              .as[String],
             
           sample_id =
             (obj \ sample_id.entryName)

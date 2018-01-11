@@ -26,7 +26,7 @@ class Context @Inject() (configuration: play.api.Configuration) {
   // it WILL NOT be used when binding components
   //  def this(configuration: play.api.Configuration) = this(configuration)
 
-  private val elasticsearch_uri      = configuration.getString("disease-express.database.elasticsearch.uri").get
+/*  private val elasticsearch_uri      = configuration.getString("disease-express.database.elasticsearch.uri").get
   private val elasticsearch_database = configuration.getString("disease-express.database.elasticsearch.db").get
 
   private val elastic_client = HttpClient(ElasticsearchClientUri(elasticsearch_uri))
@@ -55,7 +55,7 @@ class Context @Inject() (configuration: play.api.Configuration) {
   val session = cluster.connect(cassandra_database)
   
   val cassandraService = new CassandraService with CassandraRepository { val context = session }
-  
+  */
   // ===========================================================================
   // Mongodb
   private val mongo_uri      = configuration.getString("disease-express.database.mongo.uri").get
@@ -76,7 +76,7 @@ class Context @Inject() (configuration: play.api.Configuration) {
   
   // ===========================================================================
   def getService(): ServiceComponent =
-    elasticsearchService
+    mongoService
 
 }
 

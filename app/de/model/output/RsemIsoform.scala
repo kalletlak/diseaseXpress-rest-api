@@ -44,12 +44,12 @@ case class RsemIsoform( // TODO: separate out
 
     // ---------------------------------------------------------------------------
     def fromJson(
-        transcript_id:       String,
         obj:                 JsObject,
         projectionFiledsObj: RsemIsoformProjectons = new RsemIsoformProjectons) =
           
       RsemIsoform(
-        transcript_id = transcript_id,
+        transcript_id = (obj \ transcript_id.entryName)
+            .as[String],
         
         sample_id =
           (obj \ sample_id.entryName)

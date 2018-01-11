@@ -33,17 +33,13 @@ trait MongoService extends ServiceComponent {
         : Iterable[RsemGene] =
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
-        .flatMap { result =>          
-          val gene_id = (result \ "gene_id").as[GeneId]
+        .map { result =>          
           
-          result
-            .parseObjectArray("data") // TODO: enums/constants for these
-            .map { _data =>
-              RsemGene
+          RsemGene
                 .fromJson(
-                  gene_id,
-                  _data,
-                  projection.asInstanceOf[RsemGeneProjectons]) } }    
+                  result,
+                  projection.asInstanceOf[RsemGeneProjectons])
+                  }    
 
     // ---------------------------------------------------------------------------
     def getAbundanceData(
@@ -52,17 +48,13 @@ trait MongoService extends ServiceComponent {
         : Iterable[Abundance] =
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
-        .flatMap { result =>          
-          val transcript_id = (result \ "transcript_id").as[TranscriptId]
+        .map { result =>          
           
-          result
-            .parseObjectArray("data")
-            .map { _data =>
-              Abundance
+          Abundance
                 .fromJson(
-                  transcript_id,
-                  _data,
-                  projection.asInstanceOf[AbundanceProjectons]) } }    
+                  result,
+                  projection.asInstanceOf[AbundanceProjectons]) 
+                  }    
 
     // ---------------------------------------------------------------------------
     def getIsoformData(
@@ -71,17 +63,11 @@ trait MongoService extends ServiceComponent {
         : Iterable[RsemIsoform] =      
       find(projection.collection_name, filters)
         .asInstanceOf[Iterable[JsObject]]
-        .flatMap { result =>          
-          val transcript_id = (result \ "transcript_id").as[TranscriptId]
-          
-          result
-            .parseObjectArray("data")
-            .map { _data =>
-              RsemIsoform
+        .map { result =>          
+          RsemIsoform
                 .fromJson(
-                  transcript_id,
-                  _data,
-                  projection.asInstanceOf[RsemIsoformProjectons]) } }    
+                  result,
+                  projection.asInstanceOf[RsemIsoformProjectons]) }    
 
   }
 }

@@ -2,6 +2,7 @@ package de.model.output
 
 import de.utils.Enums.{Normalization, Projection}
 import play.api.libs.json.Json
+import utils.OptionUtils
 
 // ===========================================================================
 case class TranscriptWithGeneInfo(
@@ -56,12 +57,12 @@ case class TranscriptWithGeneInfo(
         obj.start,
         obj.end,
         obj.biotype,
-        obj.entrez_ids        .mkString(","),
-        obj.refseq_mrna_ids   .mkString(","),
-        obj.refseq_protein_ids.mkString(","),
+        OptionUtils.arrayToString(obj.entrez_ids),
+        OptionUtils.arrayToString(obj.refseq_mrna_ids),
+        OptionUtils.arrayToString(obj.refseq_protein_ids),
         obj.gene_id,
         obj.gene_symbol)
-  
+        
   }
 
 // ===========================================================================

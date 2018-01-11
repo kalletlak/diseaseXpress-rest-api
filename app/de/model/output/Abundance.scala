@@ -39,12 +39,12 @@ case class Abundance(
 
     // ---------------------------------------------------------------------------
     def fromJson(
-        transcript_id:       String,
         obj:                 JsObject,
         projectionFiledsObj: AbundanceProjectons = new AbundanceProjectons) =
   
       Abundance(
-        transcript_id = transcript_id,
+        transcript_id = (obj \ transcript_id.entryName)
+            .as[String],
 
         sample_id =
           (obj \ sample_id.entryName)

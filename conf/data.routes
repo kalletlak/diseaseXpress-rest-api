@@ -534,12 +534,28 @@ GET    /transcripts/ids/:transcript_ids/studies/:studies/normalizations/:normali
 #             - detailed
 #         - in: body
 #           name: payload
-#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           description: |
+#             Its a JSON payload currently supports the following operations
+#             Logical Operators             : $and, $not, $nor, $or
+#             Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+#             Example:                           
+#             {
+#             &emsp; \"$and\": [
+#             &emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp; { \"$in\": { \"risk\": [\"high\",\"low\"] } },
+#             &emsp;&emsp;&emsp; { \"$not\": { \"$eq\": { \"stage\": 4 } } },
+#             &emsp;&emsp;&emsp; { \"$lt\": { \"stage\": 4 } },
+#             &emsp;&emsp;&emsp; { \"$or\": [
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"stage\": \"4\" } ]
+#             &emsp;&emsp;&emsp; }
+#             &emsp;]
+#             }
 #           required: true
 #           schema:
-#             type: string
-#           x-examples:
-#             String: '"test"'
+#             type: object
+#             example:
+#               { "$eq": { "mycn_status":"amplified" }}
 #       responses:
 #         '200':
 #           description: successful operation
@@ -588,12 +604,28 @@ POST   /api/tags/data/genes/symbols/:gene_symbols/normalizations/:normalizations
 #             - detailed
 #         - in: body
 #           name: payload
-#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           description: |
+#             Its a JSON payload currently supports the following operations
+#             Logical Operators             : $and, $not, $nor, $or
+#             Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+#             Example:                           
+#             {
+#             &emsp; \"$and\": [
+#             &emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp; { \"$in\": { \"risk\": [\"high\",\"low\"] } },
+#             &emsp;&emsp;&emsp; { \"$not\": { \"$eq\": { \"stage\": 4 } } },
+#             &emsp;&emsp;&emsp; { \"$lt\": { \"stage\": 4 } },
+#             &emsp;&emsp;&emsp; { \"$or\": [
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"stage\": \"4\" } ]
+#             &emsp;&emsp;&emsp; }
+#             &emsp;]
+#             }
 #           required: true
 #           schema:
-#             type: string
-#           x-examples:
-#             String: '"test"'
+#             type: object
+#             example:
+#               { "$eq": { "mycn_status":"amplified" }}
 #       responses:
 #         '200':
 #           description: successful operation
@@ -642,12 +674,28 @@ POST   /api/tags/data/genes/ids/:gene_ids/normalizations/:normalizations        
 #             - detailed
 #         - in: body
 #           name: payload
-#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           description: |
+#             Its a JSON payload currently supports the following operations
+#             Logical Operators             : $and, $not, $nor, $or
+#             Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+#             Example:                           
+#             {
+#             &emsp; \"$and\": [
+#             &emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp; { \"$in\": { \"risk\": [\"high\",\"low\"] } },
+#             &emsp;&emsp;&emsp; { \"$not\": { \"$eq\": { \"stage\": 4 } } },
+#             &emsp;&emsp;&emsp; { \"$lt\": { \"stage\": 4 } },
+#             &emsp;&emsp;&emsp; { \"$or\": [
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"stage\": \"4\" } ]
+#             &emsp;&emsp;&emsp; }
+#             &emsp;]
+#             }
 #           required: true
 #           schema:
-#             type: string
-#           x-examples:
-#             String: '"test"'
+#             type: object
+#             example:
+#               { "$eq": { "mycn_status":"amplified" }}
 #       responses:
 #         '200':
 #           description: successful operation
@@ -689,12 +737,28 @@ POST   /api/tags/data/transcripts/ids/:transcript_ids/normalizations/:normalizat
 #             - detailed
 #         - in: body
 #           name: payload
-#           description: "Its a JSON payload currently supports the following operations\n                     &ensp; Logical Operators : $and, $not, $nor, $or\n                     &ensp; Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin\n                {\n                 &ensp;&ensp;\"$and\": [\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$eq\": { \"mycn_status\":\"amplified\" }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$in\": { \"risk\": [\"high\",\"low\"] }},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$not\": { \"$eq\": { \"stage\": 4 }}},\n                 &ensp;&ensp;&ensp;&ensp;&ensp;{ \"$or\": [\n    \t           &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"risk\": \"high\" },\n                 &ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;{ \"stage\": 4 }]\n                 &ensp;&ensp;&ensp;&ensp;&ensp;}]\n                } "
+#           description: |
+#             Its a JSON payload currently supports the following operations
+#             Logical Operators             : $and, $not, $nor, $or
+#             Comparison Operators : $eq, $gt, $gte, $in, $lt, $lte, $ne, $nin
+#             Example:                           
+#             {
+#             &emsp; \"$and\": [
+#             &emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp; { \"$in\": { \"risk\": [\"high\",\"low\"] } },
+#             &emsp;&emsp;&emsp; { \"$not\": { \"$eq\": { \"stage\": 4 } } },
+#             &emsp;&emsp;&emsp; { \"$lt\": { \"stage\": 4 } },
+#             &emsp;&emsp;&emsp; { \"$or\": [
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"$eq\": { \"mycn_status\":\"amplified\" } },
+#             &emsp;&emsp;&emsp;&emsp;&emsp; { \"stage\": \"4\" } ]
+#             &emsp;&emsp;&emsp; }
+#             &emsp;]
+#             }
 #           required: true
 #           schema:
-#             type: string
-#           x-examples:
-#             String: '"test"'
+#             type: object
+#             example:
+#               { "$eq": { "mycn_status":"amplified" }}
 #       responses:
 #         '200':
 #           description: successful operation
