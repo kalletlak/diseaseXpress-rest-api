@@ -28,7 +28,7 @@ object SamplesDAO {
     //TODO: get url from configuration file
     val stream =
       Source
-        .fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/static-files/clinical_info.txt")
+        .fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/files/prod/api/static-files/clinical_info.txt")
 
     val results = stream
       .getLines

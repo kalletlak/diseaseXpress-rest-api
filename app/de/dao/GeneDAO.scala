@@ -11,7 +11,7 @@ object GeneDAO {
     //TODO: get url from configuration file
     val stream =
       Source
-        .fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/static-files/gencode.v23.annotation_otherids.txt")
+        .fromURL("https://s3.amazonaws.com/d3b.dam/disease-express/files/prod/api/static-files/gencode.v23.annotation_otherids.txt")
 
     val results = stream
       .getLines
