@@ -1,18 +1,16 @@
 import com.typesafe.sbt.packager.MappingsHelper._
-scalaVersion		:= "2.11.8"
-sbtVersion			:= "0.13.13"
-lazy val playVersion		= "2.5.13"
-lazy val jacksonVersion		= "2.8.4"
-lazy val jongoVersion		= "1.3.0"
-lazy val enumeratumVersion	= "1.5.1"
-lazy val swaggerVersion		= "0.6.1"
-lazy val log4jVersion 		= "1.2.17"
-lazy val elastic4sVersion 	= "5.4.12"
-lazy val mongoVersion 		= "3.4.2"
-lazy val fongoVersion 		= "2.1.0"
-lazy val cassandraVersion 	= "3.3.0"
-lazy val junitVersion          = "4.12"
-lazy val junitInterfaceVersion = "0.11" // see https://github.com/sbt/junit-interface
+lazy val playVersion			= "2.5.13"
+lazy val jacksonVersion			= "2.8.4"
+lazy val jongoVersion			= "1.3.0"
+lazy val enumeratumVersion		= "1.5.1"
+lazy val swaggerVersion			= "0.6.1"
+lazy val log4jVersion 			= "1.2.17"
+lazy val elastic4sVersion 		= "5.4.12"
+lazy val mongoVersion 			= "3.4.2"
+lazy val fongoVersion 			= "2.1.0"
+lazy val cassandraVersion 		= "3.3.0"
+lazy val junitVersion 			= "4.12"
+lazy val junitInterfaceVersion 	= "0.11" // see https://github.com/sbt/junit-interface
 
 
 libraryDependencies ++= Seq(
@@ -80,17 +78,15 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-// for eclipse to link with sources
-// TODO: shouldn't have IDE-specific settings in build file
-EclipseKeys.withSource := true // see http://stackoverflow.com/questions/10472840/how-to-attach-sources-to-sbt-managed-dependencies-in-scala-ide
-EclipseKeys.createSrc  := EclipseCreateSrc.Default + EclipseCreateSrc.Resource // see http://stackoverflow.com/questions/14060131/access-configuration-resources-in-scala-ide
 
 // so can use "sbt run"
 lazy val disease_express = (project in file("."))
   .enablePlugins(PlayScala, SwaggerPlugin)
   .settings(
-    name    := "d3b-disease-express-server",
-    version := "0.1.2",
+    name			:= "disease-express-rest-api",
+    version			:= "0.1.2",
+    scalaVersion	:= "2.11.8",
+    sbtVersion		:= "0.13.13",
     resourceDirectory in Test := baseDirectory.value / "test/resources")
     
 //add domain package names for play-swagger to auto generate swagger definitions for domain classes mentioned in your routes
