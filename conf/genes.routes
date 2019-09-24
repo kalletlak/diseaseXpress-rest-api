@@ -79,3 +79,46 @@ GET   /symbols                 @de.controllers.Genes.getGenesBySymbol()
 #              $ref: '#/definitions/de.model.output.GeneInfo'
 ###
 GET   /symbols/:gene_symbols   @de.controllers.Genes.getGeneInfoBySymbols(gene_symbols:String)
+
+###
+#       summary: get Gene information
+#       description: Returns Gene information
+#       operationId: getGenes
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: geneIdType
+#           in: query
+#           description: gene id type
+#           required: true
+#           type: string
+#           default: HUGO_GENE_SYMBOL
+#           enum:
+#             - HUGO_GENE_SYMBOL
+#             - ENTREZ_GENE_ID
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: SUMMARY
+#           enum:
+#             - SUMMARY
+#             - DETAILED
+#         - name: geneIds
+#           in: body
+#           description: List of Entrez Gene IDs or Hugo Gene Symbols
+#           required: true
+#           schema:
+#             type: array
+#             items:
+#               type:  string
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               $ref: '#/definitions/de.model.output.GeneInfo'
+###
+POST   /fetch   @de.controllers.CbioApi.getGenes(geneIdType:String, projection:String)

@@ -15,5 +15,275 @@ GET   /swagger.json      @de.controllers.ApiSpecs.specs
 
 ->    /api/data          data.Routes
 
+###
+#      summary: get sample ids
+#      description: Returns sample ids
+#      operationId: getSamplesFromListId
+#      produces:
+#        - application/json
+#      parameters:
+#        - name: sampleListId
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /api/sample-lists/:sampleListId/sample-ids   @de.controllers.CbioApi.getSamplesFromListId(sampleListId:String)
+
+###
+#      summary: get study Info
+#      description: Returns study Info
+#      operationId: getStudy
+#      produces:
+#        - application/json
+#      parameters:
+#        - name: studyId
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /api/studies/:studyId   @de.controllers.CbioApi.getStudy(studyId:String)
+
+
+###
+#      summary: get sampleList
+#      description: Returns sampleList
+#      operationId: getsampleList
+#      produces:
+#        - application/json
+#      parameters:
+#        - name: sampleListId
+#          in: path
+#          required: true
+#          type: string
+#      responses:
+#        '200':
+#          description: successful operation
+#          schema:
+#            type: array
+#            items:
+#              type: string
+###
+GET   /api/sample-lists/:sampleListId   @de.controllers.CbioApi.getsampleList(sampleListId:String)
+
+
 ### NoDocs ###
 GET   /*file             controllers.Assets.at(path="/swagger-ui",file)
+
+
+###
+#       summary: get Clinical Attributes Info
+#       description: Returns Clinical Attributes information
+#       operationId: getClinicalAttributes
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: studyIds
+#           in: body
+#           description: List of Study IDs
+#           required: true
+#           schema:
+#             type: array
+#             items:
+#               type:  string
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/clinical-attributes/fetch   @de.controllers.CbioApi.getClinicalAttributes()
+
+
+###
+#       summary: get Molecular Profiles Info
+#       description: Returns Molecular Profiles information
+#       operationId: getMolecularProfiles
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: studyIds
+#           in: body
+#           description: object of Study Ids
+#           required: true
+#           schema:
+#             type: object
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/molecular-profiles/fetch   @de.controllers.CbioApi.getMolecularProfiles()
+
+
+
+###
+#       summary: get Samples
+#       description: Returns Samples
+#       operationId: getCbioSamples
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: sampleListIds
+#           in: body
+#           description: object of sampleList Ids
+#           required: true
+#           schema:
+#             type: object
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/samples/fetch   @de.controllers.CbioApi.getSamples()
+
+
+###
+#       summary: get Patients
+#       description: Returns Patients
+#       operationId: getCbioPatients
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: Patient Keys
+#           in: body
+#           description: object of Patient Keys
+#           required: true
+#           schema:
+#             type: object
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/patients/fetch   @de.controllers.CbioApi.getPatients()
+
+
+###
+#       summary: get Clinical Data
+#       description: Returns Clinical Data
+#       operationId: getClinicalData
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: studyId
+#           in: path
+#           required: true
+#           type: string
+#         - name: clinicalDataType
+#           in: query
+#           description: Clinical Data Type
+#           required: true
+#           type: string
+#           default: SAMPLE
+#           enum:
+#             - SAMPLE
+#             - PATIENT
+#         - name: Attribute and Samples Object
+#           in: body
+#           description: object of Patient Keys
+#           required: true
+#           schema:
+#             type: object
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/studies/:studyId/clinical-data/fetch   @de.controllers.CbioApi.getClinicalData(studyId:String,clinicalDataType:String)
+
+###
+#       summary: get Clinical Data
+#       description: Returns Clinical Data
+#       operationId: getClinicalData
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: clinicalDataType
+#           in: query
+#           description: Clinical Data Type
+#           required: true
+#           type: string
+#           default: SAMPLE
+#           enum:
+#             - SAMPLE
+#             - PATIENT
+#         - name: Attribute and Samples Object
+#           in: body
+#           description: object of Patient Keys
+#           required: true
+#           schema:
+#             type: object
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/clinical-data/fetch   @de.controllers.CbioApi.getClinicalDataByIdentitiers(clinicalDataType:String)
+
+
+
+###
+#       summary: get Studies information
+#       description: Returns Studies information
+#       operationId: getStudies
+#       produces:
+#         - application/json
+#       parameters:
+#         - name: projection
+#           in: query
+#           description: Projection type summary or detailed
+#           required: false
+#           type: string
+#           default: SUMMARY
+#           enum:
+#             - SUMMARY
+#             - DETAILED
+#         - name: studyIds
+#           in: body
+#           description: List of Study IDs
+#           required: true
+#           schema:
+#             type: array
+#             items:
+#               type:  string
+#       responses:
+#         '200':
+#           description: successful operation
+#           schema:
+#             type: array
+#             items:
+#               type:  object
+###
+POST   /api/studies/fetch   @de.controllers.CbioApi.getStudies(projection:String)
+

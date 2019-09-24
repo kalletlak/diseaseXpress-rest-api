@@ -36,10 +36,10 @@ object Queryparser {
       override def toString = "$eq"
     }
   
-    case object $and extends Operation with Logical with Nary
-    case object $or  extends Operation with Logical with Nary
-    case object $nor extends Operation with Logical with Nary
-    case object $not extends Operation with Logical with Unary
+    case object $and extends Operation with Logical    with Nary
+    case object $or  extends Operation with Logical    with Nary
+    case object $nor extends Operation with Logical    with Nary
+    case object $not extends Operation with Logical    with Unary
   
   }
 
@@ -48,8 +48,6 @@ object Queryparser {
   object QueryConstants extends Enum[QueryConstants] {
     val values = findValues
   
-    case object $and         extends QueryConstants
-    case object $not         extends QueryConstants
     case object `tags`       extends QueryConstants
     case object `key`        extends QueryConstants
     case object `value`      extends QueryConstants
@@ -63,10 +61,11 @@ object Queryparser {
   sealed trait QueryKey   extends Formatter
   sealed trait QueryValue extends Formatter
   
-  sealed trait Query extends Formatter{
+  sealed trait Query extends Formatter {
     val key       : QueryKey   = _Key("")
     val value     : QueryValue = _Value(Text(""))
     val operation : Operation  = Operation.eq
+    val subQueryies : Seq[Query] = Seq()
   }
   
   sealed trait Result
@@ -74,19 +73,19 @@ object Queryparser {
   case class ErrorQuery  (value: Seq[String]) extends Result
     
     
-  case class _Key(obj:String)  extends QueryKey{
+  case class _Key(obj:String)  extends QueryKey {
     def formatJson = JsString(obj)
   }
   
-  case class _Value(obj:Value) extends QueryValue{
+  case class _Value(obj:Value) extends QueryValue {
     def formatJson = obj.formatJson
   }
   
-  case class QueryAsValue(obj: Query)         extends QueryValue{
+  case class QueryAsValue(obj: Query)         extends QueryValue {
     def formatJson = Json.obj(obj.operation.entryName ->  obj.value.formatJson)
   }
   
-  case class QueriesAsValues(obj: Seq[Query]) extends QueryValue{
+  case class QueriesAsValues(obj: Seq[Query]) extends QueryValue {
     def formatJson =JsArray(obj.map { _.formatJson })
   }
   
@@ -169,7 +168,7 @@ object Queryparser {
             
             case _                            => ErrorQuery(Seq(operator.entryName))
         }
-        case None           => parseArrayValue(value = value,operator=key)
+        case None           => parseArrayValue(value = value,key = key)
       }
       
       parentOperator match {
@@ -235,7 +234,7 @@ object Queryparser {
   // ---------------------------------------------------------------------------
   //ex { "risk": ["high","low"] }
   private def parseArrayValue(
-              operator: String,
+              key: String,
               value:    JsArray)
           : Result = {
     
@@ -255,7 +254,7 @@ object Queryparser {
     if(errors.isEmpty) {
       val res = result.collect { case a: SuccessQuery => a }
       SuccessQuery(QueryKV(
-                      key       = _Key(operator),
+                      key       = _Key(key),
                       value     = QueriesAsValues(res.map ( _.value )), 
                       operation = Operation.$in))
     } else {

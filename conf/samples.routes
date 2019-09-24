@@ -12,7 +12,9 @@
 #          schema:
 #            type: array
 #            items:
-#              type: string
+#              type: object
+#              additionalProperties:
+#                type: string
 ###
 GET   /             @de.controllers.Samples.getAllSamples()
 ###
@@ -33,6 +35,8 @@ GET   /             @de.controllers.Samples.getAllSamples()
 #          schema:
 #            type: array
 #            items:
-#              type: string
+#              type: object
+#              additionalProperties:
+#                type: string
 ###
 GET   /:study_ids   @de.controllers.Samples.getSamplesByStudy(study_ids:String)
