@@ -2,8 +2,12 @@
 GET   /                  controllers.Assets.at(path="/swagger-ui",file="index.html")
 ### NoDocs ###
 GET   /docs              controllers.Assets.at(path="/swagger-ui",file="index.html")
+
 ### NoDocs ###
 GET   /swagger.json      @de.controllers.ApiSpecs.specs
+
+### NoDocs ###
+GET   /*file             controllers.Assets.at(path="/swagger-ui",file)
 
 
 ->    /api/genes         genes.Routes
