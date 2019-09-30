@@ -4,7 +4,7 @@ lazy val root = (project in file("."))
   .enablePlugins(PlayScala, SwaggerPlugin)
   .settings(
     name                        := "disease-express-rest-api",
-    version                     := "0.1.2",
+    version                     := "0.1.6",
     scalaVersion                := "2.11.8",
     sbtVersion                  := "0.13.13",
     resourceDirectory in Test   := baseDirectory.value / "test/resources")

@@ -2,7 +2,7 @@ package de.model.tags
 
 import scala.math.BigDecimal.double2bigDecimal
 
-import de.model.tags.Enums.{ ethnicity, gender, library_type, platform, race, unavailable, vital_status }
+import de.model.tags.Enums.{ ethnicity, gender, platform, race, unavailable, vital_status }
 import play.api.libs.json.{ JsNumber, JsString, JsValue }
 import Sample.{Text, EitherValue, Number}
 import de.model.Fields
@@ -15,10 +15,8 @@ trait Sample {
       val sample_barcode:  Either[Text,         unavailable]
       val study_id:        Text
       val tissue:          Text
+      val subtissue:       Text
       val definition:      Text
-      val library_type:    Either[library_type, unavailable]
-      val platform:        Either[platform,     unavailable]
-      val center:          Text
       val gender:          Either[gender,       unavailable]
       val race:            Either[race,         unavailable]
       val ethnicity:       Either[ethnicity,    unavailable]
@@ -43,10 +41,8 @@ trait Sample {
           override val sample_barcode:  Either[Text,         unavailable],
           override val study_id:        Text,
           override val tissue:          Text,
+          override val subtissue:       Text,
           override val definition:      Text,
-          override val library_type:    Either[library_type, unavailable],
-          override val platform:        Either[platform,     unavailable],
-          override val center:          Text,
           override val gender:          Either[gender,       unavailable],
           override val race:            Either[race,         unavailable],
           override val ethnicity:       Either[ethnicity,    unavailable],
@@ -64,10 +60,8 @@ trait Sample {
             Tag(Fields.sample_barcode.entryName,  EitherValue(sample_barcode)),
             Tag(Fields.study_id.entryName,        study_id),
             Tag(Fields.tissue.entryName,          tissue),
+            Tag(Fields.subtissue.entryName,       subtissue),
             Tag(Fields.definition.entryName,      definition),
-            Tag(Fields.library_type.entryName,    EitherValue(library_type)),
-            Tag(Fields.platform.entryName,        EitherValue(platform)),
-            Tag(Fields.center.entryName,          center),
             Tag(Fields.gender.entryName,          EitherValue(gender)),
             Tag(Fields.race.entryName,            EitherValue(race)),
             Tag(Fields.ethnicity.entryName,       EitherValue(ethnicity)),
@@ -86,10 +80,8 @@ trait Sample {
           override val sample_barcode:  Either[Text, unavailable],
           override val study_id:        Text,
           override val tissue:          Text,
+          override val subtissue:       Text,
           override val definition:      Text,
-          override val library_type:    Either[library_type, unavailable],
-          override val platform:        Either[platform, unavailable],
-          override val center:          Text,
           override val gender:          Either[gender, unavailable],
           override val race:            Either[race, unavailable],
           override val ethnicity:       Either[ethnicity, unavailable],
@@ -112,10 +104,8 @@ trait Sample {
             Tag(Fields.sample_barcode.entryName,  EitherValue(sample_barcode)),
             Tag(Fields.study_id.entryName,        study_id),
             Tag(Fields.tissue.entryName,          tissue),
+            Tag(Fields.subtissue.entryName,       subtissue),
             Tag(Fields.definition.entryName,      definition),
-            Tag(Fields.library_type.entryName,    EitherValue(library_type)),
-            Tag(Fields.platform.entryName,        EitherValue(platform)),
-            Tag(Fields.center.entryName,          center),
             Tag(Fields.gender.entryName,          EitherValue(gender)),
             Tag(Fields.race.entryName,            EitherValue(race)),
             Tag(Fields.ethnicity.entryName,       EitherValue(ethnicity)),

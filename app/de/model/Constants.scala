@@ -14,10 +14,8 @@ sealed trait Fields extends EnumEntry
     case object sample_barcode                       extends Fields
     case object study_id                             extends Fields
     case object tissue                               extends Fields
+    case object subtissue                            extends Fields
     case object definition                           extends Fields
-    case object library_type                         extends Fields
-    case object platform                             extends Fields
-    case object center                               extends Fields
     case object gender                               extends Fields
     case object race                                 extends Fields
     case object ethnicity                            extends Fields

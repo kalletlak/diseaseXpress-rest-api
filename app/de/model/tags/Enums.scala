@@ -33,18 +33,6 @@ object Enums {
     }
 
   // ---------------------------------------------------------------------------
-  sealed abstract class library_type(override val entryName: String) extends EnumEntry with Value {
-      override val formatJson  = JsString(entryName)
-      //override val formatQuery = s""""entryName""""
-    }
-  
-    object library_type extends Enum[library_type] {  
-      val values = findValues  
-      
-      case object `ran_seq` extends library_type("RNA-Seq")
-    }
-
-  // ---------------------------------------------------------------------------
   sealed trait gender extends EnumEntry with Value {
       override val formatJson  = JsString(entryName)
       //override val formatQuery = s""""entryName""""

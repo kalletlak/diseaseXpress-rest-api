@@ -84,10 +84,8 @@ object SampleUtils {
     val _disease_name                         = spl.next.trim
     val _disease_subtype                      = spl.next.trim
     val _tissue                               = spl.next.trim
+    val _subtissue                            = spl.next.trim
     val _definition                           = spl.next.trim
-    val _library_type                         = spl.next.trim
-    val _platform                             = spl.next.trim
-    val _center                               = spl.next.trim
     val _gender                               = spl.next.trim
     val _race                                 = spl.next.trim
     val _ethnicity                            = spl.next.trim
@@ -112,10 +110,8 @@ object SampleUtils {
             sample_barcode  = readValue(_sample_barcode, Text.apply),
             study_id        = Text(_study),
             tissue          = Text(_tissue),
+            subtissue       = Text(_subtissue),
             definition      = Text(_definition),
-            library_type    = readEnum(_library_type, library_type.withNameOption),
-            platform        = readEnum(_platform, platform.withNameOption),
-            center          = Text(_center),
             gender          = readEnum(_gender, gender.withNameOption),
             race            = readEnum(_race, race.withNameOption),
             ethnicity       = readEnum(_ethnicity, ethnicity.withNameOption),
@@ -134,10 +130,8 @@ object SampleUtils {
             sample_barcode  = readValue(_sample_barcode, Text.apply),
             study_id        = Text(_study),
             tissue          = Text(_tissue),
+            subtissue       = Text(_subtissue),
             definition      = Text(_definition),
-            library_type    = readEnum(_library_type, library_type.withNameOption),
-            platform        = readEnum(_platform, platform.withNameOption),
-            center          = Text(_center),
             gender          = readEnum(_gender, gender.withNameOption),
             race            = readEnum(_race, race.withNameOption),
             ethnicity       = readEnum(_ethnicity, ethnicity.withNameOption),
